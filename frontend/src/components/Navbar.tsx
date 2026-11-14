@@ -1,9 +1,9 @@
 import React from 'react';
-import { Send, BarChart3, User, Settings } from 'lucide-react';
+import { Send, BarChart3, User, Settings, Compass } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'outreach' | 'tracker' | 'profile' | 'settings';
-  setActiveTab: (tab: 'outreach' | 'tracker' | 'profile' | 'settings') => void;
+  activeTab: 'outreach' | 'tracker' | 'guide' | 'profile' | 'settings';
+  setActiveTab: (tab: 'outreach' | 'tracker' | 'guide' | 'profile' | 'settings') => void;
   sentCount: number;
   hasResume: boolean;
 }
@@ -40,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <nav className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={() => setActiveTab('outreach')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                 activeTab === 'outreach'
                   ? 'bg-stone-900 text-stone-50 shadow-xs'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
@@ -51,8 +51,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab('guide')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activeTab === 'guide'
+                  ? 'bg-stone-900 text-stone-50 shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
+              }`}
+            >
+              <Compass className="h-4 w-4" />
+              <span>Hiring Radar</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('tracker')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all relative ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all relative cursor-pointer ${
                 activeTab === 'tracker'
                   ? 'bg-stone-900 text-stone-50 shadow-xs'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
@@ -75,7 +87,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all relative ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all relative cursor-pointer ${
                 activeTab === 'profile'
                   ? 'bg-stone-900 text-stone-50 shadow-xs'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
@@ -90,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setActiveTab('settings')}
-              className={`p-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`p-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                 activeTab === 'settings'
                   ? 'bg-stone-900 text-stone-50 shadow-xs'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'

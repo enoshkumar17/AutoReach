@@ -4,15 +4,26 @@ import { NewOutreach } from './components/NewOutreach';
 import { ApplicationsTracker } from './components/ApplicationsTracker';
 import { ProfileManager } from './components/ProfileManager';
 import { SettingsTab } from './components/SettingsTab';
+import { HiringGuide } from './components/HiringGuide';
 import type { CandidateProfile, Project, Application, EnvConfig } from './types';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'outreach' | 'tracker' | 'profile' | 'settings'>('outreach');
+  const [activeTab, setActiveTab] = useState<'outreach' | 'tracker' | 'guide' | 'profile' | 'settings'>('outreach');
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [envConfig, setEnvConfig] = useState<EnvConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Prefill state from Hiring Guide -> Outreach
+  const [prefilledCompany, setPrefilledCompany] = useState<string | null>(null);
+  const [prefilledRole, setPrefilledRole] = useState<string | null>(null);
+
+  const handleSelectCompanyForPitch = (companyName: string, role: string) => {
+    setPrefilledCompany(companyName);
+    setPrefilledRole(role);
+    setActiveTab('outreach');
+  };
 
   // Initial data loading
   useEffect(() => {
@@ -134,6 +145,18 @@ export default function App() {
             onNavigateToSettings={() => setActiveTab('settings')}
             hasGeminiKey={!!envConfig?.hasGeminiKey}
             hasGmailConfig={!!envConfig?.hasGmailConfig}
+            prefilledCompany={prefilledCompany}
+            prefilledRole={prefilledRole}
+            onClearPrefilled={() => {
+              setPrefilledCompany(null);
+              setPrefilledRole(null);
+            }}
+          />
+        )}
+
+        {activeTab === 'guide' && (
+          <HiringGuide
+            onSelectCompanyForPitch={handleSelectCompanyForPitch}
           />
         )}
 

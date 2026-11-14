@@ -36,6 +36,9 @@ interface NewOutreachProps {
   onNavigateToSettings: () => void;
   hasGeminiKey: boolean;
   hasGmailConfig: boolean;
+  prefilledCompany?: string | null;
+  prefilledRole?: string | null;
+  onClearPrefilled?: () => void;
 }
 
 export const NewOutreach: React.FC<NewOutreachProps> = ({
@@ -45,6 +48,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
   onNavigateToSettings,
   hasGeminiKey,
   hasGmailConfig,
+  prefilledCompany,
+  prefilledRole,
+  onClearPrefilled,
 }) => {
   // Outreach mode: Single Post vs Batch List Scanner (LinkedIn / Spreadsheet list)
   const [outreachMode, setOutreachMode] = useState<'single' | 'batch'>('single');
@@ -58,6 +64,17 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
   const [isExtracting, setIsExtracting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // If prefilled company came from Hiring Radar
+  useEffect(() => {
+    if (prefilledCompany) {
+      setInputType('text');
+      setPastedText(`Company: ${prefilledCompany}\nRole: ${prefilledRole || 'Software Engineering Intern'}\nApplying directly to engineering team for open internship opportunities.`);
+      if (onClearPrefilled) {
+        onClearPrefilled();
+      }
+    }
+  }, [prefilledCompany, prefilledRole, onClearPrefilled]);
 
   // Single Draft state
   const [draft, setDraft] = useState<ExtractedOutreach | null>(null);
