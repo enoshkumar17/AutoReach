@@ -179,7 +179,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             companyName: c.companyName,
             url: c.url,
             domain: c.domain,
-            recipientEmail: c.recipientEmail,
+            recipientEmail: c.recipientEmail || '',
             emailPatterns: c.emailPatterns || [
               `careers@${c.domain || 'company.com'}`,
               `recruiting@${c.domain || 'company.com'}`,
@@ -223,7 +223,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     setSuccessMsg(null);
 
     if (!draft.recipientEmail || !draft.recipientEmail.includes('@')) {
-      setErrorMsg('Please provide a valid recipient email address.');
+      setErrorMsg('Recipient email is required. Please enter an email address or click one of the suggested aliases.');
       return;
     }
 
@@ -326,7 +326,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
   // Send Individual Item from Batch
   const handleSendSingleBatchItem = async (item: BatchItem) => {
     if (!item.recipientEmail || !item.recipientEmail.includes('@')) {
-      alert(`Invalid email address for ${item.companyName}`);
+      alert(`Please enter a valid recipient email address for ${item.companyName} before sending.`);
       return;
     }
 
@@ -371,15 +371,18 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
     stopBatchRef.current = false;
     pauseBatchRef.current = false;
-    setIsBatchRunning(true);
-    setIsBatchPaused(false);
 
-    const pendingItems = batchQueue.filter((item) => item.status === 'PENDING');
+    const pendingItems = batchQueue.filter(
+      (item) => item.status === 'PENDING' && item.recipientEmail && item.recipientEmail.includes('@')
+    );
+
     if (pendingItems.length === 0) {
-      alert('No pending applications in the queue.');
-      setIsBatchRunning(false);
+      alert('Please provide a recipient email for at least one company in the queue (or click a suggested alias).');
       return;
     }
+
+    setIsBatchRunning(true);
+    setIsBatchPaused(false);
 
     for (let i = 0; i < pendingItems.length; i++) {
       if (stopBatchRef.current) break;
@@ -471,7 +474,12 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     : 0;
 
   const batchSentCount = batchQueue.filter((item) => item.status === 'SENT').length;
-  const batchPendingCount = batchQueue.filter((item) => item.status === 'PENDING').length;
+  const batchReadyCount = batchQueue.filter(
+    (item) => item.status === 'PENDING' && item.recipientEmail && item.recipientEmail.includes('@')
+  ).length;
+  const batchNeedsEmailCount = batchQueue.filter(
+    (item) => item.status === 'PENDING' && (!item.recipientEmail || !item.recipientEmail.includes('@'))
+  ).length;
 
   return (
     <div className="max-w-4xl mx-auto space-y-7 pb-24">
@@ -574,7 +582,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             <p className="text-sm text-stone-500 mt-1">
               {outreachMode === 'single'
                 ? 'Paste recruiter text or drop a screenshot. AutoReach extracts details and writes a tailored pitch.'
-                : 'Upload a screenshot of a LinkedIn list (like 40+ companies) or paste list text. AutoReach parses every company into an Outbox Queue.'}
+                : 'Upload a screenshot of a hiring list (e.g. 40+ companies from LinkedIn) or paste text. AutoReach extracts every company into an Outbox Queue.'}
             </p>
           </div>
 
@@ -727,11 +735,17 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
       {outreachMode === 'single' && draft && (
         <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
           <div className="flex items-center justify-between border-b border-stone-100 pb-4">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200">
                 Ready to Review
               </span>
-              <span className="text-sm text-stone-500">{draft.confidenceNotes}</span>
+              <span className="text-sm text-stone-600 font-medium">
+                {draft.recipientEmail ? (
+                  <span className="text-emerald-700">✓ Recruiter email extracted from post</span>
+                ) : (
+                  <span className="text-amber-700">⚠️ Recruiter email not found in post — please enter below</span>
+                )}
+              </span>
             </div>
 
             <button
@@ -767,15 +781,26 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1.5">
-                Recipient Email <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-stone-600">
+                  Recipient Email <span className="text-rose-500">*</span>
+                </label>
+                {!draft.recipientEmail && (
+                  <span className="text-[11px] font-semibold text-amber-700">
+                    Required
+                  </span>
+                )}
+              </div>
               <input
                 type="email"
                 value={draft.recipientEmail}
-                placeholder="recruiter@company.com"
+                placeholder="Enter recruiter or team email..."
                 onChange={(e) => setDraft({ ...draft, recipientEmail: e.target.value })}
-                className="w-full rounded-lg bg-[#faf9f6]/60 border border-stone-200 px-3.5 py-2 text-sm text-stone-900 focus:outline-none focus:border-stone-400 font-mono"
+                className={`w-full rounded-lg bg-[#faf9f6]/60 border px-3.5 py-2 text-sm text-stone-900 focus:outline-none focus:border-stone-400 font-mono ${
+                  !draft.recipientEmail
+                    ? 'border-amber-300 ring-1 ring-amber-200/50'
+                    : 'border-stone-200'
+                }`}
               />
             </div>
 
@@ -792,9 +817,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
           {/* Quick-Select Recruiter Email Aliases */}
           {draft.companyName && (
-            <div className="space-y-1.5">
-              <span className="text-xs font-medium text-stone-500 block">
-                Quick-Select Recruiter Aliases (1-click to fill email):
+            <div className="space-y-1.5 p-3 rounded-xl bg-stone-50/80 border border-stone-200/70">
+              <span className="text-xs font-medium text-stone-600 block">
+                Common company aliases (optional — click to use if you don't have a direct email):
               </span>
               <div className="flex flex-wrap gap-2">
                 {[
@@ -809,8 +834,8 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                     onClick={() => setDraft({ ...draft, recipientEmail: pattern })}
                     className={`px-2.5 py-1 rounded-md text-xs font-mono transition cursor-pointer border ${
                       draft.recipientEmail === pattern
-                        ? 'bg-stone-900 text-stone-50 border-stone-900'
-                        : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+                        ? 'bg-stone-900 text-stone-50 border-stone-900 font-semibold'
+                        : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'
                     }`}
                   >
                     {pattern}
@@ -863,13 +888,15 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           {/* Email Body */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-medium text-stone-600">Email Body</label>
+              <label className="text-xs font-medium text-stone-600">
+                Email Body (Multi-Paragraph Pitch with Resume & Signature)
+              </label>
               <span className="text-xs text-stone-400">
-                {wordCount} words {wordCount >= 60 && wordCount <= 125 ? '(Optimal length)' : ''}
+                {wordCount} words {wordCount >= 60 && wordCount <= 135 ? '(Optimal length)' : ''}
               </span>
             </div>
             <textarea
-              rows={9}
+              rows={10}
               value={draft.emailBody}
               onChange={(e) => setDraft({ ...draft, emailBody: e.target.value })}
               className="w-full rounded-xl bg-[#faf9f6]/40 border border-stone-200 p-4 text-sm sm:text-[15px] text-stone-900 focus:outline-none focus:border-stone-400 font-sans leading-relaxed"
@@ -882,11 +909,11 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
               <span className="font-semibold text-stone-800">Deliverability Health:</span>
               <span className="font-semibold text-emerald-700">
-                {wordCount >= 60 && wordCount <= 130 ? '98/100' : '85/100'}
+                {wordCount >= 60 && wordCount <= 135 ? '98/100' : '88/100'}
               </span>
               <span className="text-stone-500">
-                {wordCount >= 60 && wordCount <= 130
-                  ? '• Optimal length, clean phrasing (high inbox placement)'
+                {wordCount >= 60 && wordCount <= 135
+                  ? '• Structured paragraphs, clear resume mention & low-friction CTA'
                   : '• Tip: Keep pitch concise (75–125 words)'}
               </span>
             </div>
@@ -935,6 +962,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                 type="button"
                 onClick={handleSendSingleEmail}
                 disabled={isSending || !draft.recipientEmail}
+                title={!draft.recipientEmail ? 'Please provide recipient email first' : 'Dispatch email'}
                 className="px-5 py-2.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 font-medium text-sm transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-xs cursor-pointer"
               >
                 {isSending ? (
@@ -945,7 +973,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                 ) : (
                   <>
                     <Send className="h-4 w-4" />
-                    Dispatch Application
+                    {!draft.recipientEmail ? 'Enter Email to Send' : 'Dispatch Application'}
                   </>
                 )}
               </button>
@@ -960,15 +988,29 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           {/* Header & Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
             <div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <h3 className="text-base sm:text-lg font-semibold text-stone-900">
                   Outbox Staging Queue
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-800 border border-stone-200">
                   {batchQueue.length} Companies
                 </span>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                    batchReadyCount > 0
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-stone-50 text-stone-500 border-stone-200'
+                  }`}
+                >
+                  {batchReadyCount} Ready to Dispatch
+                </span>
+                {batchNeedsEmailCount > 0 && (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                    {batchNeedsEmailCount} Need Email
+                  </span>
+                )}
                 {batchSentCount > 0 && (
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-800 border border-stone-200">
                     {batchSentCount} Dispatched
                   </span>
                 )}
@@ -1017,11 +1059,12 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                   </button>
                   <button
                     onClick={startSafeBatchDispatch}
-                    disabled={batchPendingCount === 0}
-                    className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-xs sm:text-sm font-semibold flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-40"
+                    disabled={batchReadyCount === 0}
+                    title={batchReadyCount === 0 ? 'Please enter a recipient email for at least one company first' : 'Send all ready applications with 25s delays'}
+                    className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-xs sm:text-sm font-semibold flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Send className="h-4 w-4" />
-                    <span>Dispatch All (Safe 25s Delay)</span>
+                    <span>Dispatch Ready ({batchReadyCount})</span>
                   </button>
                 </>
               )}
@@ -1045,22 +1088,23 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                   </span>
                 )}
               </div>
-              <span className="text-xs text-amber-700">
+              <span className="text-xs text-amber-700 font-semibold">
                 {isBatchPaused ? 'PAUSED' : 'ACTIVE QUEUE'}
               </span>
             </div>
           )}
 
           {/* Staged Items List */}
-          <div className="space-y-3.5">
+          <div className="space-y-4">
             {batchQueue.map((item, idx) => {
               const isExpanded = expandedItemId === item.id;
               const isCurrent = currentBatchIdx === idx && isBatchRunning;
+              const hasEmail = Boolean(item.recipientEmail && item.recipientEmail.includes('@'));
 
               return (
                 <div
                   key={item.id}
-                  className={`rounded-xl border p-4.5 transition ${
+                  className={`rounded-xl border p-5 transition ${
                     isCurrent
                       ? 'border-amber-300 bg-amber-50/30 shadow-xs'
                       : item.status === 'SENT'
@@ -1071,11 +1115,11 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
                       <span className="text-xs font-mono font-semibold text-stone-400 mt-1">
                         #{idx + 1}
                       </span>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-stone-900 text-sm sm:text-base">
                             {item.companyName}
@@ -1112,29 +1156,45 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                         </div>
 
                         {/* Recruiter Email Field */}
-                        <div className="flex items-center gap-2 mt-2">
-                          <input
-                            type="email"
-                            value={item.recipientEmail}
-                            onChange={(e) =>
-                              handleUpdateBatchItem(item.id, { recipientEmail: e.target.value })
-                            }
-                            placeholder="careers@company.com"
-                            className="text-xs sm:text-sm font-mono px-2.5 py-1 rounded bg-[#faf9f6] border border-stone-200 focus:outline-none focus:border-stone-400 w-64"
-                          />
+                        <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
+                          <div className="relative">
+                            <input
+                              type="email"
+                              value={item.recipientEmail}
+                              onChange={(e) =>
+                                handleUpdateBatchItem(item.id, { recipientEmail: e.target.value })
+                              }
+                              placeholder="Enter recruiter email..."
+                              className={`text-xs sm:text-sm font-mono px-3 py-1.5 rounded-lg bg-[#faf9f6] border focus:outline-none focus:border-stone-400 w-64 ${
+                                !hasEmail
+                                  ? 'border-amber-300 ring-1 ring-amber-200/50'
+                                  : 'border-stone-200'
+                              }`}
+                            />
+                          </div>
+
+                          {!hasEmail && (
+                            <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              ⚠️ Email needed
+                            </span>
+                          )}
 
                           {/* Quick Alias Pills */}
-                          <div className="flex items-center gap-1 flex-wrap">
-                            {item.emailPatterns.slice(0, 3).map((pat) => (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[11px] text-stone-400 font-medium">
+                              Aliases:
+                            </span>
+                            {item.emailPatterns.map((pat) => (
                               <button
                                 key={pat}
                                 type="button"
+                                title={`Click to use ${pat}`}
                                 onClick={() =>
                                   handleUpdateBatchItem(item.id, { recipientEmail: pat })
                                 }
-                                className={`text-[11px] px-1.5 py-0.5 rounded border font-mono transition cursor-pointer ${
+                                className={`text-[11px] px-2 py-0.5 rounded border font-mono transition cursor-pointer ${
                                   item.recipientEmail === pat
-                                    ? 'bg-stone-900 text-stone-50 border-stone-900'
+                                    ? 'bg-stone-900 text-stone-50 border-stone-900 font-semibold'
                                     : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
                                 }`}
                               >
@@ -1146,7 +1206,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
                         {/* Matched project tags */}
                         {item.matchedProjects.length > 0 && (
-                          <div className="flex items-center gap-1.5 mt-2">
+                          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                             <span className="text-[11px] text-stone-400">Pitch project:</span>
                             {item.matchedProjects.map((p) => (
                               <span
@@ -1162,7 +1222,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                     </div>
 
                     {/* Item Actions */}
-                    <div className="flex items-center gap-2 self-end sm:self-center">
+                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                       <button
                         onClick={() =>
                           setExpandedItemId(isExpanded ? null : item.id)
@@ -1182,8 +1242,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
                       <button
                         onClick={() => handleSendSingleBatchItem(item)}
-                        disabled={item.status === 'SENT' || item.status === 'SENDING'}
-                        className="px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-xs font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-30"
+                        disabled={item.status === 'SENT' || item.status === 'SENDING' || !hasEmail}
+                        title={!hasEmail ? 'Please provide recipient email first' : 'Send pitch now'}
+                        className="px-3.5 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-xs font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         <Send className="h-3 w-3" />
                         Send Now
@@ -1217,16 +1278,21 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-medium text-stone-500 block mb-1">
-                          Tailored Cold Email:
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-medium text-stone-500">
+                            Tailored Cold Email (Structured Multi-Paragraph Letter with Resume & Signature):
+                          </label>
+                          <span className="text-[11px] text-stone-400">
+                            Resume PDF attached on dispatch
+                          </span>
+                        </div>
                         <textarea
-                          rows={4}
+                          rows={10}
                           value={item.emailBody}
                           onChange={(e) =>
                             handleUpdateBatchItem(item.id, { emailBody: e.target.value })
                           }
-                          className="w-full text-xs leading-relaxed p-3 rounded bg-[#faf9f6] border border-stone-200 focus:outline-none focus:border-stone-400 font-sans"
+                          className="w-full text-xs sm:text-sm leading-relaxed p-3.5 rounded-xl bg-[#faf9f6] border border-stone-200 focus:outline-none focus:border-stone-400 font-sans"
                         />
                       </div>
                     </div>
