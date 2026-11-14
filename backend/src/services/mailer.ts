@@ -9,6 +9,8 @@ export interface SendEmailOptions {
   resumePath?: string | null;
   gmailUser?: string;
   gmailAppPassword?: string;
+  inReplyTo?: string | null;
+  references?: string | null;
 }
 
 export function createTransporter(gmailUser?: string, gmailAppPassword?: string) {
@@ -57,7 +59,7 @@ export async function sendApplicationEmail(options: SendEmailOptions) {
     </div>
   `;
 
-  const mailOptions = {
+  const mailOptions: any = {
     from: senderEmail,
     to: options.to,
     subject: options.subject,
@@ -65,6 +67,11 @@ export async function sendApplicationEmail(options: SendEmailOptions) {
     html: formattedHtml,
     attachments: attachments,
   };
+
+  if (options.inReplyTo) {
+    mailOptions.inReplyTo = options.inReplyTo;
+    mailOptions.references = options.references || options.inReplyTo;
+  }
 
   const info = await transporter.sendMail(mailOptions);
   return {

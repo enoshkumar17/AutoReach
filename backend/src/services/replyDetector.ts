@@ -1,6 +1,39 @@
 import { ImapFlow } from 'imapflow';
 import { prisma } from '../prisma.js';
 
+export async function classifyReplySentiment(subject: string, textSnippet: string): Promise<'INTERVIEW' | 'QUESTION' | 'REJECTED' | 'GENERAL'> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return 'GENERAL';
+
+  const prompt = `Classify this recruiter reply to a student job application into exactly ONE category:
+- INTERVIEW: If the recruiter wants to schedule an interview, screening call, meet, or asked for candidate's availability.
+- REJECTED: If they are not hiring, position filled, or politely declining.
+- QUESTION: If they are asking for assignment, links, GPA, or questions.
+- GENERAL: Auto-replies, general acknowledgement, or out of office.
+
+Subject: "${subject}"
+Content Snippet: "${textSnippet}"
+
+Output ONLY the category name.`;
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    });
+    const json = await res.json();
+    const raw = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
+    if (raw?.includes('INTERVIEW')) return 'INTERVIEW';
+    if (raw?.includes('REJECT')) return 'REJECTED';
+    if (raw?.includes('QUESTION')) return 'QUESTION';
+    return 'GENERAL';
+  } catch (_) {
+    return 'GENERAL';
+  }
+}
+
 export async function checkInboxForReplies() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
@@ -9,10 +42,25 @@ export async function checkInboxForReplies() {
     return { success: false, message: 'Gmail credentials not configured.' };
   }
 
-  // Find all applications awaiting reply
-  const pendingApps = await prisma.application.findMany({
+  // 1. Mark applications sent > 4 days ago as FOLLOW_UP_DUE if still awaiting reply
+  const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
+  await prisma.application.updateMany({
     where: {
       status: 'SENT',
+      sentAt: { lte: fourDaysAgo },
+      followUpCount: 0,
+    },
+    data: {
+      status: 'FOLLOW_UP_DUE',
+    },
+  });
+
+  // 2. Find all applications that are awaiting reply or follow-up due
+  const pendingApps = await prisma.application.findMany({
+    where: {
+      status: {
+        in: ['SENT', 'FOLLOW_UP_DUE'],
+      },
     },
   });
 
@@ -37,13 +85,11 @@ export async function checkInboxForReplies() {
 
     try {
       for (const app of pendingApps) {
-        // Search for emails from the recruiter email
         const searchCriteria: any = {
           from: app.recipientEmail,
         };
 
         if (app.sentAt) {
-          // Look for messages sent on or after the application date
           const sentDate = new Date(app.sentAt);
           sentDate.setHours(0, 0, 0, 0);
           searchCriteria.since = sentDate;
@@ -52,26 +98,37 @@ export async function checkInboxForReplies() {
         const messageUids = await client.search(searchCriteria);
 
         if (messageUids && messageUids.length > 0) {
-          // Get the latest message snippet
           const latestUid = messageUids[messageUids.length - 1];
-          let replySnippet = 'Reply received';
+          let replySubject = 'Reply received';
           let replyDate = new Date();
 
           for await (const message of client.fetch(latestUid, { envelope: true })) {
             if (message.envelope) {
-              replySnippet = `Reply Subject: "${message.envelope.subject || 'No Subject'}"`;
+              replySubject = message.envelope.subject || 'No Subject';
               if (message.envelope.date) {
                 replyDate = new Date(message.envelope.date);
               }
             }
           }
 
+          // AI sentiment classification
+          const sentiment = await classifyReplySentiment(replySubject, replySubject);
+
+          let newStatus = 'REPLIED';
+          if (sentiment === 'INTERVIEW') {
+            newStatus = 'INTERVIEW';
+          } else if (sentiment === 'REJECTED') {
+            newStatus = 'REJECTED';
+          }
+
           // Update application in database
           const updated = await prisma.application.update({
             where: { id: app.id },
             data: {
-              status: 'REPLIED',
-              notes: `${replySnippet} (Received on ${replyDate.toLocaleString()})`,
+              status: newStatus,
+              sentiment: sentiment,
+              replySnippet: replySubject,
+              notes: `[${sentiment}] ${replySubject} (Received on ${replyDate.toLocaleDateString()})`,
             },
           });
 
@@ -90,7 +147,7 @@ export async function checkInboxForReplies() {
       checked: pendingApps.length,
       newReplies: newRepliesCount,
       updatedApps,
-      message: `Checked ${pendingApps.length} pending application(s). Found ${newRepliesCount} new reply(ies).`,
+      message: `Checked ${pendingApps.length} application(s). Found ${newRepliesCount} new response(s).`,
     };
   } catch (error: any) {
     console.error('[ReplyDetector] Error checking replies:', error);

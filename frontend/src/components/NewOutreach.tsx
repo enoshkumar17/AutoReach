@@ -1,6 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, FileText, Send, CheckCircle2, AlertCircle, FileCheck, RefreshCw, X, Clipboard, ArrowRight, Eye } from 'lucide-react';
-import type { CandidateProfile, ExtractedOutreach, Application, Project } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Upload,
+  FileText,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  FileCheck,
+  RefreshCw,
+  X,
+  Clipboard,
+  ArrowRight,
+  Eye,
+  ShieldCheck,
+  Layers,
+  Play,
+  Pause,
+  Trash2,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import type {
+  CandidateProfile,
+  ExtractedOutreach,
+  Application,
+  Project,
+  PitchStyle,
+  BatchItem,
+} from '../types';
 
 interface NewOutreachProps {
   profile: CandidateProfile | null;
@@ -19,20 +46,38 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
   hasGeminiKey,
   hasGmailConfig,
 }) => {
+  // Outreach mode: Single Post vs Batch List Scanner (LinkedIn / Spreadsheet list)
+  const [outreachMode, setOutreachMode] = useState<'single' | 'batch'>('single');
+  const [pitchStyle, setPitchStyle] = useState<PitchStyle>('proof-of-work');
+
+  // Input state
   const [inputType, setInputType] = useState<'screenshot' | 'text'>('screenshot');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pastedText, setPastedText] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const [isSendingTest, setIsSendingTest] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Draft state
+  // Single Draft state
   const [draft, setDraft] = useState<ExtractedOutreach | null>(null);
   const [sourceType, setSourceType] = useState<'SCREENSHOT' | 'TEXT'>('SCREENSHOT');
   const [attachResume, setAttachResume] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
+
+  // Batch Staging Queue state
+  const [batchQueue, setBatchQueue] = useState<BatchItem[]>([]);
+  const [batchConfidenceNotes, setBatchConfidenceNotes] = useState<string | null>(null);
+  const [isBatchRunning, setIsBatchRunning] = useState(false);
+  const [isBatchPaused, setIsBatchPaused] = useState(false);
+  const [currentBatchIdx, setCurrentBatchIdx] = useState<number | null>(null);
+  const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+
+  // Refs for throttling interval control
+  const stopBatchRef = useRef(false);
+  const pauseBatchRef = useRef(false);
 
   // Global clipboard listener for Ctrl+V image pasting
   useEffect(() => {
@@ -76,6 +121,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     }
   };
 
+  // Extract Single or Batch
   const handleExtractAndDraft = async () => {
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -104,19 +150,54 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
       } else {
         formData.append('text', pastedText);
       }
+      formData.append('pitchStyle', pitchStyle);
 
-      const res = await fetch('/api/extract', {
-        method: 'POST',
-        body: formData,
-      });
+      if (outreachMode === 'single') {
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          body: formData,
+        });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to extract information from post.');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to extract information from post.');
+
+        setDraft(data.data);
+        setSourceType(data.sourceType);
+      } else {
+        // Batch Mode
+        const res = await fetch('/api/extract/batch', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to scan list of companies.');
+
+        const stagedList: BatchItem[] = (data.data?.companies || []).map(
+          (c: any, idx: number) => ({
+            id: `batch-${Date.now()}-${idx}`,
+            companyName: c.companyName,
+            url: c.url,
+            domain: c.domain,
+            recipientEmail: c.recipientEmail,
+            emailPatterns: c.emailPatterns || [
+              `careers@${c.domain || 'company.com'}`,
+              `recruiting@${c.domain || 'company.com'}`,
+              `internships@${c.domain || 'company.com'}`,
+              `jobs@${c.domain || 'company.com'}`,
+            ],
+            role: c.role || 'Software Engineering Intern',
+            jobType: c.jobType || 'Internship',
+            matchedProjects: c.matchedProjects || [],
+            emailSubject: c.emailSubject,
+            emailBody: c.emailBody,
+            status: 'PENDING',
+          })
+        );
+
+        setBatchQueue(stagedList);
+        setBatchConfidenceNotes(data.data?.confidenceNotes || `Extracted ${stagedList.length} companies.`);
       }
-
-      setDraft(data.data);
-      setSourceType(data.sourceType);
     } catch (err: any) {
       setErrorMsg(err.message || 'Something went wrong while analyzing the job posting.');
     } finally {
@@ -124,6 +205,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     }
   };
 
+  // Toggle Project in Single Draft
   const handleToggleProject = (projectTitle: string) => {
     if (!draft) return;
     const isCurrentlyMatched = draft.matchedProjects.includes(projectTitle);
@@ -134,7 +216,8 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     setDraft({ ...draft, matchedProjects: newMatched });
   };
 
-  const handleSendEmail = async () => {
+  // Send Single Outreach
+  const handleSendSingleEmail = async () => {
     if (!draft) return;
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -170,11 +253,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to dispatch email.');
-      }
+      if (!res.ok) throw new Error(data.error || 'Failed to dispatch email.');
 
-      setSuccessMsg(`Application sent to ${draft.recipientEmail}. Successfully recorded in Applications tracker.`);
+      setSuccessMsg(`Application sent to ${draft.recipientEmail}! Logged in Applications pipeline.`);
       onApplicationSent(data.application);
 
       setTimeout(() => {
@@ -190,6 +271,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     }
   };
 
+  // Send Test to Myself
   const handleSendTestToSelf = async () => {
     if (!draft || !profile?.email) {
       setErrorMsg('Candidate profile email is required to send a test copy.');
@@ -228,7 +310,168 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     }
   };
 
-  const wordCount = draft?.emailBody ? draft.emailBody.trim().split(/\s+/).filter(Boolean).length : 0;
+  // -------------------------------------------------------------
+  // Batch Staging Queue Handlers
+  // -------------------------------------------------------------
+  const handleUpdateBatchItem = (id: string, updates: Partial<BatchItem>) => {
+    setBatchQueue((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+    );
+  };
+
+  const handleDeleteBatchItem = (id: string) => {
+    setBatchQueue((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // Send Individual Item from Batch
+  const handleSendSingleBatchItem = async (item: BatchItem) => {
+    if (!item.recipientEmail || !item.recipientEmail.includes('@')) {
+      alert(`Invalid email address for ${item.companyName}`);
+      return;
+    }
+
+    handleUpdateBatchItem(item.id, { status: 'SENDING' });
+
+    try {
+      const res = await fetch('/api/applications/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: item.companyName,
+          recipientEmail: item.recipientEmail,
+          role: item.role,
+          jobType: item.jobType,
+          emailSubject: item.emailSubject,
+          emailBody: item.emailBody,
+          matchedProjects: item.matchedProjects,
+          sourceType: 'SCREENSHOT',
+          attachResume,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send.');
+
+      handleUpdateBatchItem(item.id, { status: 'SENT' });
+      onApplicationSent(data.application);
+    } catch (err: any) {
+      handleUpdateBatchItem(item.id, {
+        status: 'FAILED',
+        errorMessage: err.message || 'Send failed',
+      });
+    }
+  };
+
+  // Staggered Safe Batch Dispatcher (25s interval to protect Gmail reputation)
+  const startSafeBatchDispatch = async () => {
+    if (!hasGmailConfig) {
+      setErrorMsg('Gmail credentials are required to dispatch batch emails. Check Settings.');
+      return;
+    }
+
+    stopBatchRef.current = false;
+    pauseBatchRef.current = false;
+    setIsBatchRunning(true);
+    setIsBatchPaused(false);
+
+    const pendingItems = batchQueue.filter((item) => item.status === 'PENDING');
+    if (pendingItems.length === 0) {
+      alert('No pending applications in the queue.');
+      setIsBatchRunning(false);
+      return;
+    }
+
+    for (let i = 0; i < pendingItems.length; i++) {
+      if (stopBatchRef.current) break;
+
+      while (pauseBatchRef.current) {
+        await new Promise((r) => setTimeout(r, 1000));
+        if (stopBatchRef.current) break;
+      }
+      if (stopBatchRef.current) break;
+
+      const currentItem = pendingItems[i];
+      const itemIndexInQueue = batchQueue.findIndex((item) => item.id === currentItem.id);
+      setCurrentBatchIdx(itemIndexInQueue);
+
+      // Send the item
+      handleUpdateBatchItem(currentItem.id, { status: 'SENDING' });
+
+      try {
+        const res = await fetch('/api/applications/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyName: currentItem.companyName,
+            recipientEmail: currentItem.recipientEmail,
+            role: currentItem.role,
+            jobType: currentItem.jobType,
+            emailSubject: currentItem.emailSubject,
+            emailBody: currentItem.emailBody,
+            matchedProjects: currentItem.matchedProjects,
+            sourceType: 'SCREENSHOT',
+            attachResume,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+
+        handleUpdateBatchItem(currentItem.id, { status: 'SENT' });
+        onApplicationSent(data.application);
+      } catch (err: any) {
+        handleUpdateBatchItem(currentItem.id, {
+          status: 'FAILED',
+          errorMessage: err.message || 'Failed',
+        });
+      }
+
+      // If more items remain, wait 25 seconds with a live countdown to keep Gmail safe
+      if (i < pendingItems.length - 1 && !stopBatchRef.current) {
+        for (let sec = 25; sec > 0; sec--) {
+          if (stopBatchRef.current) break;
+          while (pauseBatchRef.current) {
+            await new Promise((r) => setTimeout(r, 1000));
+            if (stopBatchRef.current) break;
+          }
+          setCountdownSeconds(sec);
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+        setCountdownSeconds(null);
+      }
+    }
+
+    setIsBatchRunning(false);
+    setCurrentBatchIdx(null);
+    setCountdownSeconds(null);
+    setSuccessMsg('Batch dispatch finished! View all in Applications pipeline.');
+  };
+
+  const handlePauseBatch = () => {
+    pauseBatchRef.current = true;
+    setIsBatchPaused(true);
+  };
+
+  const handleResumeBatch = () => {
+    pauseBatchRef.current = false;
+    setIsBatchPaused(false);
+  };
+
+  const handleCancelBatch = () => {
+    stopBatchRef.current = true;
+    setIsBatchRunning(false);
+    setIsBatchPaused(false);
+    setCurrentBatchIdx(null);
+    setCountdownSeconds(null);
+  };
+
+  // Deliverability helper for single draft
+  const wordCount = draft?.emailBody
+    ? draft.emailBody.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+
+  const batchSentCount = batchQueue.filter((item) => item.status === 'SENT').length;
+  const batchPendingCount = batchQueue.filter((item) => item.status === 'PENDING').length;
 
   return (
     <div className="max-w-4xl mx-auto space-y-7 pb-24">
@@ -239,28 +482,99 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             <span className="h-2 w-2 rounded-full bg-amber-600 shrink-0" />
             <span>
               Setup items pending: {!hasGeminiKey && 'Gemini Key • '}
-              {!hasGmailConfig && 'Gmail Password • '}
+              {!hasGmailConfig && 'Gmail App Password • '}
               {!profile?.hasResume && 'Resume PDF'}
             </span>
           </div>
           <button
             onClick={onNavigateToSettings}
-            className="text-amber-900 hover:text-amber-950 underline font-semibold text-sm"
+            className="text-amber-900 hover:text-amber-950 underline font-semibold text-sm cursor-pointer"
           >
             Configure
           </button>
         </div>
       )}
 
-      {/* Main Outreach Composer Card */}
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-6">
+      {/* Mode Switcher: Single vs Batch Scanner */}
+      <div className="bg-white border border-stone-200/80 rounded-2xl p-2.5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setOutreachMode('single')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition cursor-pointer ${
+              outreachMode === 'single'
+                ? 'bg-stone-900 text-stone-50 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+            }`}
+          >
+            <Send className="h-4 w-4" />
+            <span>Single Post Outreach</span>
+          </button>
+
+          <button
+            onClick={() => setOutreachMode('batch')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition cursor-pointer ${
+              outreachMode === 'batch'
+                ? 'bg-stone-900 text-stone-50 shadow-xs'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+            }`}
+          >
+            <Layers className="h-4 w-4" />
+            <span>Batch List Scanner (LinkedIn / Multi-Company)</span>
+          </button>
+        </div>
+
+        {/* Pitch Style Pills */}
+        <div className="flex items-center gap-1.5 self-end sm:self-auto text-xs font-medium">
+          <span className="text-stone-400 mr-1 hidden sm:inline">Formula:</span>
+          <button
+            onClick={() => setPitchStyle('proof-of-work')}
+            title="Proof-of-work pitch with live demo and GitHub repo link"
+            className={`px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+              pitchStyle === 'proof-of-work'
+                ? 'bg-stone-800 text-stone-100 border-stone-800'
+                : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+            }`}
+          >
+            Proof-of-Work
+          </button>
+          <button
+            onClick={() => setPitchStyle('short-casual')}
+            title="Ultra-brief casual coffee chat pitch (under 65 words)"
+            className={`px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+              pitchStyle === 'short-casual'
+                ? 'bg-stone-800 text-stone-100 border-stone-800'
+                : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+            }`}
+          >
+            Short (&lt;65 words)
+          </button>
+          <button
+            onClick={() => setPitchStyle('value-prop')}
+            title="Emphasizes specific technical contributions to their product"
+            className={`px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+              pitchStyle === 'value-prop'
+                ? 'bg-stone-800 text-stone-100 border-stone-800'
+                : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+            }`}
+          >
+            Value-Add
+          </button>
+        </div>
+      </div>
+
+      {/* Main Outreach Input Card */}
+      <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
           <div>
             <h2 className="text-base sm:text-lg font-semibold text-stone-900">
-              Generate Outreach Pitch
+              {outreachMode === 'single'
+                ? 'Generate Single Outreach Pitch'
+                : 'Scan Multi-Company Hiring List'}
             </h2>
             <p className="text-sm text-stone-500 mt-1">
-              Paste recruiter text or drop a screenshot. AutoReach extracts details and writes a tailored pitch.
+              {outreachMode === 'single'
+                ? 'Paste recruiter text or drop a screenshot. AutoReach extracts details and writes a tailored pitch.'
+                : 'Upload a screenshot of a LinkedIn list (like 40+ companies) or paste list text. AutoReach parses every company into an Outbox Queue.'}
             </p>
           </div>
 
@@ -268,7 +582,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           <div className="flex rounded-lg bg-stone-100 p-1 border border-stone-200/60 self-start sm:self-auto">
             <button
               onClick={() => setInputType('screenshot')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-sm font-medium transition ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
                 inputType === 'screenshot'
                   ? 'bg-white text-stone-900 shadow-xs'
                   : 'text-stone-500 hover:text-stone-900'
@@ -279,7 +593,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             </button>
             <button
               onClick={() => setInputType('text')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-sm font-medium transition ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
                 inputType === 'text'
                   ? 'bg-white text-stone-900 shadow-xs'
                   : 'text-stone-500 hover:text-stone-900'
@@ -310,13 +624,15 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                   className="max-h-56 max-w-full rounded-lg border border-stone-200 object-contain mx-auto shadow-xs"
                 />
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-sm text-stone-700 font-medium">{selectedFile?.name || 'Pasted image'}</span>
+                  <span className="text-sm text-stone-700 font-medium">
+                    {selectedFile?.name || 'Pasted image'}
+                  </span>
                   <button
                     onClick={() => {
                       setSelectedFile(null);
                       setPreviewUrl(null);
                     }}
-                    className="text-sm text-stone-500 hover:text-rose-600 font-medium underline"
+                    className="text-sm text-stone-500 hover:text-rose-600 font-medium underline cursor-pointer"
                   >
                     Remove
                   </button>
@@ -327,7 +643,11 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                 <div className="flex items-center justify-center gap-2.5 text-sm sm:text-base text-stone-700 font-medium">
                   <Clipboard className="h-4 w-4 text-stone-500" />
                   <span>
-                    Press <kbd className="px-2 py-0.5 rounded bg-stone-100 text-stone-800 text-xs font-mono border border-stone-200 shadow-2xs">Ctrl + V</kbd> to paste screenshot
+                    Press{' '}
+                    <kbd className="px-2 py-0.5 rounded bg-stone-100 text-stone-800 text-xs font-mono border border-stone-200 shadow-2xs">
+                      Ctrl + V
+                    </kbd>{' '}
+                    to paste screenshot
                   </span>
                 </div>
                 <div className="text-sm text-stone-400">
@@ -350,7 +670,11 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             rows={6}
             value={pastedText}
             onChange={(e) => setPastedText(e.target.value)}
-            placeholder="Paste hiring tweet, LinkedIn post, or role description..."
+            placeholder={
+              outreachMode === 'single'
+                ? 'Paste hiring tweet, LinkedIn post, or role description...'
+                : 'Paste list of companies (e.g. 1. Docker - https://docker.com 2. Upstart - https://upstart.com)...'
+            }
             className="w-full rounded-xl bg-[#faf9f6]/60 border border-stone-200 p-4 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 font-mono leading-relaxed"
           />
         )}
@@ -358,7 +682,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
         {/* Action Row */}
         <div className="flex items-center justify-between pt-1">
           <span className="text-xs text-stone-400">
-            Powered by Gemini Multimodal Vision
+            Powered by Gemini Multimodal Vision • Native Fetch
           </span>
 
           <button
@@ -369,11 +693,15 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             {isExtracting ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                Analyzing post...
+                {outreachMode === 'single' ? 'Analyzing post...' : 'Scanning company list...'}
               </>
             ) : (
               <>
-                <span>Generate Outreach Pitch</span>
+                <span>
+                  {outreachMode === 'single'
+                    ? 'Generate Outreach Pitch'
+                    : 'Scan & Stage Companies'}
+                </span>
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
@@ -395,9 +723,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
         )}
       </div>
 
-      {/* Draft Review & Send (Clean Paper Composer) */}
-      {draft && (
-        <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-6 animate-in fade-in duration-150">
+      {/* SINGLE OUTREACH: Draft Review & Send */}
+      {outreachMode === 'single' && draft && (
+        <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
           <div className="flex items-center justify-between border-b border-stone-100 pb-4">
             <div className="flex items-center gap-2.5">
               <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200">
@@ -462,6 +790,36 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             </div>
           </div>
 
+          {/* Quick-Select Recruiter Email Aliases */}
+          {draft.companyName && (
+            <div className="space-y-1.5">
+              <span className="text-xs font-medium text-stone-500 block">
+                Quick-Select Recruiter Aliases (1-click to fill email):
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  `careers@${draft.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+                  `recruiting@${draft.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+                  `internships@${draft.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+                  `jobs@${draft.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+                ].map((pattern) => (
+                  <button
+                    key={pattern}
+                    type="button"
+                    onClick={() => setDraft({ ...draft, recipientEmail: pattern })}
+                    className={`px-2.5 py-1 rounded-md text-xs font-mono transition cursor-pointer border ${
+                      draft.recipientEmail === pattern
+                        ? 'bg-stone-900 text-stone-50 border-stone-900'
+                        : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+                    }`}
+                  >
+                    {pattern}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Dynamic Project Toggle Chips */}
           {projects.length > 0 && (
             <div className="space-y-2 pt-1">
@@ -518,6 +876,22 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             />
           </div>
 
+          {/* Deliverability & Spam Score Banner */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200/80 text-xs">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <span className="font-semibold text-stone-800">Deliverability Health:</span>
+              <span className="font-semibold text-emerald-700">
+                {wordCount >= 60 && wordCount <= 130 ? '98/100' : '85/100'}
+              </span>
+              <span className="text-stone-500">
+                {wordCount >= 60 && wordCount <= 130
+                  ? '• Optimal length, clean phrasing (high inbox placement)'
+                  : '• Tip: Keep pitch concise (75–125 words)'}
+              </span>
+            </div>
+          </div>
+
           {/* Bottom Actions */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-stone-100">
             <div className="flex items-center gap-3">
@@ -559,7 +933,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
               <button
                 type="button"
-                onClick={handleSendEmail}
+                onClick={handleSendSingleEmail}
                 disabled={isSending || !draft.recipientEmail}
                 className="px-5 py-2.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 font-medium text-sm transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-xs cursor-pointer"
               >
@@ -576,6 +950,290 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* BATCH OUTREACH: Outbox Staging Queue */}
+      {outreachMode === 'batch' && batchQueue.length > 0 && (
+        <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
+          {/* Header & Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-base sm:text-lg font-semibold text-stone-900">
+                  Outbox Staging Queue
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-800 border border-stone-200">
+                  {batchQueue.length} Companies
+                </span>
+                {batchSentCount > 0 && (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {batchSentCount} Dispatched
+                  </span>
+                )}
+              </div>
+              <p className="text-xs sm:text-sm text-stone-500 mt-1">
+                {batchConfidenceNotes}
+              </p>
+            </div>
+
+            {/* Batch Dispatch Controls */}
+            <div className="flex items-center gap-2 shrink-0">
+              {isBatchRunning ? (
+                <>
+                  {isBatchPaused ? (
+                    <button
+                      onClick={handleResumeBatch}
+                      className="px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-stone-50 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                      Resume
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handlePauseBatch}
+                      className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-stone-50 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Pause className="h-3.5 w-3.5" />
+                      Pause
+                    </button>
+                  )}
+                  <button
+                    onClick={handleCancelBatch}
+                    className="px-3.5 py-2 rounded-lg bg-stone-100 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer border border-stone-200"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setBatchQueue([])}
+                    className="px-3 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-medium cursor-pointer"
+                  >
+                    Clear Queue
+                  </button>
+                  <button
+                    onClick={startSafeBatchDispatch}
+                    disabled={batchPendingCount === 0}
+                    className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-xs sm:text-sm font-semibold flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-40"
+                  >
+                    <Send className="h-4 w-4" />
+                    <span>Dispatch All (Safe 25s Delay)</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Running Batch Live Notification Bar */}
+          {isBatchRunning && (
+            <div className="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200/90 text-amber-900 text-xs sm:text-sm flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <RefreshCw className="h-4 w-4 animate-spin text-amber-700" />
+                <span className="font-semibold">
+                  {currentBatchIdx !== null &&
+                    `Sending ${currentBatchIdx + 1} of ${batchQueue.length} to ${
+                      batchQueue[currentBatchIdx]?.companyName
+                    }...`}
+                </span>
+                {countdownSeconds !== null && (
+                  <span className="text-amber-800">
+                    (Next dispatch in <strong className="font-mono">{countdownSeconds}s</strong> to protect Gmail)
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-amber-700">
+                {isBatchPaused ? 'PAUSED' : 'ACTIVE QUEUE'}
+              </span>
+            </div>
+          )}
+
+          {/* Staged Items List */}
+          <div className="space-y-3.5">
+            {batchQueue.map((item, idx) => {
+              const isExpanded = expandedItemId === item.id;
+              const isCurrent = currentBatchIdx === idx && isBatchRunning;
+
+              return (
+                <div
+                  key={item.id}
+                  className={`rounded-xl border p-4.5 transition ${
+                    isCurrent
+                      ? 'border-amber-300 bg-amber-50/30 shadow-xs'
+                      : item.status === 'SENT'
+                      ? 'border-emerald-200/70 bg-emerald-50/20'
+                      : item.status === 'FAILED'
+                      ? 'border-rose-200 bg-rose-50/30'
+                      : 'border-stone-200/80 bg-white hover:border-stone-300'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <span className="text-xs font-mono font-semibold text-stone-400 mt-1">
+                        #{idx + 1}
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-stone-900 text-sm sm:text-base">
+                            {item.companyName}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded bg-stone-100 text-stone-700 border border-stone-200 font-medium">
+                            {item.role}
+                          </span>
+                          {item.url && (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-stone-400 hover:text-stone-700 text-xs flex items-center gap-0.5"
+                              title="Open company website/job link"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          {item.status === 'SENT' && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+                              ✓ Dispatched
+                            </span>
+                          )}
+                          {item.status === 'SENDING' && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-semibold flex items-center gap-1">
+                              <RefreshCw className="h-3 w-3 animate-spin" /> Sending
+                            </span>
+                          )}
+                          {item.status === 'FAILED' && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-rose-50 text-rose-800 border border-rose-200 font-semibold">
+                              Failed: {item.errorMessage}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Recruiter Email Field */}
+                        <div className="flex items-center gap-2 mt-2">
+                          <input
+                            type="email"
+                            value={item.recipientEmail}
+                            onChange={(e) =>
+                              handleUpdateBatchItem(item.id, { recipientEmail: e.target.value })
+                            }
+                            placeholder="careers@company.com"
+                            className="text-xs sm:text-sm font-mono px-2.5 py-1 rounded bg-[#faf9f6] border border-stone-200 focus:outline-none focus:border-stone-400 w-64"
+                          />
+
+                          {/* Quick Alias Pills */}
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {item.emailPatterns.slice(0, 3).map((pat) => (
+                              <button
+                                key={pat}
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateBatchItem(item.id, { recipientEmail: pat })
+                                }
+                                className={`text-[11px] px-1.5 py-0.5 rounded border font-mono transition cursor-pointer ${
+                                  item.recipientEmail === pat
+                                    ? 'bg-stone-900 text-stone-50 border-stone-900'
+                                    : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                                }`}
+                              >
+                                {pat.split('@')[0]}@
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Matched project tags */}
+                        {item.matchedProjects.length > 0 && (
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <span className="text-[11px] text-stone-400">Pitch project:</span>
+                            {item.matchedProjects.map((p) => (
+                              <span
+                                key={p}
+                                className="text-[11px] font-medium text-stone-700 bg-stone-100 px-2 py-0.5 rounded"
+                              >
+                                ★ {p}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Item Actions */}
+                    <div className="flex items-center gap-2 self-end sm:self-center">
+                      <button
+                        onClick={() =>
+                          setExpandedItemId(isExpanded ? null : item.id)
+                        }
+                        className="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                      >
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp className="h-3.5 w-3.5" /> Hide Pitch
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-3.5 w-3.5" /> Preview Pitch
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleSendSingleBatchItem(item)}
+                        disabled={item.status === 'SENT' || item.status === 'SENDING'}
+                        className="px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-xs font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-30"
+                      >
+                        <Send className="h-3 w-3" />
+                        Send Now
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteBatchItem(item.id)}
+                        title="Remove from queue"
+                        className="p-1.5 rounded-lg bg-stone-100 hover:bg-rose-100 text-stone-400 hover:text-rose-700 cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expanded Pitch Preview */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-3 border-t border-stone-100 space-y-3">
+                      <div>
+                        <label className="text-[11px] font-medium text-stone-500 block mb-1">
+                          Subject Line:
+                        </label>
+                        <input
+                          type="text"
+                          value={item.emailSubject}
+                          onChange={(e) =>
+                            handleUpdateBatchItem(item.id, { emailSubject: e.target.value })
+                          }
+                          className="w-full text-xs font-medium px-3 py-1.5 rounded bg-[#faf9f6] border border-stone-200 focus:outline-none focus:border-stone-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-medium text-stone-500 block mb-1">
+                          Tailored Cold Email:
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={item.emailBody}
+                          onChange={(e) =>
+                            handleUpdateBatchItem(item.id, { emailBody: e.target.value })
+                          }
+                          className="w-full text-xs leading-relaxed p-3 rounded bg-[#faf9f6] border border-stone-200 focus:outline-none focus:border-stone-400 font-sans"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

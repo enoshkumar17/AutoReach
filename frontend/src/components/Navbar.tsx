@@ -31,7 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 AutoReach
               </span>
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-stone-200/70 text-stone-700">
-                v1.2
+                v2.0
               </span>
             </div>
           </div>

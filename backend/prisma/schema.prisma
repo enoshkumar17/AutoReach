@@ -39,12 +39,17 @@ model Application {
   recipientEmail  String
   role            String
   jobType         String    @default("Internship")
-  status          String    @default("SENT") // DRAFT, SENT, REPLIED, REJECTED, INTERVIEW
+  status          String    @default("SENT") // DRAFT, SENT, FOLLOW_UP_DUE, REPLIED, REJECTED, INTERVIEW
   emailSubject    String
   emailBody       String
   sourceType      String    @default("TEXT") // SCREENSHOT, TEXT
   matchedProjects String?
   notes           String?
+  messageId       String?
+  followUpCount   Int       @default(0)
+  lastFollowUpAt  DateTime?
+  sentiment       String?   // INTERVIEW, QUESTION, REJECTED, GENERAL
+  replySnippet    String?
   sentAt          DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
