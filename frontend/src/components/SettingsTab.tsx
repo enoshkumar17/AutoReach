@@ -65,7 +65,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ envConfig, onConfigUpd
 
   return (
     <div className="max-w-xl mx-auto space-y-7 pb-24">
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-6">
+      <div className="bg-white border border-stone-200/80 rounded-xl p-6 sm:p-7 shadow-2xs space-y-5">
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-stone-900">API & Email Credentials</h2>
           <p className="text-sm text-stone-500 mt-1">

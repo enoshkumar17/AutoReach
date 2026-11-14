@@ -521,11 +521,11 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
       )}
 
       {/* Mode Switcher: Single vs Batch Scanner */}
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-2.5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-white border border-stone-200/80 rounded-xl p-2 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => setOutreachMode('single')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition cursor-pointer ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer ${
               outreachMode === 'single'
                 ? 'bg-stone-900 text-stone-50 shadow-xs'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -537,7 +537,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
           <button
             onClick={() => setOutreachMode('batch')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition cursor-pointer ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer ${
               outreachMode === 'batch'
                 ? 'bg-stone-900 text-stone-50 shadow-xs'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -554,7 +554,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           <button
             onClick={() => setPitchStyle('proof-of-work')}
             title="Proof-of-work pitch with live demo and GitHub repo link"
-            className={`px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md border transition cursor-pointer ${
               pitchStyle === 'proof-of-work'
                 ? 'bg-stone-800 text-stone-100 border-stone-800'
                 : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
@@ -565,7 +565,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           <button
             onClick={() => setPitchStyle('short-casual')}
             title="Ultra-brief casual coffee chat pitch (under 65 words)"
-            className={`px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md border transition cursor-pointer ${
               pitchStyle === 'short-casual'
                 ? 'bg-stone-800 text-stone-100 border-stone-800'
                 : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
@@ -576,7 +576,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           <button
             onClick={() => setPitchStyle('value-prop')}
             title="Emphasizes specific technical contributions to their product"
-            className={`px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md border transition cursor-pointer ${
               pitchStyle === 'value-prop'
                 ? 'bg-stone-800 text-stone-100 border-stone-800'
                 : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
@@ -588,7 +588,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
       </div>
 
       {/* Main Outreach Input Card */}
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-xs space-y-6">
+      <div className="bg-white border border-stone-200/80 rounded-xl p-5 sm:p-6 shadow-2xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
           <div>
             <h2 className="text-base sm:text-lg font-semibold text-stone-900">
@@ -750,7 +750,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
       {/* SINGLE OUTREACH: Draft Review & Send */}
       {outreachMode === 'single' && draft && (
-        <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
+        <div className="bg-white border border-stone-200/80 rounded-xl p-6 sm:p-7 shadow-2xs space-y-5 animate-in fade-in duration-150">
           <div className="flex items-center justify-between border-b border-stone-100 pb-4">
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200">
@@ -1001,7 +1001,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
       {/* BATCH OUTREACH: Outbox Staging Queue */}
       {outreachMode === 'batch' && batchQueue.length > 0 && (
-        <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
+        <div className="bg-white border border-stone-200/80 rounded-xl p-5 sm:p-6 shadow-2xs space-y-5 animate-in fade-in duration-150">
           {/* Header & Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
             <div>

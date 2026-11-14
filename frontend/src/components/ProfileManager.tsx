@@ -118,7 +118,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-7 pb-24">
       {/* Candidate Profile Details & Resume */}
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-6">
+      <div className="bg-white border border-stone-200/80 rounded-xl p-6 sm:p-7 shadow-2xs space-y-5">
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-stone-900">Candidate Identity & Resume</h2>
           <p className="text-sm text-stone-500 mt-1">
@@ -279,7 +279,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       </div>
 
       {/* Projects Showcase Library */}
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-6">
+      <div className="bg-white border border-stone-200/80 rounded-xl p-6 sm:p-7 shadow-2xs space-y-5">
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-stone-900">
             Project Showcase Library ({projects.length})
@@ -290,7 +290,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
         </div>
 
         {/* Add Project Form */}
-        <form onSubmit={handleAddProject} className="bg-[#faf9f6]/60 p-5 rounded-xl border border-stone-200/80 space-y-4">
+        <form onSubmit={handleAddProject} className="bg-[#f9fafb] p-4 sm:p-5 rounded-lg border border-stone-200/80 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs sm:text-sm font-medium text-stone-600 mb-1.5">

@@ -147,7 +147,7 @@ Best regards,`);
   return (
     <div className="max-w-4xl mx-auto space-y-7 pb-24">
       {/* Top Header Card & Metrics */}
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-7 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-6">
+      <div className="bg-white border border-stone-200/80 rounded-xl p-6 sm:p-7 shadow-2xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-base sm:text-lg font-semibold text-stone-900">Applications Pipeline</h2>
@@ -436,7 +436,7 @@ Best regards,`);
       {/* Follow-Up Composer Modal */}
       {selectedAppForFollowup && (
         <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-200 rounded-2xl max-w-xl w-full p-7 space-y-4 shadow-lg animate-in fade-in">
+          <div className="bg-white border border-stone-200 rounded-xl max-w-xl w-full p-6 space-y-4 shadow-lg animate-in fade-in">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
                 <h3 className="font-semibold text-stone-900 text-base">
@@ -501,7 +501,7 @@ Best regards,`);
       {/* View Email Modal */}
       {selectedAppForView && (
         <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-200 rounded-2xl max-w-2xl w-full p-7 space-y-5 max-h-[85vh] flex flex-col shadow-lg">
+          <div className="bg-white border border-stone-200 rounded-xl max-w-2xl w-full p-6 space-y-4 max-h-[85vh] flex flex-col shadow-lg">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3.5">
               <div>
                 <h3 className="font-semibold text-stone-900 text-base">
