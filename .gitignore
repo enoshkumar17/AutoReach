@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+
+# Sensitive Environment Variables (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.env
+
+# SQLite Databases & Local Storage
+*.db
+*.db-journal
+dev.db
+backend/prisma/dev.db
+backend/dev.db
+
+# User Uploaded Resumes
+uploads/*
+!uploads/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# System & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+npm-debug.log*

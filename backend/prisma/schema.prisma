@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model CandidateProfile {
+  id          Int      @id @default(autoincrement())
+  fullName    String
+  email       String
+  phone       String?
+  college     String?
+  degree      String?
+  linkedin    String?
+  github      String?
+  portfolio   String?
+  resumePath  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  tags        String   // Comma-separated, e.g. "React, TypeScript, Node.js"
+  githubUrl   String?
+  liveUrl     String?
+  createdAt   DateTime @default(now())
+}
+
+model Application {
+  id              Int       @id @default(autoincrement())
+  companyName     String
+  recipientName   String?
+  recipientEmail  String
+  role            String
+  jobType         String    @default("Internship")
+  status          String    @default("SENT") // DRAFT, SENT, REPLIED, REJECTED, INTERVIEW
+  emailSubject    String
+  emailBody       String
+  sourceType      String    @default("TEXT") // SCREENSHOT, TEXT
+  matchedProjects String?
+  notes           String?
+  sentAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

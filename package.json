@@ -1,0 +1,11 @@
+{
+  "name": "autoreach",
+  "version": "1.0.0",
+  "description": "Autonomous multimodal cold outreach and pipeline tracker for job seekers",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build"
+  }
+}
