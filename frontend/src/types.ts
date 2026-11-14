@@ -105,3 +105,28 @@ export interface EnvConfig {
   hasGmailConfig: boolean;
   gmailUser: string;
 }
+
+export interface LiveListingItem {
+  id: string;
+  company: string;
+  companySlug: string;
+  title: string;
+  category: 'swe' | 'data_ml' | 'quant' | 'hardware' | 'product' | 'general';
+  categoryLabel: string;
+  roleType: 'Summer Intern' | '6-Month Intern' | 'PPO / Full-Time' | 'Internship';
+  locations: string[];
+  datePosted: string;
+  postedAgoLabel: string;
+  hoursOld: number;
+  daysOld: number;
+  isUrgentFresh: boolean;
+  deadline: string;
+  eligibleBatches: number[];
+  eligibleBatchesLabel: string;
+  degreeRequired: string;
+  durationMonths: number | null;
+  stipend: string;
+  url: string;
+  source: 'direct_ats' | 'official_feed';
+  status: 'open' | 'closed';
+}

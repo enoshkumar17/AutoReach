@@ -10,6 +10,7 @@ dotenv.config();
 import profileRoutes from './routes/profile.routes.js';
 import extractRoutes from './routes/extract.routes.js';
 import applicationsRoutes from './routes/applications.routes.js';
+import liveListingsRoutes from './routes/liveListings.routes.js';
 import { checkInboxForReplies } from './services/replyDetector.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +30,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/profile', profileRoutes);
 app.use('/api/extract', extractRoutes);
 app.use('/api/applications', applicationsRoutes);
+app.use('/api/live-listings', liveListingsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {

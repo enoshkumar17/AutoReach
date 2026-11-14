@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   HIRING_COMPANIES,
   FLAGSHIP_HACKATHONS,
 } from '../data/hiringData';
+import type { LiveListingItem } from '../types';
 import {
   Search,
   Building2,
-  Calendar,
   Trophy,
   ExternalLink,
   Send,
@@ -15,7 +15,10 @@ import {
   Clock,
   MapPin,
   Sparkles,
-  Info,
+  Flame,
+  RefreshCw,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 
 interface HiringGuideProps {
@@ -25,23 +28,104 @@ interface HiringGuideProps {
 export const HiringGuide: React.FC<HiringGuideProps> = ({
   onSelectCompanyForPitch,
 }) => {
-  // Navigation sub-tab: 'companies' | 'hackathons' | 'roadmap'
-  const [subTab, setSubTab] = useState<'companies' | 'hackathons' | 'roadmap'>('companies');
+  // Navigation sub-tab: 'live' | 'companies' | 'hackathons' | 'roadmap'
+  const [subTab, setSubTab] = useState<'live' | 'companies' | 'hackathons' | 'roadmap'>('live');
 
-  // Filters
+  // Static Radar Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedBatch, setSelectedBatch] = useState<string>('ALL');
   const [selectedAccess, setSelectedAccess] = useState<string>('ALL');
   const [selectedTiming, setSelectedTiming] = useState<'ALL' | 'ACTIVE_NOW' | 'UPCOMING_SOON' | 'ANNUAL_CYCLE'>('ALL');
 
+  // Live ATS Listings State
+  const [liveListings, setLiveListings] = useState<LiveListingItem[]>([]);
+  const [liveLoading, setLiveLoading] = useState<boolean>(true);
+  const [liveRefreshing, setLiveRefreshing] = useState<boolean>(false);
+  const [liveOpenCount, setLiveOpenCount] = useState<number>(0);
+  const [liveFreshCount, setLiveFreshCount] = useState<number>(0);
+  const [liveLastFetched, setLiveLastFetched] = useState<string>('');
+
+  // Live ATS Filters
+  const [liveSearchQuery, setLiveSearchQuery] = useState<string>('');
+  const [liveFreshFilter, setLiveFreshFilter] = useState<'ALL_OPEN' | 'FRESH_ONLY' | 'ALL'>('ALL_OPEN');
+  const [liveBatchFilter, setLiveBatchFilter] = useState<string>('ALL');
+  const [liveCategoryFilter, setLiveCategoryFilter] = useState<string>('ALL');
+
+  // Fetch live listings from backend
+  const fetchLiveListings = async (forceRefresh = false) => {
+    try {
+      if (forceRefresh) {
+        setLiveRefreshing(true);
+      } else {
+        setLiveLoading(true);
+      }
+
+      const endpoint = forceRefresh ? '/api/live-listings/refresh' : '/api/live-listings';
+      const method = forceRefresh ? 'POST' : 'GET';
+
+      const res = await fetch(endpoint, { method });
+      if (res.ok) {
+        const data = await res.json();
+        setLiveListings(data.listings || []);
+        setLiveOpenCount(data.openCount || 0);
+        setLiveFreshCount(data.freshCount || 0);
+        setLiveLastFetched(data.lastFetchedAt || new Date().toISOString());
+      }
+    } catch (err) {
+      console.error('Failed to fetch live listings:', err);
+    } finally {
+      setLiveLoading(false);
+      setLiveRefreshing(false);
+    }
+  };
+
+  // Load live listings on mount
+  useEffect(() => {
+    fetchLiveListings();
+  }, []);
+
+  // Filtered live listings
+  const filteredLiveListings = useMemo(() => {
+    return liveListings.filter((item) => {
+      // Freshness & status filter
+      if (liveFreshFilter === 'FRESH_ONLY') {
+        if (!item.isUrgentFresh || item.status !== 'open') return false;
+      } else if (liveFreshFilter === 'ALL_OPEN') {
+        if (item.status !== 'open') return false;
+      }
+
+      // Batch filter
+      if (liveBatchFilter !== 'ALL') {
+        const targetYear = parseInt(liveBatchFilter, 10);
+        if (!item.eligibleBatches.includes(targetYear)) return false;
+      }
+
+      // Category filter
+      if (liveCategoryFilter !== 'ALL') {
+        if (item.category !== liveCategoryFilter) return false;
+      }
+
+      // Search query
+      if (liveSearchQuery.trim()) {
+        const q = liveSearchQuery.toLowerCase();
+        const matchesComp = item.company.toLowerCase().includes(q);
+        const matchesTitle = item.title.toLowerCase().includes(q);
+        const matchesLoc = item.locations.some((l) => l.toLowerCase().includes(q));
+        const matchesBatches = item.eligibleBatchesLabel.toLowerCase().includes(q);
+        if (!matchesComp && !matchesTitle && !matchesLoc && !matchesBatches) return false;
+      }
+
+      return true;
+    });
+  }, [liveListings, liveFreshFilter, liveBatchFilter, liveCategoryFilter, liveSearchQuery]);
+
   // Current month (November = 11)
   const currentMonth = 11; // November
 
-  // Categorize and sort companies dynamically by current time (November first!)
+  // Static Radar Categorization & Sorting
   const sortedAndFilteredCompanies = useMemo(() => {
     return HIRING_COMPANIES.filter((company) => {
-      // Search
       const matchesSearch =
         company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         company.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -49,32 +133,26 @@ export const HiringGuide: React.FC<HiringGuideProps> = ({
         company.process.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (company.insiderTip && company.insiderTip.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      // Category filter
       const matchesCategory =
         selectedCategory === 'ALL' || company.category === selectedCategory;
 
-      // Batch filter
       const matchesBatch =
         selectedBatch === 'ALL' ||
         company.targetBatches.some((b) => b.includes(selectedBatch));
 
-      // Access filter
       const matchesAccess =
         selectedAccess === 'ALL' || company.accessType === selectedAccess;
 
-      // Timing filter
       const matchesTiming =
         selectedTiming === 'ALL' || company.currentStatus === selectedTiming;
 
       return matchesSearch && matchesCategory && matchesBatch && matchesAccess && matchesTiming;
     }).sort((a, b) => {
-      // Priority 1: ACTIVE_NOW (Open in current month Nov)
       const aIsActive = a.activeMonths.includes(currentMonth);
       const bIsActive = b.activeMonths.includes(currentMonth);
       if (aIsActive && !bIsActive) return -1;
       if (!aIsActive && bIsActive) return 1;
 
-      // Priority 2: UPCOMING_SOON (Dec, Jan, Feb)
       const aIsUpcoming = a.upcomingMonths.some((m) => [12, 1, 2].includes(m));
       const bIsUpcoming = b.upcomingMonths.some((m) => [12, 1, 2].includes(m));
       if (aIsUpcoming && !bIsUpcoming) return -1;
@@ -84,7 +162,6 @@ export const HiringGuide: React.FC<HiringGuideProps> = ({
     });
   }, [searchQuery, selectedCategory, selectedBatch, selectedAccess, selectedTiming, currentMonth]);
 
-  // Metric counts
   const activeNowCount = HIRING_COMPANIES.filter((c) => c.activeMonths.includes(currentMonth)).length;
   const upcomingSoonCount = HIRING_COMPANIES.filter(
     (c) => !c.activeMonths.includes(currentMonth) && c.upcomingMonths.some((m) => [12, 1, 2].includes(m))
@@ -97,95 +174,401 @@ export const HiringGuide: React.FC<HiringGuideProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🇮🇳</span>
+              <span className="text-xl">⚡</span>
               <h2 className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
-                India Tech Hiring Radar & Guide
+                India Tech Hiring Radar & Live ATS Tracker
               </h2>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200">
-                34 Major Firms
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                Live Engine
               </span>
             </div>
             <p className="text-sm text-stone-500">
-              Live recruitment cycles, off-campus timelines, early-year diversity programs, and hiring hackathons.
+              Live automated crawler & verified ATS feeds across 100+ top tech companies (Google, Juspay, Apple, Microsoft, Nvidia, etc.) with real-time deadlines and 1-click recruiter pitching.
             </p>
           </div>
 
           {/* Sub-tab Navigation */}
-          <div className="flex rounded-xl bg-stone-100 p-1 border border-stone-200/60 self-start sm:self-auto">
+          <div className="flex rounded-xl bg-stone-100 p-1 border border-stone-200/60 self-start sm:self-auto overflow-x-auto max-w-full">
+            <button
+              onClick={() => setSubTab('live')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+                subTab === 'live'
+                  ? 'bg-stone-900 text-stone-50 shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-400" />
+              <span>Live ATS Feed</span>
+              {liveFreshCount > 0 && (
+                <span className="h-4 px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {liveFreshCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setSubTab('companies')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
                 subTab === 'companies'
-                  ? 'bg-white text-stone-900 shadow-xs'
+                  ? 'bg-stone-900 text-stone-50 shadow-xs'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               <Building2 className="h-3.5 w-3.5" />
-              <span>Companies Radar</span>
+              <span>34 MNC Radar</span>
             </button>
             <button
               onClick={() => setSubTab('hackathons')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
                 subTab === 'hackathons'
-                  ? 'bg-white text-stone-900 shadow-xs'
+                  ? 'bg-stone-900 text-stone-50 shadow-xs'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               <Trophy className="h-3.5 w-3.5" />
-              <span>Hiring Hackathons</span>
+              <span>Hackathons</span>
             </button>
             <button
               onClick={() => setSubTab('roadmap')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
                 subTab === 'roadmap'
-                  ? 'bg-white text-stone-900 shadow-xs'
+                  ? 'bg-stone-900 text-stone-50 shadow-xs'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               <GraduationCap className="h-3.5 w-3.5" />
-              <span>Batch Roadmap</span>
+              <span>Roadmap</span>
             </button>
           </div>
         </div>
 
-        {/* Live Month & Urgency Alert Bar */}
+        {/* Live Metrics Header */}
         <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
-          <div className="flex items-center gap-2.5">
-            <Calendar className="h-4 w-4 text-stone-700 shrink-0" />
-            <span className="text-stone-800">
-              Current Time: <strong className="font-semibold text-stone-900">November 2026</strong> — Companies sorted by live activity!
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="font-semibold text-stone-800 flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Status:
+            </span>
+            <span className="text-stone-600">
+              <strong className="text-stone-900">{liveOpenCount}</strong> active openings across 100+ company portals
+            </span>
+            <span className="text-stone-300">|</span>
+            <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1">
+              <Flame className="h-3 w-3 text-rose-600" />
+              <strong>{liveFreshCount}</strong> posted in last 48h
+            </span>
+            <span className="text-stone-300">|</span>
+            <span className="text-xs text-stone-400">
+              {liveLastFetched ? `Checked ${new Date(liveLastFetched).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Live'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setSelectedTiming(selectedTiming === 'ACTIVE_NOW' ? 'ALL' : 'ACTIVE_NOW')}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border ${
-                selectedTiming === 'ACTIVE_NOW'
-                  ? 'bg-emerald-700 text-stone-50 border-emerald-700'
-                  : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-              }`}
+              onClick={() => fetchLiveListings(true)}
+              disabled={liveRefreshing}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-stone-700 border border-stone-200 hover:bg-stone-100 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-60 shadow-2xs"
+              title="Force sync latest postings from company ATS endpoints"
             >
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{activeNowCount} Open in Nov</span>
-            </button>
-
-            <button
-              onClick={() => setSelectedTiming(selectedTiming === 'UPCOMING_SOON' ? 'ALL' : 'UPCOMING_SOON')}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border ${
-                selectedTiming === 'UPCOMING_SOON'
-                  ? 'bg-amber-700 text-stone-50 border-amber-700'
-                  : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
-              }`}
-            >
-              <Clock className="h-3.5 w-3.5 text-amber-600" />
-              <span>{upcomingSoonCount} Next in Jan–Feb</span>
+              <RefreshCw className={`h-3.5 w-3.5 text-stone-600 ${liveRefreshing ? 'animate-spin' : ''}`} />
+              <span>{liveRefreshing ? 'Syncing Feeds...' : 'Sync Live ATS'}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* SUB-VIEW 1: COMPANIES RADAR */}
+      {/* SUB-VIEW 0: LIVE ATS FEED (DEFAULT) */}
+      {subTab === 'live' && (
+        <div className="space-y-5">
+          {/* Urgency Alert Card */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-5 shadow-xs space-y-2">
+            <div className="flex items-center gap-2 text-amber-900 font-bold text-sm">
+              <Flame className="h-4 w-4 text-orange-600" />
+              <span>Critical Application Velocity Rule: 24–48 Hour Deadlines</span>
+            </div>
+            <p className="text-xs sm:text-sm text-amber-800 leading-relaxed">
+              Top tech internship postings in India (Google, Juspay, Caterpillar, Apple, Microsoft) often close within <strong>1–2 days</strong> once reaching applicant caps (typically 500–1,000 resumes). Filter by <strong>Fresh (&lt;48h)</strong> daily and dispatch your targeted pitch immediately.
+            </p>
+          </div>
+
+          {/* Live Filters & Search Bar */}
+          <div className="bg-white border border-stone-200/80 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="h-4 w-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search company (Juspay, Apple, Google, Caterpillar), role, or location (Bangalore, Hyderabad)..."
+                  value={liveSearchQuery}
+                  onChange={(e) => setLiveSearchQuery(e.target.value)}
+                  className="w-full bg-[#faf9f6]/70 border border-stone-200 rounded-xl pl-9 pr-3.5 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 font-sans"
+                />
+              </div>
+
+              {/* Freshness Toggle */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {[
+                  { id: 'FRESH_ONLY', label: '🔥 Fresh (<48h)' },
+                  { id: 'ALL_OPEN', label: '🟢 All Open' },
+                  { id: 'ALL', label: 'All (Inc. Archives)' },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setLiveFreshFilter(f.id as any)}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
+                      liveFreshFilter === f.id
+                        ? 'bg-stone-900 text-stone-50 border-stone-900 shadow-xs'
+                        : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Filter Pills: Batches & Categories */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-stone-100 text-xs">
+              {/* Batch Pills */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-stone-400 font-medium mr-1">Graduation Batch:</span>
+                {[
+                  { label: 'All Batches', val: 'ALL' },
+                  { label: '🎓 2026', val: '2026' },
+                  { label: '🎓 2027', val: '2027' },
+                  { label: '🎓 2028 (1st/2nd Yr)', val: '2028' },
+                  { label: '🎓 2025', val: '2025' },
+                ].map((b) => (
+                  <button
+                    key={b.val}
+                    onClick={() => setLiveBatchFilter(b.val)}
+                    className={`px-2.5 py-1 rounded-md transition cursor-pointer border font-medium ${
+                      liveBatchFilter === b.val
+                        ? 'bg-stone-900 text-stone-50 border-stone-900'
+                        : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                    }`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Category Pills */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-stone-400 font-medium mr-1">Discipline:</span>
+                {[
+                  { label: 'All Roles', val: 'ALL' },
+                  { label: 'Software / SWE', val: 'swe' },
+                  { label: 'Data & AI / ML', val: 'data_ml' },
+                  { label: 'Quant & Trading', val: 'quant' },
+                  { label: 'Product', val: 'product' },
+                  { label: 'Hardware & Silicon', val: 'hardware' },
+                ].map((cat) => (
+                  <button
+                    key={cat.val}
+                    onClick={() => setLiveCategoryFilter(cat.val)}
+                    className={`px-2.5 py-1 rounded-md transition cursor-pointer border font-medium ${
+                      liveCategoryFilter === cat.val
+                        ? 'bg-stone-900 text-stone-50 border-stone-900'
+                        : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Feed Results Count */}
+          <div className="flex items-center justify-between px-1 text-xs text-stone-500">
+            <span>
+              Showing <strong>{filteredLiveListings.length}</strong> live postings matching criteria
+            </span>
+            <span className="text-stone-400">
+              Verified ATS feeds checked regularly
+            </span>
+          </div>
+
+          {/* Loading Indicator */}
+          {liveLoading && (
+            <div className="bg-white border border-stone-200/80 rounded-2xl p-12 text-center shadow-xs">
+              <div className="h-6 w-6 border-2 border-stone-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-sm font-semibold text-stone-800">
+                Crawling live career portals & ATS endpoints...
+              </p>
+              <p className="text-xs text-stone-500 mt-1">
+                Parsing batch years, stipends, and posting dates for 100+ Indian tech employers.
+              </p>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!liveLoading && filteredLiveListings.length === 0 && (
+            <div className="bg-white border border-stone-200/80 rounded-2xl p-12 text-center shadow-xs space-y-3">
+              <div className="h-10 w-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 mx-auto">
+                <Search className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-semibold text-stone-900">
+                No openings match these filters
+              </h3>
+              <p className="text-xs text-stone-500 max-w-md mx-auto">
+                Try switching to "All Open" or selecting a different graduation batch year or sector.
+              </p>
+              <button
+                onClick={() => {
+                  setLiveSearchQuery('');
+                  setLiveFreshFilter('ALL_OPEN');
+                  setLiveBatchFilter('ALL');
+                  setLiveCategoryFilter('ALL');
+                }}
+                className="px-4 py-2 rounded-lg text-xs font-semibold bg-stone-900 text-stone-50 hover:bg-stone-800 cursor-pointer"
+              >
+                Reset All Filters
+              </button>
+            </div>
+          )}
+
+          {/* Listings Cards Grid */}
+          {!liveLoading && filteredLiveListings.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredLiveListings.map((item) => (
+                <div
+                  key={item.id}
+                  className={`bg-white border rounded-2xl p-5 shadow-xs transition hover:shadow-sm flex flex-col justify-between space-y-4 ${
+                    item.isUrgentFresh && item.status === 'open'
+                      ? 'border-orange-300/80 ring-1 ring-orange-200/60 bg-gradient-to-b from-orange-50/20 to-white'
+                      : 'border-stone-200/80'
+                  }`}
+                >
+                  {/* Card Header */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-9 w-9 rounded-xl bg-stone-900 text-stone-50 font-bold text-sm flex items-center justify-center shadow-2xs shrink-0">
+                          {item.company.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-bold text-stone-900 text-sm sm:text-base leading-tight">
+                              {item.company}
+                            </h3>
+                            <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-stone-100 text-stone-700 border border-stone-200">
+                              {item.categoryLabel}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-stone-400 flex items-center gap-1 mt-0.5">
+                            <ShieldCheck className="h-3 w-3 text-emerald-600" />
+                            {item.source === 'direct_ats' ? 'Live ATS Hook' : 'Official Portal'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Freshness / Status Badge */}
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {item.status === 'open' ? (
+                          item.isUrgentFresh ? (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5 animate-pulse">
+                              <Flame className="h-3.5 w-3.5 text-rose-600" />
+                              <span>Fresh ({item.postedAgoLabel})</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              🟢 Open ({item.postedAgoLabel})
+                            </span>
+                          )
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-500 border border-stone-200">
+                            Closed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Role Title */}
+                    <h4 className="text-sm sm:text-base font-semibold text-stone-900 leading-snug">
+                      {item.title}
+                    </h4>
+
+                    {/* Metadata Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                      <div className="p-2.5 rounded-xl bg-[#faf9f6] border border-stone-200/70">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-0.5">
+                          Target Batches
+                        </span>
+                        <strong className="text-stone-800 font-semibold block truncate">
+                          {item.eligibleBatchesLabel}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-[#faf9f6] border border-stone-200/70">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-0.5">
+                          Role Type
+                        </span>
+                        <strong className="text-stone-800 font-semibold block truncate">
+                          {item.roleType} {item.durationMonths ? `(${item.durationMonths}M)` : ''}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-[#faf9f6] border border-stone-200/70">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-0.5">
+                          Locations
+                        </span>
+                        <strong className="text-stone-800 font-semibold block truncate">
+                          {item.locations.join(', ')}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-[#faf9f6] border border-stone-200/70">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-0.5">
+                          Compensation
+                        </span>
+                        <strong className="text-stone-800 font-semibold block truncate">
+                          {item.stipend}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Urgency Alert if Fresh */}
+                    {item.isUrgentFresh && item.status === 'open' && (
+                      <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-900 text-xs font-medium flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                        <span>
+                          <strong>High Velocity:</strong> Posted {item.postedAgoLabel}. Tech internships usually close within 24–48 hours!
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Actions */}
+                  <div className="pt-2 border-t border-stone-100 flex items-center gap-2">
+                    <button
+                      onClick={() => onSelectCompanyForPitch(item.company, item.title)}
+                      className="flex-1 py-2 px-3 rounded-xl bg-stone-900 text-stone-50 hover:bg-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      <span>Pitch Recruiter</span>
+                    </button>
+
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2 px-3 rounded-xl bg-[#faf9f6] border border-stone-200 hover:bg-stone-100 text-stone-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                      title="Open verified official career portal"
+                    >
+                      <span>Official Portal</span>
+                      <ExternalLink className="h-3 w-3 text-stone-500" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SUB-VIEW 1: COMPANIES RADAR (34 MNCS) */}
       {subTab === 'companies' && (
         <div className="space-y-5">
           {/* Search & Filter Bar */}
@@ -305,188 +688,129 @@ export const HiringGuide: React.FC<HiringGuideProps> = ({
           {/* Results Summary Bar */}
           <div className="flex items-center justify-between px-1 text-xs text-stone-500">
             <span>
-              Showing <strong>{sortedAndFilteredCompanies.length}</strong> companies (sorted by current live activity)
+              Showing <strong>{sortedAndFilteredCompanies.length}</strong> companies (<strong>{activeNowCount}</strong> open now in Nov, <strong>{upcomingSoonCount}</strong> opening Jan–Feb)
             </span>
             <span className="text-stone-400">
-              Tip: Click "Pitch Recruiter" on any company to draft an outreach email
+              💡 Tip: Click "Pitch Recruiter" to automatically draft a project-matched outreach letter.
             </span>
           </div>
 
-          {/* Companies Cards Grid */}
-          <div className="space-y-4">
-            {sortedAndFilteredCompanies.map((comp) => {
-              const isActiveInNov = comp.activeMonths.includes(currentMonth);
-              const isUpcomingJan = comp.upcomingMonths.some((m) => [12, 1, 2].includes(m));
+          {/* Company Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {sortedAndFilteredCompanies.map((company) => {
+              const isOpenNow = company.activeMonths.includes(currentMonth);
+              const isUpcoming = company.upcomingMonths.some((m) => [12, 1, 2].includes(m));
 
               return (
                 <div
-                  key={comp.id}
-                  className={`bg-white border rounded-2xl p-6 transition shadow-xs space-y-4 ${
-                    isActiveInNov
-                      ? 'border-emerald-300/80 bg-gradient-to-b from-emerald-50/10 to-white'
-                      : isUpcomingJan
-                      ? 'border-amber-200/80'
-                      : 'border-stone-200/80 hover:border-stone-300'
+                  key={company.name}
+                  className={`bg-white border rounded-2xl p-5 shadow-xs transition hover:shadow-sm flex flex-col justify-between space-y-4 ${
+                    isOpenNow
+                      ? 'border-emerald-300 ring-1 ring-emerald-200/60 bg-gradient-to-b from-emerald-50/20 to-white'
+                      : isUpcoming
+                      ? 'border-amber-200'
+                      : 'border-stone-200/80'
                   }`}
                 >
                   {/* Card Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-3.5">
-                      {/* Monogram / Brand Icon */}
-                      <div
-                        style={{ backgroundColor: comp.logoBg, color: comp.logoColor }}
-                        className="h-11 w-11 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs shrink-0 select-none"
-                      >
-                        {comp.initials}
-                      </div>
-
-                      <div className="space-y-1">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-base sm:text-lg font-bold text-stone-900">
-                            {comp.name}
+                          <h3 className="font-bold text-stone-900 text-base leading-tight">
+                            {company.name}
                           </h3>
-                          <span className="text-xs px-2.5 py-0.5 rounded-md font-medium bg-stone-100 text-stone-700 border border-stone-200">
-                            {comp.category}
-                          </span>
-                          <span
-                            className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
-                              isActiveInNov
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                : isUpcomingJan
-                                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                : 'bg-stone-100 text-stone-700 border-stone-200'
-                            }`}
-                          >
-                            {comp.statusLabel}
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-stone-100 text-stone-700 border border-stone-200">
+                            {company.category}
                           </span>
                         </div>
+                        <div className="flex items-center gap-1.5 text-xs text-stone-500 mt-1">
+                          <MapPin className="h-3 w-3 text-stone-400 shrink-0" />
+                          <span>{company.locations.join(' · ')}</span>
+                        </div>
+                      </div>
 
-                        {/* Location and Access pills */}
-                        <div className="flex items-center gap-2.5 text-xs text-stone-500 flex-wrap">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5 text-stone-400" />
-                            {comp.locations.join(', ')}
+                      {/* Live Status Badge */}
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {isOpenNow ? (
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Active in Nov</span>
                           </span>
-                          <span>•</span>
-                          <span
-                            className={`font-medium ${
-                              comp.accessType === 'Off-Campus Friendly'
-                                ? 'text-emerald-700'
-                                : comp.accessType === 'Both (Campus + Portal)'
-                                ? 'text-stone-700'
-                                : 'text-amber-700'
-                            }`}
-                          >
-                            {comp.accessType}
+                        ) : isUpcoming ? (
+                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1">
+                            <Clock className="h-3 w-3 text-amber-600" />
+                            <span>Opens Dec–Feb</span>
                           </span>
-                          {comp.stipendInfo && (
-                            <>
-                              <span>•</span>
-                              <span className="text-stone-700 font-medium">
-                                Stipend: {comp.stipendInfo}
-                              </span>
-                            </>
-                          )}
-                        </div>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-600 border border-stone-200">
+                            Aug–Oct Cycle
+                          </span>
+                        )}
+                        <span className="text-[11px] text-stone-400">
+                          {company.accessType}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    {/* Window & Eligibility Tags */}
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                      <div className="p-2.5 rounded-xl bg-[#faf9f6] border border-stone-200">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-0.5">
+                          Application Window
+                        </span>
+                        <strong className="text-stone-800 font-semibold block truncate">
+                          {company.appsOpen} – {company.appsClose}
+                        </strong>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#faf9f6] border border-stone-200">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-0.5">
+                          Target Batches
+                        </span>
+                        <strong className="text-stone-800 font-semibold block truncate">
+                          {company.targetBatches.join(', ')}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Interview / OA Process */}
+                    <div className="text-xs text-stone-600 leading-relaxed bg-[#faf9f6]/60 p-2.5 rounded-xl border border-stone-100">
+                      <span className="font-semibold text-stone-800 block mb-0.5">
+                        Hiring Flow:
+                      </span>
+                      {company.process}
+                    </div>
+
+                    {/* Insider Tip / Warning */}
+                    {company.insiderTip && (
+                      <div className="text-xs text-stone-600 leading-relaxed flex items-start gap-1.5 pt-0.5">
+                        <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <span>{company.insiderTip}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       <a
-                        href={comp.portalUrl}
+                        href={company.portalUrl}
                         target="_blank"
-                        rel="noreferrer"
-                        className="px-3.5 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border border-stone-200"
-                        title="Open official career portal"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 transition cursor-pointer"
                       >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        <span>Official Portal</span>
+                        <span>Career Site</span>
+                        <ExternalLink className="h-3 w-3" />
                       </a>
-
-                      <button
-                        onClick={() =>
-                          onSelectCompanyForPitch(comp.name, 'Software Engineering Intern')
-                        }
-                        className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-                        title="Auto-draft cold email in New Outreach"
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                        <span>Pitch Recruiter</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Targeted Batches & Key Schedule Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[#faf9f6]/80 border border-stone-200/70 text-xs">
-                    <div>
-                      <span className="text-stone-400 font-medium block">Application Window:</span>
-                      <strong className="text-stone-900 font-semibold mt-0.5 block">
-                        {comp.appsOpen}
-                      </strong>
-                      <span className="text-stone-500 text-[11px]">Closes: {comp.appsClose}</span>
                     </div>
 
-                    <div>
-                      <span className="text-stone-400 font-medium block">Internship Period:</span>
-                      <strong className="text-stone-900 font-semibold mt-0.5 block">
-                        {comp.internshipPeriod}
-                      </strong>
-                      <span className="text-stone-500 text-[11px]">{comp.cyclesPerYear}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-stone-400 font-medium block">Target Batches / Years:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {comp.targetBatches.map((b) => (
-                          <span
-                            key={b}
-                            className="px-2 py-0.5 rounded bg-white border border-stone-200 font-semibold text-stone-800 text-[11px]"
-                          >
-                            {b}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Interview Process Flow */}
-                  <div className="text-xs space-y-1">
-                    <span className="text-stone-400 font-medium block">Interview Process & Stages:</span>
-                    <p className="text-stone-700 bg-stone-50 p-2.5 rounded-lg border border-stone-200/60 font-sans leading-relaxed">
-                      {comp.process}
-                    </p>
-                  </div>
-
-                  {/* Special programs & Insider tips */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1 text-xs text-stone-600">
-                    {comp.specialPrograms && comp.specialPrograms.length > 0 && (
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-stone-400 font-medium">Special Tracks:</span>
-                        {comp.specialPrograms.map((p) => (
-                          <span
-                            key={p}
-                            className="bg-purple-50 text-purple-800 border border-purple-200 px-2 py-0.5 rounded text-[11px] font-medium"
-                          >
-                            ★ {p}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {comp.insiderTip && (
-                      <div className="flex items-center gap-1.5 text-stone-600 bg-stone-100/70 px-2.5 py-1 rounded-md text-[11px]">
-                        <Info className="h-3.5 w-3.5 text-stone-500 shrink-0" />
-                        <span>{comp.insiderTip}</span>
-                      </div>
-                    )}
-
-                    {comp.warning && (
-                      <div className="flex items-center gap-1.5 text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md text-[11px] border border-rose-200">
-                        <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
-                        <span>{comp.warning}</span>
-                      </div>
-                    )}
+                    <button
+                      onClick={() => onSelectCompanyForPitch(company.name, 'Software Engineering Intern')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-stone-50 bg-stone-900 hover:bg-stone-800 transition cursor-pointer shadow-xs"
+                    >
+                      <Send className="h-3 w-3" />
+                      <span>Pitch Recruiter</span>
+                    </button>
                   </div>
                 </div>
               );
@@ -495,87 +819,72 @@ export const HiringGuide: React.FC<HiringGuideProps> = ({
         </div>
       )}
 
-      {/* SUB-VIEW 2: FLAGSHIP HIRING HACKATHONS */}
+      {/* SUB-VIEW 2: HACKATHONS */}
       {subTab === 'hackathons' && (
-        <div className="space-y-6">
-          <div className="bg-white border border-stone-200/80 rounded-2xl p-6 sm:p-7 shadow-xs space-y-3">
-            <h3 className="text-base sm:text-lg font-bold text-stone-900 flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-600" />
-              <span>Flagship Big Tech Hiring Hackathons & Challenges (Direct PPIs)</span>
+        <div className="space-y-5">
+          <div className="bg-white border border-stone-200/80 rounded-2xl p-6 shadow-xs space-y-2">
+            <h3 className="text-base font-bold text-stone-900">
+              Flagship Hiring Hackathons (Direct Pre-Placement Interviews / PPIs)
             </h3>
-            <p className="text-sm text-stone-500 leading-relaxed">
-              These are not standard college hackathons that award participation certificates. These are
-              <strong> direct corporate recruitment challenges</strong> in India where top performers bypass the resume screening pile and receive Pre-Placement Interviews (PPIs) and internship/full-time offers.
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+              These verified competitive hackathons offer <strong>direct interview calls and summer/6-month internship offers</strong> bypassing standard resume screen filters.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {FLAGSHIP_HACKATHONS.map((hack) => (
+            {FLAGSHIP_HACKATHONS.map((h) => (
               <div
-                key={hack.id}
-                className="bg-white border border-stone-200/80 rounded-2xl p-6 shadow-xs space-y-4 hover:border-stone-300 transition flex flex-col justify-between"
+                key={h.name}
+                className="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-xs space-y-3.5 flex flex-col justify-between"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-stone-100 text-stone-800 border border-stone-200">
-                      {hack.company}
-                    </span>
-                    <span
-                      className={`text-xs px-2.5 py-0.5 rounded-md font-semibold border ${
-                        hack.status === 'ACTIVE_NOW'
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                          : hack.status === 'UPCOMING_SOON'
-                          ? 'bg-amber-50 text-amber-800 border-amber-200'
-                          : 'bg-stone-50 text-stone-700 border-stone-200'
-                      }`}
-                    >
-                      {hack.status === 'ACTIVE_NOW'
-                        ? '🟢 Active / Rolling'
-                        : hack.status === 'UPCOMING_SOON'
-                        ? '⏰ Opens Jan–March'
-                        : '📅 Summer Annual'}
+                <div className="space-y-2.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h4 className="font-bold text-stone-900 text-base">
+                        {h.name}
+                      </h4>
+                      <span className="text-xs text-stone-500">
+                        Organized by <strong className="text-stone-800">{h.company}</strong>
+                      </span>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                      {h.period}
                     </span>
                   </div>
 
-                  <h4 className="text-base font-bold text-stone-900 leading-snug">
-                    {hack.name}
-                  </h4>
-
-                  <div className="text-xs space-y-1.5 text-stone-600">
+                  <div className="p-2.5 rounded-xl bg-[#faf9f6] border border-stone-200 text-xs space-y-1">
                     <div>
-                      <strong className="text-stone-800">Timeline:</strong> {hack.period}
+                      <span className="text-stone-400 font-medium">Eligible: </span>
+                      <strong className="text-stone-800">{h.targetBatches}</strong>
                     </div>
                     <div>
-                      <strong className="text-stone-800">Eligible Batches:</strong> {hack.targetBatches}
-                    </div>
-                    <div>
-                      <strong className="text-stone-800">Challenge Format:</strong> {hack.format}
+                      <span className="text-stone-400 font-medium">Reward: </span>
+                      <strong className="text-emerald-700">{h.rewards}</strong>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/70 text-xs text-amber-900 space-y-1">
-                    <span className="font-semibold block flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-700" />
-                      Hiring Rewards & PPIs:
-                    </span>
-                    <p className="font-medium leading-relaxed">{hack.rewards}</p>
-                  </div>
+                  <p className="text-xs text-stone-600 leading-relaxed">
+                    {h.format}
+                  </p>
                 </div>
 
-                <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2">
-                  <span className="text-xs text-stone-400 font-medium">
-                    Category: {hack.category}
-                  </span>
-
+                <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
                   <a
-                    href={hack.officialUrl}
+                    href={h.officialUrl}
                     target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 transition cursor-pointer"
                   >
-                    <span>View Challenge</span>
+                    <span>Official Portal</span>
                     <ExternalLink className="h-3 w-3" />
                   </a>
+                  <button
+                    onClick={() => onSelectCompanyForPitch(h.company, `${h.name} Finalist Outreach`)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-50 bg-stone-900 hover:bg-stone-800 transition cursor-pointer shadow-xs"
+                  >
+                    <Send className="h-3 w-3" />
+                    <span>Pitch for {h.company}</span>
+                  </button>
                 </div>
               </div>
             ))}
@@ -583,112 +892,90 @@ export const HiringGuide: React.FC<HiringGuideProps> = ({
         </div>
       )}
 
-      {/* SUB-VIEW 3: YEAR-BY-YEAR BATCH ROADMAP */}
+      {/* SUB-VIEW 3: 4-YEAR ROADMAP */}
       {subTab === 'roadmap' && (
-        <div className="space-y-6">
-          <div className="bg-white border border-stone-200/80 rounded-2xl p-6 sm:p-7 shadow-xs space-y-3">
-            <h3 className="text-base sm:text-lg font-bold text-stone-900 flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-stone-800" />
-              <span>College Year-by-Year Hiring Strategy & Timeline</span>
+        <div className="space-y-5">
+          <div className="bg-white border border-stone-200/80 rounded-2xl p-6 shadow-xs space-y-2">
+            <h3 className="text-base font-bold text-stone-900">
+              4-Year B.Tech Placement & Internship Timeline
             </h3>
-            <p className="text-sm text-stone-500 leading-relaxed">
-              When should you start applying? A complete master breakdown of what engineering students must do in each year of their B.Tech / B.E. degree.
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+              When to apply for each program depending on your current graduation batch.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 1st Year */}
-            <div className="bg-white border border-stone-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-stone-400">
-                  Year 1 (Freshers)
+                  Year 1 (Freshman)
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-stone-100 text-stone-800 border border-stone-200">
-                  Batches 2028 / 2029
+                  Batch 2028 / 2029
                 </span>
               </div>
               <h4 className="text-base font-bold text-stone-900">
-                1st Year: Foundations & Exploratory Programs
+                1st Year: Foundations & Early Diversity Programs
               </h4>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Build basic Data Structures (Arrays, Strings, Recursion), Git/GitHub profile, and apply to early-talent cohorts.
+                Focus on Data Structures, Git, and web/systems projects. Apply to dedicated early-year explorer pipelines:
               </p>
-              <div className="space-y-2 text-xs">
-                <div className="p-2.5 rounded-lg bg-[#faf9f6] border border-stone-200/70">
-                  <strong className="text-stone-900">Google STEP (Nov–Jan):</strong> Dedicated program for 1st & 2nd year students (stipend: ~₹70,000/mo).
-                </div>
-                <div className="p-2.5 rounded-lg bg-[#faf9f6] border border-stone-200/70">
-                  <strong className="text-stone-900">Microsoft Discover / Explore (Dec–Feb):</strong> 1st & 2nd-year rotation track.
-                </div>
-                <div className="p-2.5 rounded-lg bg-[#faf9f6] border border-stone-200/70">
-                  <strong className="text-stone-900">Google Summer of Code (GSoC) (Mar–Apr):</strong> Open to 1st years! Stipend \$1,500–\$3,000.
-                </div>
-              </div>
+              <ul className="text-xs text-stone-700 space-y-1.5 list-disc list-inside bg-[#faf9f6] p-3 rounded-xl border border-stone-200">
+                <li><strong>Google STEP:</strong> Opens in Nov–Dec for 1st & 2nd year students.</li>
+                <li><strong>Microsoft Explore:</strong> 8–12 week program designed for freshmen & sophomores.</li>
+                <li><strong>Open Source:</strong> GSoC & GirlScript Summer of Code (Jan–March).</li>
+              </ul>
             </div>
 
             {/* 2nd Year */}
-            <div className="bg-white border border-stone-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-stone-400">
-                  Year 2 (Sophomores)
+                  Year 2 (Sophomore)
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-stone-100 text-stone-800 border border-stone-200">
-                  Batches 2027 / 2028
+                  Batch 2027 / 2028
                 </span>
               </div>
               <h4 className="text-base font-bold text-stone-900">
-                2nd Year: Early-ID Programs & Startup Cold Outreach
+                2nd Year: Early Internships & Women Diversity Hackathons
               </h4>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Intermediate DSA (Trees, Graphs, DP), production-grade web projects, and cold emailing startup founders via AutoReach.
+                The most important year for early industry entry and PPI pipeline access:
               </p>
-              <div className="space-y-2 text-xs">
-                <div className="p-2.5 rounded-lg bg-[#faf9f6] border border-stone-200/70">
-                  <strong className="text-stone-900">Google STEP APAC (Oct–Dec):</strong> Prime window for 2nd years before 3rd-year summer.
-                </div>
-                <div className="p-2.5 rounded-lg bg-[#faf9f6] border border-stone-200/70">
-                  <strong className="text-stone-900">Uber STAR & Adobe SheCodes:</strong> Early-career diversity programs.
-                </div>
-                <div className="p-2.5 rounded-lg bg-[#faf9f6] border border-stone-200/70">
-                  <strong className="text-stone-900">Early-Stage Seed/Series-A Startups:</strong> Best window to land paid 2-month summer internships.
-                </div>
-              </div>
+              <ul className="text-xs text-stone-700 space-y-1.5 list-disc list-inside bg-[#faf9f6] p-3 rounded-xl border border-stone-200">
+                <li><strong>Amazon WoW:</strong> Flagship diversity program (applications open Feb–April).</li>
+                <li><strong>Uber STAR:</strong> Designed specifically for 2nd-year CS students.</li>
+                <li><strong>Walmart CodeHers:</strong> Unstop hackathon offering summer intern PPIs (Feb–March).</li>
+              </ul>
             </div>
 
             {/* 3rd Year */}
-            <div className="bg-white border-2 border-stone-900 rounded-2xl p-6 shadow-xs space-y-4 md:col-span-2">
+            <div className="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-700 font-mono">
-                  ★ THE PEAK SEASON (High PPO Conversion)
+                <span className="text-xs font-bold uppercase tracking-wider text-stone-400">
+                  Year 3 (Pre-Final Year)
                 </span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-stone-900 text-stone-50">
-                  Pre-Final Year (Batches 2026 / 2027)
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  Peak Summer Intern Window
                 </span>
               </div>
-              <h4 className="text-base sm:text-lg font-bold text-stone-900">
-                3rd Year: The 10-Month-in-Advance Big Tech Summer Influx
+              <h4 className="text-base font-bold text-stone-900">
+                3rd Year: The Core Summer Internship (May–July)
               </h4>
-              <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
-                <strong>Critical Rule:</strong> Big Tech companies hire for Summer 2027 starting in <strong>July 2026</strong>. If you wait until March/April of your 3rd year, 85% of top MNCs have already finalized offers. Over 70% of these internships convert to full-time Pre-Placement Offers (PPOs).
+              <p className="text-xs text-stone-600 leading-relaxed">
+                Highest convert-to-PPO rate in India tech. 80%+ of full-time hires at Big Tech come through this cohort:
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
-                <div className="p-3 rounded-xl bg-[#faf9f6] border border-stone-200">
-                  <strong className="text-stone-900 block mb-1">July 1 – August:</strong>
-                  Goldman Sachs (July 1), Amazon, Google, Microsoft, Atlassian, Nvidia, Meta, Tower Research.
-                </div>
-                <div className="p-3 rounded-xl bg-[#faf9f6] border border-stone-200">
-                  <strong className="text-stone-900 block mb-1">September – November:</strong>
-                  Morgan Stanley, PayPal, Adobe, ServiceNow, Qualcomm, Texas Instruments, Juspay.
-                </div>
-                <div className="p-3 rounded-xl bg-[#faf9f6] border border-stone-200">
-                  <strong className="text-stone-900 block mb-1">May – July (Execution):</strong>
-                  You work the 2-month summer internship; final PPO evaluation round conducted in July.
-                </div>
-              </div>
+              <ul className="text-xs text-stone-700 space-y-1.5 list-disc list-inside bg-[#faf9f6] p-3 rounded-xl border border-stone-200">
+                <li><strong>Big Tech Applications Open:</strong> June–August (Google, MS, Amazon, Apple, Nvidia).</li>
+                <li><strong>Finance & Banking:</strong> Goldman Sachs, JP Morgan, Morgan Stanley (Aug–Oct).</li>
+                <li><strong>Off-Campus Season:</strong> Drops in Jan–April for summer (Juspay, Swiggy, Cred).</li>
+              </ul>
             </div>
 
             {/* 4th Year */}
-            <div className="bg-white border border-stone-200/80 rounded-2xl p-6 shadow-xs space-y-4 md:col-span-2">
+            <div className="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-stone-400">
                   Year 4 (Final Year)
@@ -698,21 +985,15 @@ export const HiringGuide: React.FC<HiringGuideProps> = ({
                 </span>
               </div>
               <h4 className="text-base font-bold text-stone-900">
-                4th Year: 6-Month Mandatory Semester Internships & New Grad FTE
+                4th Year: 6-Month Semester Internships & SDE-1
               </h4>
               <p className="text-xs text-stone-600 leading-relaxed">
                 Targeting 6-month Spring internships (January – June) and full-time SDE-1 placement drives.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-                <div className="p-3 rounded-xl bg-[#faf9f6] border border-stone-200">
-                  <strong className="text-stone-900 block mb-1">6-Month Spring Internships:</strong>
-                  Cisco, Intel, Juspay, Amazon (Jan–Jun batch), Qualcomm, NXP, Meesho, Western Digital. Recruited in August–November.
-                </div>
-                <div className="p-3 rounded-xl bg-[#faf9f6] border border-stone-200">
-                  <strong className="text-stone-900 block mb-1">Off-Campus FTE Waves:</strong>
-                  Major waves drop in August–October and January–March on Unstop, company portals, and HackerEarth.
-                </div>
-              </div>
+              <ul className="text-xs text-stone-700 space-y-1.5 list-disc list-inside bg-[#faf9f6] p-3 rounded-xl border border-stone-200">
+                <li><strong>6-Month Spring Internships:</strong> Cisco, Intel, Juspay, Amazon, Qualcomm, NXP.</li>
+                <li><strong>Off-Campus FTE Waves:</strong> Peak in Aug–Oct and Jan–March on career portals and Unstop.</li>
+              </ul>
             </div>
           </div>
         </div>
