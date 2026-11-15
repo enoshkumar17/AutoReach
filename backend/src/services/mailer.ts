@@ -79,3 +79,31 @@ export async function sendApplicationEmail(options: SendEmailOptions) {
     accepted: info.accepted,
   };
 }
+
+export interface SendHtmlEmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  gmailUser?: string;
+  gmailAppPassword?: string;
+}
+
+export async function sendHtmlEmail(options: SendHtmlEmailOptions) {
+  const transporter = createTransporter(options.gmailUser, options.gmailAppPassword);
+  const senderEmail = options.gmailUser || process.env.GMAIL_USER;
+
+  const mailOptions = {
+    from: `"AutoReach Job Radar" <${senderEmail}>`,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
+    text: options.text || options.subject,
+  };
+
+  const info = await transporter.sendMail(mailOptions);
+  return {
+    messageId: info.messageId,
+    accepted: info.accepted,
+  };
+}

@@ -8,18 +8,22 @@ datasource db {
 }
 
 model CandidateProfile {
-  id          Int      @id @default(autoincrement())
-  fullName    String
-  email       String
-  phone       String?
-  college     String?
-  degree      String?
-  linkedin    String?
-  github      String?
-  portfolio   String?
-  resumePath  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  Int      @id @default(autoincrement())
+  fullName            String
+  email               String
+  phone               String?
+  college             String?
+  degree              String?
+  targetBatch         Int?     @default(2028)
+  targetRoles         String?  @default("SWE, SDE, Backend, Fullstack, Systems")
+  emailAlertsEnabled  Boolean  @default(true)
+  alertFrequency      String   @default("INSTANT")
+  linkedin            String?
+  github              String?
+  portfolio           String?
+  resumePath          String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model Project {
@@ -30,6 +34,21 @@ model Project {
   githubUrl   String?
   liveUrl     String?
   createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id              Int       @id @default(autoincrement())
+  type            String    @default("JOB_ALERT") // JOB_ALERT, CLOSING_SOON, HACKATHON, SYSTEM
+  title           String
+  message         String
+  company         String?
+  role            String?
+  url             String?
+  batch           Int?
+  matchScore      Int       @default(90)
+  isRead          Boolean   @default(false)
+  emailSent       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
 }
 
 model Application {

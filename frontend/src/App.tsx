@@ -8,7 +8,8 @@ import { LiveOpeningsFeed } from './components/LiveOpeningsFeed';
 import { CompanyHiringCycles } from './components/CompanyHiringCycles';
 import { HackathonsDirectory } from './components/HackathonsDirectory';
 import { StudentPrograms } from './components/StudentPrograms';
-import type { CandidateProfile, Project, Application, EnvConfig } from './types';
+import { NotificationDrawer } from './components/NotificationDrawer';
+import type { CandidateProfile, Project, Application, EnvConfig, NotificationItem } from './types';
 import {
   Sparkles,
   Flame,
@@ -32,6 +33,11 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [liveStats, setLiveStats] = useState<{ openCount: number; freshCount: number }>({ openCount: 52, freshCount: 6 });
 
+  // Notifications State
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isNotificationOpen, setIsNotificationOpen] = useState<boolean>(false);
+
   // Prefill state from Guides/Cycles/Live -> Outreach
   const [prefilledCompany, setPrefilledCompany] = useState<string | null>(null);
   const [prefilledRole, setPrefilledRole] = useState<string | null>(null);
@@ -42,42 +48,126 @@ export default function App() {
     setActiveTab('outreach');
   };
 
-  // Initial data loading
-  useEffect(() => {
-    async function loadInitialData() {
-      try {
-        const [profileRes, appsRes, liveRes] = await Promise.all([
-          fetch('/api/profile'),
-          fetch('/api/applications'),
-          fetch('/api/live-listings'),
-        ]);
-
-        if (profileRes.ok) {
-          const profileData = await profileRes.json();
-          setProfile(profileData.profile);
-          setProjects(profileData.projects || []);
-          setEnvConfig(profileData.envConfig || null);
-        }
-
-        if (appsRes.ok) {
-          const appsData = await appsRes.json();
-          setApplications(appsData.applications || []);
-        }
-
-        if (liveRes.ok) {
-          const liveData = await liveRes.json();
-          if (liveData.openCount) {
-            setLiveStats({ openCount: liveData.openCount, freshCount: liveData.freshCount || 6 });
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load initial data:', err);
-      } finally {
-        setIsLoading(false);
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch('/api/notifications');
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
       }
-    }
+    } catch (_) {}
+  };
 
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      const res = await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+      if (res.ok) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (_) {}
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+      if (res.ok) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+      }
+    } catch (_) {}
+  };
+
+  const handleDeleteNotification = async (id: number) => {
+    try {
+      const res = await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        const item = notifications.find((n) => n.id === id);
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+        if (item && !item.isRead) {
+          setUnreadCount((prev) => Math.max(0, prev - 1));
+        }
+      }
+    } catch (_) {}
+  };
+
+  const handleSendTestEmail = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/notifications/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: profile?.email || 'enoshkumar2006@gmail.com' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchNotifications();
+        return { success: true, message: data.message || 'Test alert delivered to your email!' };
+      }
+      return { success: false, message: data.error || 'Failed to send test alert email.' };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Network error delivering test alert.' };
+    }
+  };
+
+  const handleCheckPortalsNow = async () => {
+    try {
+      const res = await fetch('/api/notifications/check-now', { method: 'POST' });
+      if (res.ok) {
+        await Promise.all([fetchNotifications(), loadInitialData()]);
+      }
+    } catch (_) {}
+  };
+
+  // Initial data loading
+  async function loadInitialData() {
+    try {
+      const [profileRes, appsRes, liveRes, notifRes] = await Promise.all([
+        fetch('/api/profile'),
+        fetch('/api/applications'),
+        fetch('/api/live-listings'),
+        fetch('/api/notifications'),
+      ]);
+
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        setProfile(profileData.profile);
+        setProjects(profileData.projects || []);
+        setEnvConfig(profileData.envConfig || null);
+      }
+
+      if (appsRes.ok) {
+        const appsData = await appsRes.json();
+        setApplications(appsData.applications || []);
+      }
+
+      if (liveRes.ok) {
+        const liveData = await liveRes.json();
+        if (liveData.openCount) {
+          setLiveStats({ openCount: liveData.openCount, freshCount: liveData.freshCount || 6 });
+        }
+      }
+
+      if (notifRes.ok) {
+        const notifData = await notifRes.json();
+        setNotifications(notifData.notifications || []);
+        setUnreadCount(notifData.unreadCount || 0);
+      }
+    } catch (err) {
+      console.error('Failed to load initial data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
     loadInitialData();
+
+    // Periodic notification poll every 30 seconds
+    const interval = setInterval(fetchNotifications, 30 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   // Silently check for new replies whenever switching to Applications tab
@@ -188,9 +278,18 @@ export default function App() {
                   ⌘K
                 </span>
               </div>
-              <div className="w-8 h-8 rounded-xl bg-white border border-stone-200/90 flex items-center justify-center text-stone-500 shadow-2xs">
-                <Bell className="h-3.5 w-3.5" />
-              </div>
+              <button
+                onClick={() => setIsNotificationOpen(true)}
+                className="w-9 h-9 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/90 flex items-center justify-center text-stone-700 shadow-2xs relative transition cursor-pointer"
+                title="Immediate Career Alerts & Notifications"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 
@@ -376,6 +475,7 @@ export default function App() {
         {activeTab === 'live' && (
           <LiveOpeningsFeed
             onSelectCompanyForPitch={handleSelectCompanyForPitch}
+            candidateTargetBatch={profile?.targetBatch || 2028}
           />
         )}
 
@@ -427,6 +527,20 @@ export default function App() {
             onConfigUpdated={(newCfg) => setEnvConfig(newCfg)}
           />
         )}
+
+        {/* Global Notification Drawer */}
+        <NotificationDrawer
+          isOpen={isNotificationOpen}
+          onClose={() => setIsNotificationOpen(false)}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={handleMarkAsRead}
+          onMarkAllAsRead={handleMarkAllAsRead}
+          onDeleteNotification={handleDeleteNotification}
+          onSelectCompanyForPitch={handleSelectCompanyForPitch}
+          onSendTestEmail={handleSendTestEmail}
+          onCheckPortalsNow={handleCheckPortalsNow}
+        />
       </main>
 
       <footer className="border-t border-stone-200/80 bg-white py-6 text-center text-xs text-stone-400">

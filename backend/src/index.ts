@@ -11,7 +11,10 @@ import profileRoutes from './routes/profile.routes.js';
 import extractRoutes from './routes/extract.routes.js';
 import applicationsRoutes from './routes/applications.routes.js';
 import liveListingsRoutes from './routes/liveListings.routes.js';
+import notificationsRoutes from './routes/notifications.routes.js';
 import { checkInboxForReplies } from './services/replyDetector.js';
+import { syncLiveListings } from './services/liveTracker.js';
+import { processAndNotifyListings } from './services/jobAlertEngine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,19 +34,46 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/extract', extractRoutes);
 app.use('/api/applications', applicationsRoutes);
 app.use('/api/live-listings', liveListingsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
     service: 'AutoReach Core API',
-    version: '1.0.0',
+    version: '3.0.0',
     timestamp: new Date().toISOString(),
   });
 });
 
 app.listen(PORT, () => {
   console.log(`[AutoReach API] Running smoothly at http://localhost:${PORT}`);
+
+  // Initial background ATS scan and alert dispatch 5s after startup
+  setTimeout(async () => {
+    try {
+      console.log('[JobAlertEngine] Performing startup live ATS scan & profile matching...');
+      const listings = await syncLiveListings(false);
+      const result = await processAndNotifyListings(listings);
+      console.log(`[JobAlertEngine] Startup check complete: ${result.matchedCount} matched, ${result.emailsSent} email alerts sent.`);
+    } catch (err: any) {
+      console.warn(`[JobAlertEngine] Startup scan notice: ${err.message}`);
+    }
+  }, 5000);
+
+  // Automated background live ATS scanner & email alert engine every 15 minutes
+  setInterval(async () => {
+    try {
+      console.log('[JobAlertEngine] Running periodic live ATS scan for new batch opportunities...');
+      const listings = await syncLiveListings(true);
+      const result = await processAndNotifyListings(listings);
+      if (result.matchedCount > 0) {
+        console.log(`[JobAlertEngine] Dispatched ${result.emailsSent} new job alerts (${result.matchedCount} matches).`);
+      }
+    } catch (err: any) {
+      console.warn(`[JobAlertEngine] Periodic scan notice: ${err.message}`);
+    }
+  }, 15 * 60 * 1000);
 
   // Automated background reply checker every 60 seconds
   setInterval(async () => {

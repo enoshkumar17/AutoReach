@@ -5,6 +5,10 @@ export interface CandidateProfile {
   phone?: string | null;
   college?: string | null;
   degree?: string | null;
+  targetBatch?: number | null;
+  targetRoles?: string | null;
+  emailAlertsEnabled?: boolean;
+  alertFrequency?: string;
   linkedin?: string | null;
   github?: string | null;
   portfolio?: string | null;
@@ -131,4 +135,19 @@ export interface LiveListingItem {
   status: 'open' | 'closed';
   closedAt?: string | null;
   closedAgoLabel?: string | null;
+}
+
+export interface NotificationItem {
+  id: number;
+  type: 'JOB_ALERT' | 'CLOSING_SOON' | 'HACKATHON' | 'SYSTEM';
+  title: string;
+  message: string;
+  company?: string | null;
+  role?: string | null;
+  url?: string | null;
+  batch?: number | null;
+  matchScore: number;
+  isRead: boolean;
+  emailSent: boolean;
+  createdAt: string;
 }

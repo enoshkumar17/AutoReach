@@ -18,10 +18,12 @@ import {
 
 interface LiveOpeningsFeedProps {
   onSelectCompanyForPitch: (companyName: string, role: string) => void;
+  candidateTargetBatch?: number;
 }
 
 export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
   onSelectCompanyForPitch,
+  candidateTargetBatch = 2028,
 }) => {
   const [liveListings, setLiveListings] = useState<LiveListingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -83,8 +85,15 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
     return liveListings.filter((i) => i.status === 'open' && i.roleType === 'PPO / Full-Time').length;
   }, [liveListings]);
 
+  const matchedForMeCount = useMemo(() => {
+    return liveListings.filter(
+      (i) => i.status === 'open' && (i.eligibleBatches.includes(candidateTargetBatch) || i.eligibleBatches.length === 0)
+    ).length;
+  }, [liveListings, candidateTargetBatch]);
+
   const roleTypeTabs = [
     { id: 'ALL', label: `All Live Openings (${openCount})` },
+    { id: 'MATCHED_FOR_ME', label: `⭐ Matched for Batch ${candidateTargetBatch} (${matchedForMeCount})` },
     { id: 'FRESH_URGENT', label: `🔥 Closes in 1-2 Days (${freshCount})` },
     { id: 'Summer Intern', label: `☀️ Summer Internships (${summerOpenCount})` },
     { id: '6-Month Intern', label: `💼 6-Month Semester (${sixMonthOpenCount})` },
@@ -111,7 +120,9 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
         // All active live tabs MUST ONLY contain open positions!
         if (item.status !== 'open') return false;
 
-        if (selectedRoleType === 'FRESH_URGENT') {
+        if (selectedRoleType === 'MATCHED_FOR_ME') {
+          if (!item.eligibleBatches.includes(candidateTargetBatch) && item.eligibleBatches.length > 0) return false;
+        } else if (selectedRoleType === 'FRESH_URGENT') {
           if (!item.isUrgentFresh) return false;
         } else if (selectedRoleType !== 'ALL') {
           if (item.roleType !== selectedRoleType) return false;
@@ -413,6 +424,11 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
                   {/* Badges Row */}
                   <div className="flex items-center gap-1.5 flex-wrap mb-3 text-[11px]">
+                    {!isClosed && (listing.eligibleBatches.includes(candidateTargetBatch) || listing.eligibleBatches.length === 0) && (
+                      <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300 font-bold">
+                        ⭐ Match (Batch {candidateTargetBatch})
+                      </span>
+                    )}
                     <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 font-semibold">
                       {listing.roleType}
                     </span>

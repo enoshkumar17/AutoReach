@@ -87,7 +87,20 @@ router.get('/', async (_req: Request, res: Response) => {
 // POST /api/profile - update details & upload resume
 router.post('/', upload.single('resume'), async (req: Request, res: Response) => {
   try {
-    const { fullName, email, phone, college, degree, linkedin, github, portfolio } = req.body;
+    const {
+      fullName,
+      email,
+      phone,
+      college,
+      degree,
+      linkedin,
+      github,
+      portfolio,
+      targetBatch,
+      targetRoles,
+      emailAlertsEnabled,
+      alertFrequency,
+    } = req.body;
 
     let profile = await prisma.candidateProfile.findFirst();
 
@@ -101,6 +114,19 @@ router.post('/', upload.single('resume'), async (req: Request, res: Response) =>
       github: github ?? profile?.github ?? '',
       portfolio: portfolio ?? profile?.portfolio ?? '',
     };
+
+    if (targetBatch !== undefined) {
+      dataToUpdate.targetBatch = parseInt(targetBatch, 10) || 2028;
+    }
+    if (targetRoles !== undefined) {
+      dataToUpdate.targetRoles = targetRoles;
+    }
+    if (emailAlertsEnabled !== undefined) {
+      dataToUpdate.emailAlertsEnabled = emailAlertsEnabled === 'true' || emailAlertsEnabled === true;
+    }
+    if (alertFrequency !== undefined) {
+      dataToUpdate.alertFrequency = alertFrequency;
+    }
 
     if (req.file) {
       // If previous resume existed, delete it cleanly
