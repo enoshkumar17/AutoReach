@@ -177,7 +177,7 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
                 : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
             }`}
           >
-            🟢 Open Now
+            🟢 Open Today
           </button>
           <button
             onClick={() => setSelectedStatus(selectedStatus === 'UPCOMING_SOON' ? 'ALL' : 'UPCOMING_SOON')}
@@ -187,7 +187,17 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
                 : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
             }`}
           >
-            🟡 Upcoming
+            🟡 Upcoming Cycles
+          </button>
+          <button
+            onClick={() => setSelectedStatus(selectedStatus === 'CLOSED_WAIT_NEXT' ? 'ALL' : 'CLOSED_WAIT_NEXT')}
+            className={`px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition cursor-pointer border ${
+              selectedStatus === 'CLOSED_WAIT_NEXT'
+                ? 'bg-rose-600 text-white border-rose-700 shadow-2xs'
+                : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+            }`}
+          >
+            🔴 Recently Closed
           </button>
           {['ALL', 'Big Tech', 'Finance & Banking', 'Indian Unicorns', 'Product & Enterprise', 'Semiconductors'].map((cat) => (
             <button
@@ -248,21 +258,21 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
                     </div>
                   </div>
 
-                  {/* Status Indicator */}
+                  {/* Status Indicator (Truthful, non-confusing badge) */}
                   <div>
                     {isOpenNow ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span>Active Now</span>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5 whitespace-nowrap">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                        <span>{c.statusLabel}</span>
                       </span>
                     ) : isUpcoming ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-amber-600" />
-                        <span>Coming in Jan–Feb</span>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1 whitespace-nowrap">
+                        <Clock className="h-3 w-3 text-amber-600 shrink-0" />
+                        <span>{c.statusLabel}</span>
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-600 border border-stone-200">
-                        Closed (Next Summer)
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 whitespace-nowrap">
+                        <span>{c.statusLabel}</span>
                       </span>
                     )}
                   </div>
@@ -403,16 +413,16 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
               </div>
             </div>
 
-            {/* Modal Actions */}
-            <div className="pt-2 border-t border-stone-100 flex items-center justify-between gap-3">
+            {/* Modal Actions (Realistic Application Guidance) */}
+            <div className="pt-2 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-3">
               <a
                 href={activeModalCompany.portalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-2.5 px-4 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
+                className="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
               >
-                <span>Official Careers Portal</span>
-                <ExternalLink className="h-3.5 w-3.5 text-stone-400" />
+                <span>Visit Official Careers Portal</span>
+                <ExternalLink className="h-3.5 w-3.5 text-stone-300" />
               </a>
 
               <button
@@ -420,10 +430,10 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
                   onSelectCompanyForPitch(activeModalCompany.name, 'Software Engineering Intern');
                   setActiveModalCompany(null);
                 }}
-                className="py-2.5 px-5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-xs"
+                className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
               >
-                <Send className="h-3.5 w-3.5" />
-                <span>Pitch Recruiter for {activeModalCompany.name}</span>
+                <Send className="h-3.5 w-3.5 text-stone-400" />
+                <span>Draft Referral Request Pitch</span>
               </button>
             </div>
           </div>

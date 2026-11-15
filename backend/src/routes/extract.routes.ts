@@ -14,6 +14,7 @@ router.post('/', memoryUpload.single('screenshot'), async (req: Request, res: Re
   try {
     const rawText = req.body.text as string | undefined;
     const pitchStyle = (req.body.pitchStyle as PitchStyle) || 'proof-of-work';
+    const customInstructions = req.body.customInstructions as string | undefined;
     const file = req.file;
 
     if (!rawText && !file) {
@@ -51,6 +52,7 @@ router.post('/', memoryUpload.single('screenshot'), async (req: Request, res: Re
       mimeType: file?.mimetype,
       candidate: candidateContext,
       pitchStyle,
+      customInstructions: customInstructions?.trim(),
     });
 
     res.json({
@@ -68,6 +70,7 @@ router.post('/batch', memoryUpload.single('screenshot'), async (req: Request, re
   try {
     const rawText = req.body.text as string | undefined;
     const pitchStyle = (req.body.pitchStyle as PitchStyle) || 'proof-of-work';
+    const customInstructions = req.body.customInstructions as string | undefined;
     const file = req.file;
 
     if (!rawText && !file) {
@@ -105,6 +108,7 @@ router.post('/batch', memoryUpload.single('screenshot'), async (req: Request, re
       mimeType: file?.mimetype,
       candidate: candidateContext,
       pitchStyle,
+      customInstructions: customInstructions?.trim(),
     });
 
     res.json({

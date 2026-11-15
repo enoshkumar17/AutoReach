@@ -129,4 +129,6 @@ export interface LiveListingItem {
   url: string;
   source: 'direct_ats' | 'official_feed';
   status: 'open' | 'closed';
+  closedAt?: string | null;
+  closedAgoLabel?: string | null;
 }

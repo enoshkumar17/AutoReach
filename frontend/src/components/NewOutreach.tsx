@@ -19,6 +19,7 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Sparkles,
 } from 'lucide-react';
 import type {
   CandidateProfile,
@@ -55,6 +56,11 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
   // Outreach mode: Single Post vs Batch List Scanner (LinkedIn / Spreadsheet list)
   const [outreachMode, setOutreachMode] = useState<'single' | 'batch'>('single');
   const [pitchStyle, setPitchStyle] = useState<PitchStyle>('proof-of-work');
+  const [customInstructions, setCustomInstructions] = useState<string>(() => {
+    return localStorage.getItem('autoreach_custom_instructions') || '';
+  });
+  const [showCustomizer, setShowCustomizer] = useState<boolean>(false);
+  const [extractStep, setExtractStep] = useState<string>('Analyzing post...');
 
   // Input state
   const [inputType, setInputType] = useState<'screenshot' | 'text'>('screenshot');
@@ -159,6 +165,15 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     }
 
     setIsExtracting(true);
+    setExtractStep('Reading post details...');
+
+    const timer1 = setTimeout(() => {
+      setExtractStep('Matching portfolio projects...');
+    }, 500);
+
+    const timer2 = setTimeout(() => {
+      setExtractStep('Generating tailored pitch...');
+    }, 1200);
 
     try {
       const formData = new FormData();
@@ -168,6 +183,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
         formData.append('text', pastedText);
       }
       formData.append('pitchStyle', pitchStyle);
+      if (customInstructions.trim()) {
+        formData.append('customInstructions', customInstructions.trim());
+      }
 
       if (outreachMode === 'single') {
         const res = await fetch('/api/extract', {
@@ -218,7 +236,10 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     } catch (err: any) {
       setErrorMsg(err.message || 'Something went wrong while analyzing the job posting.');
     } finally {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
       setIsExtracting(false);
+      setExtractStep('Analyzing post...');
     }
   };
 
@@ -520,15 +541,15 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
         </div>
       )}
 
-      {/* Mode Switcher: Single vs Batch Scanner */}
-      <div className="bg-[#fffefc] border-2 border-stone-800 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] p-2.5 shadow-[2.5px_3px_0px_#1c1917] flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* Mode Switcher: Single vs Batch Scanner (80% Clean SaaS Design) */}
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => setOutreachMode('single')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-1.5 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] text-xs sm:text-sm font-bold transition cursor-pointer ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
               outreachMode === 'single'
-                ? 'bg-stone-900 text-amber-100 border-2 border-stone-800 shadow-[1.5px_2px_0px_#1c1917] -rotate-0.5'
-                : 'text-stone-700 hover:text-stone-900 hover:bg-stone-100'
+                ? 'bg-stone-900 text-white shadow-xs'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
             }`}
           >
             <Send className="h-4 w-4" />
@@ -537,10 +558,10 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
           <button
             onClick={() => setOutreachMode('batch')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-1.5 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] text-xs sm:text-sm font-bold transition cursor-pointer ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
               outreachMode === 'batch'
-                ? 'bg-stone-900 text-amber-100 border-2 border-stone-800 shadow-[1.5px_2px_0px_#1c1917] rotate-0.5'
-                : 'text-stone-700 hover:text-stone-900 hover:bg-stone-100'
+                ? 'bg-stone-900 text-white shadow-xs'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
             }`}
           >
             <Layers className="h-4 w-4" />
@@ -548,16 +569,16 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           </button>
         </div>
 
-        {/* Pitch Style Pills */}
-        <div className="flex items-center gap-1.5 self-end sm:self-auto text-xs font-medium">
-          <span className="text-stone-500 font-hand mr-1 hidden sm:inline text-sm">Pitch Formula:</span>
+        {/* Pitch Style Pills & AI Customizer Toggle */}
+        <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-medium flex-wrap">
+          <span className="text-stone-400 font-semibold mr-1 hidden sm:inline text-xs">Style:</span>
           <button
             onClick={() => setPitchStyle('proof-of-work')}
             title="Proof-of-work pitch with live demo and GitHub repo link"
-            className={`px-3 py-1 rounded-[255px_10px_225px_10px/10px_225px_10px_255px] border-2 transition cursor-pointer font-semibold ${
+            className={`px-3 py-1.5 rounded-lg border transition cursor-pointer font-semibold ${
               pitchStyle === 'proof-of-work'
-                ? 'bg-amber-300 text-stone-950 border-stone-800 shadow-[1.5px_1.5px_0px_#1c1917]'
-                : 'bg-white text-stone-700 border-stone-300 hover:border-stone-800'
+                ? 'bg-amber-100 text-amber-950 border-amber-300'
+                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
             }`}
           >
             Proof-of-Work
@@ -565,10 +586,10 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           <button
             onClick={() => setPitchStyle('short-casual')}
             title="Ultra-brief casual coffee chat pitch (under 65 words)"
-            className={`px-3 py-1 rounded-[255px_10px_225px_10px/10px_225px_10px_255px] border-2 transition cursor-pointer font-semibold ${
+            className={`px-3 py-1.5 rounded-lg border transition cursor-pointer font-semibold ${
               pitchStyle === 'short-casual'
-                ? 'bg-amber-300 text-stone-950 border-stone-800 shadow-[1.5px_1.5px_0px_#1c1917]'
-                : 'bg-white text-stone-700 border-stone-300 hover:border-stone-800'
+                ? 'bg-amber-100 text-amber-950 border-amber-300'
+                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
             }`}
           >
             Short (&lt;65 words)
@@ -576,40 +597,100 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           <button
             onClick={() => setPitchStyle('value-prop')}
             title="Emphasizes specific technical contributions to their product"
-            className={`px-3 py-1 rounded-[255px_10px_225px_10px/10px_225px_10px_255px] border-2 transition cursor-pointer font-semibold ${
+            className={`px-3 py-1.5 rounded-lg border transition cursor-pointer font-semibold ${
               pitchStyle === 'value-prop'
-                ? 'bg-amber-300 text-stone-950 border-stone-800 shadow-[1.5px_1.5px_0px_#1c1917]'
-                : 'bg-white text-stone-700 border-stone-300 hover:border-stone-800'
+                ? 'bg-amber-100 text-amber-950 border-amber-300'
+                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
             }`}
           >
             Value-Add
           </button>
+
+          <button
+            onClick={() => setShowCustomizer(!showCustomizer)}
+            className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+              showCustomizer || customInstructions
+                ? 'bg-stone-900 text-amber-300 border-stone-900'
+                : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            <span>Train AI Preferences</span>
+          </button>
         </div>
       </div>
 
-      {/* Main Outreach Input Card */}
-      <div className="bg-[#fffefc] border-2 border-stone-800 rounded-[255px_18px_225px_18px/18px_225px_18px_255px] p-5 sm:p-7 shadow-[3.5px_4px_0px_#1c1917] space-y-5">
+      {/* AI Style & Training Customizer Panel */}
+      {showCustomizer && (
+        <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-xs space-y-3 animate-in fade-in duration-150">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-amber-400 text-stone-950 flex items-center justify-center font-bold text-xs">
+                <Sparkles className="h-3.5 w-3.5" />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                Train AI with Your Custom Modifications & Instructions
+              </h3>
+            </div>
+            <button
+              onClick={() => setShowCustomizer(false)}
+              className="text-stone-400 hover:text-stone-600 text-xs font-semibold cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+
+          <p className="text-xs text-stone-600 leading-relaxed">
+            Customize exactly how AutoReach AI writes your recruiter emails and pitches. Any modifications you add here are directly passed into the AI system prompt and saved for future pitches.
+          </p>
+
+          <textarea
+            rows={3}
+            value={customInstructions}
+            onChange={(e) => {
+              setCustomInstructions(e.target.value);
+              localStorage.setItem('autoreach_custom_instructions', e.target.value);
+            }}
+            placeholder="e.g., Keep pitch under 60 words. Always highlight my Webhook Delivery Engine project. Mention I am seeking a Jan–June 2027 6-month internship. Keep tone confident and humble without corporate buzzwords like 'passionate' or 'synergy'."
+            className="w-full p-3 rounded-xl border border-stone-200 bg-stone-50 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:bg-white font-sans leading-relaxed"
+          />
+
+          <div className="flex items-center justify-between text-[11px] text-stone-500 flex-wrap gap-2 pt-1 border-t border-stone-100">
+            <span>💡 Real-World Tip: Specifying exact word counts and your specific internship availability (e.g. Jan–Jun 6M) yields the highest response rates from recruiters.</span>
+            {customInstructions ? (
+              <span className="font-semibold text-emerald-700 flex items-center gap-1">
+                ✓ Active ({customInstructions.length} characters saved)
+              </span>
+            ) : (
+              <span className="text-stone-400">No custom instructions set (using default formula)</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Main Outreach Input Card (Clean, Minimal SaaS Standard) */}
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
           <div>
-            <h2 className="text-base sm:text-lg font-semibold text-stone-900">
+            <h2 className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
               {outreachMode === 'single'
                 ? 'Generate Single Outreach Pitch'
                 : 'Scan Multi-Company Hiring List'}
             </h2>
-            <p className="text-sm text-stone-500 mt-1">
+            <p className="text-xs text-stone-500 mt-1">
               {outreachMode === 'single'
-                ? 'Paste recruiter text or drop a screenshot. AutoReach extracts details and writes a tailored pitch.'
+                ? 'Paste recruiter announcement text or drop a screenshot. AutoReach extracts details and writes a tailored pitch.'
                 : 'Upload a screenshot of a hiring list (e.g. 40+ companies from LinkedIn) or paste text. AutoReach extracts every company into an Outbox Queue.'}
             </p>
           </div>
 
           {/* Toggle pill */}
-          <div className="flex rounded-lg bg-stone-100 p-1 border border-stone-200/60 self-start sm:self-auto">
+          <div className="flex rounded-xl bg-stone-100 p-1 border border-stone-200/60 self-start sm:self-auto">
             <button
               onClick={() => setInputType('screenshot')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 inputType === 'screenshot'
-                  ? 'bg-white text-stone-900 shadow-xs'
+                  ? 'bg-white text-stone-900 shadow-2xs'
                   : 'text-stone-500 hover:text-stone-900'
               }`}
             >
@@ -618,9 +699,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
             </button>
             <button
               onClick={() => setInputType('text')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-sm font-medium transition cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 inputType === 'text'
-                  ? 'bg-white text-stone-900 shadow-xs'
+                  ? 'bg-white text-stone-900 shadow-2xs'
                   : 'text-stone-500 hover:text-stone-900'
               }`}
             >
@@ -635,10 +716,10 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-[255px_15px_225px_15px/15px_225px_15px_255px] p-8 text-center transition flex flex-col items-center justify-center min-h-[190px] ${
+            className={`border-2 border-dashed rounded-2xl p-8 text-center transition flex flex-col items-center justify-center min-h-[190px] ${
               previewUrl
-                ? 'border-stone-800 bg-white'
-                : 'border-stone-800/70 hover:border-stone-900 bg-[#fffdfa]'
+                ? 'border-stone-300 bg-white'
+                : 'border-stone-300 hover:border-amber-400 bg-stone-50/50 hover:bg-white'
             }`}
           >
             {previewUrl ? (
@@ -700,25 +781,25 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
                 ? 'Paste hiring tweet, LinkedIn post, or role description...'
                 : 'Paste list of companies (e.g. 1. Docker - https://docker.com 2. Upstart - https://upstart.com)...'
             }
-            className="w-full rounded-xl bg-[#faf9f6]/60 border border-stone-200 p-4 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 font-mono leading-relaxed"
+            className="w-full rounded-xl bg-stone-50/70 border border-stone-200 p-4 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-amber-400 font-mono leading-relaxed"
           />
         )}
 
         {/* Action Row */}
         <div className="flex items-center justify-between pt-1 flex-wrap gap-3">
-          <span className="text-xs text-stone-500 font-hand text-sm">
+          <span className="text-xs text-stone-500 font-medium">
             ✦ AI Multimodal Vision • Aligned with {projects.length} portfolio projects
           </span>
 
           <button
             onClick={handleExtractAndDraft}
             disabled={isExtracting}
-            className="sketch-btn px-6 py-2.5 bg-stone-900 hover:bg-black text-amber-100 font-bold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-amber-100 font-bold text-sm shadow-xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
           >
             {isExtracting ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin text-amber-400" />
-                <span>{outreachMode === 'single' ? 'Analyzing post...' : 'Scanning company list...'}</span>
+                <span>{outreachMode === 'single' ? extractStep : 'Scanning company list...'}</span>
               </>
             ) : (
               <>

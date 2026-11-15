@@ -49,6 +49,8 @@ export interface LiveListingItem {
   url: string;
   source: 'direct_ats' | 'official_feed';
   status: 'open' | 'closed';
+  closedAt?: string | null;
+  closedAgoLabel?: string | null;
 }
 
 // In-memory cache for ultra-fast queries
@@ -189,54 +191,75 @@ async function fetchCanonicalListings(): Promise<LiveListingItem[]> {
     const rawList: RawSarthzkListing[] = (await res.json()) as RawSarthzkListing[];
     if (!Array.isArray(rawList)) return [];
 
-    return rawList.map((item) => {
-      const age = calculateAge(item.date_posted, item.first_seen);
-      const isUrgentFresh = age.hours <= 48 && item.status === 'open';
-      const catInfo = mapCategory(item.category || item.title);
-      const duration = item.enrichment?.duration_months || null;
-      const roleType = determineRoleType(item.title, duration, item.enrichment?.term);
+    return rawList
+      .map((item) => {
+        const age = calculateAge(item.date_posted, item.first_seen);
+        const isClosed = item.status === 'closed';
+        const isUrgentFresh = age.hours <= 48 && !isClosed;
+        const catInfo = mapCategory(item.category || item.title);
+        const duration = item.enrichment?.duration_months || null;
+        const roleType = determineRoleType(item.title, duration, item.enrichment?.term);
 
-      const batches = Array.isArray(item.enrichment?.eligible_batches) && item.enrichment!.eligible_batches.length > 0
-        ? item.enrichment!.eligible_batches
-        : [2026, 2027]; // Tech internships in India currently recruit 2026/2027 batches
+        const batches = Array.isArray(item.enrichment?.eligible_batches) && item.enrichment!.eligible_batches.length > 0
+          ? item.enrichment!.eligible_batches
+          : [2026, 2027]; // Tech internships in India currently recruit 2026/2027 batches
 
-      const batchesLabel = batches.map((b) => `Batch ${b}`).join(', ');
+        const batchesLabel = batches.map((b) => `Batch ${b}`).join(', ');
 
-      let deadline = 'Rolling (Closes in 24-48h once full)';
-      if (item.status === 'closed') {
-        deadline = 'Closed';
-      }
+        let deadline = 'Rolling (Closes in 24-48h once full)';
+        let closedAgoLabel: string | null = null;
+        let closedDaysOld = 0;
 
-      let stipend = item.enrichment?.stipend || 'Competitive (Standard Industry Stipend)';
-      if (!stipend || stipend === 'null') {
-        stipend = 'Competitive';
-      }
+        if (isClosed) {
+          deadline = 'Closed';
+          const closedDate = item.closed_at ? new Date(item.closed_at) : (item.date_posted ? new Date(item.date_posted) : new Date());
+          closedDaysOld = Math.max(0, Math.floor((Date.now() - closedDate.getTime()) / (1000 * 60 * 60 * 24)));
+          closedAgoLabel = closedDaysOld === 0 ? 'Closed today' : closedDaysOld === 1 ? 'Closed yesterday' : `Closed ${closedDaysOld}d ago`;
+        }
 
-      return {
-        id: item.id || `feed:${item.company_slug}:${item.external_id || Math.random().toString(36).slice(2)}`,
-        company: item.company,
-        companySlug: item.company_slug,
-        title: item.title,
-        category: catInfo.category,
-        categoryLabel: catInfo.label,
-        roleType: roleType,
-        locations: Array.isArray(item.locations) && item.locations.length > 0 ? item.locations : ['India (Bangalore / Hyderabad)'],
-        datePosted: item.date_posted || (item.first_seen ? item.first_seen.split('T')[0] : 'Recent'),
-        postedAgoLabel: age.label,
-        hoursOld: age.hours,
-        daysOld: age.days,
-        isUrgentFresh: isUrgentFresh,
-        deadline: deadline,
-        eligibleBatches: batches,
-        eligibleBatchesLabel: batchesLabel,
-        degreeRequired: item.enrichment?.degree || "Bachelor's / Master's degree in CS or related",
-        durationMonths: duration,
-        stipend: stipend,
-        url: item.url,
-        source: 'official_feed',
-        status: item.status === 'open' ? 'open' : 'closed',
-      };
-    });
+        let stipend = item.enrichment?.stipend || 'Competitive (Standard Industry Stipend)';
+        if (!stipend || stipend === 'null') {
+          stipend = 'Competitive';
+        }
+
+        return {
+          id: item.id || `feed:${item.company_slug}:${item.external_id || Math.random().toString(36).slice(2)}`,
+          company: item.company,
+          companySlug: item.company_slug,
+          title: item.title,
+          category: catInfo.category,
+          categoryLabel: catInfo.label,
+          roleType: roleType,
+          locations: Array.isArray(item.locations) && item.locations.length > 0 ? item.locations : ['India (Bangalore / Hyderabad)'],
+          datePosted: item.date_posted || (item.first_seen ? item.first_seen.split('T')[0] : 'Recent'),
+          postedAgoLabel: age.label,
+          hoursOld: age.hours,
+          daysOld: age.days,
+          isUrgentFresh: isUrgentFresh,
+          deadline: deadline,
+          eligibleBatches: batches,
+          eligibleBatchesLabel: batchesLabel,
+          degreeRequired: item.enrichment?.degree || "Bachelor's / Master's degree in CS or related",
+          durationMonths: duration,
+          stipend: stipend,
+          url: item.url,
+          source: 'official_feed' as const,
+          status: isClosed ? ('closed' as const) : ('open' as const),
+          closedAt: item.closed_at || null,
+          closedAgoLabel: closedAgoLabel,
+          _closedDaysOld: closedDaysOld,
+        };
+      })
+      .filter((item) => {
+        // Keep all active open jobs
+        if (item.status === 'open') return true;
+        // If closed, strictly ONLY keep if closed within 30 days! Older than 30 days are purged!
+        if (item.status === 'closed') {
+          return item._closedDaysOld <= 30;
+        }
+        return false;
+      })
+      .map(({ _closedDaysOld, ...cleanItem }) => cleanItem);
   } catch (err: any) {
     console.warn(`[LiveTracker] Canonical feed fetch notice: ${err.message}`);
     return [];
@@ -346,12 +369,14 @@ export async function getLiveListings(options: ListingsQueryOptions = {}) {
   }
 
   const openCount = all.filter((i) => i.status === 'open').length;
+  const closedCount = all.filter((i) => i.status === 'closed').length;
   const freshCount = all.filter((i) => i.isUrgentFresh && i.status === 'open').length;
 
   return {
     total: filtered.length,
     totalAll: all.length,
     openCount,
+    closedCount,
     freshCount,
     lastFetchedAt: lastFetchedAt?.toISOString() || new Date().toISOString(),
     listings: filtered,

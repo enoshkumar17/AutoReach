@@ -108,17 +108,31 @@ function formatProfessionalEmail(options: {
   return body;
 }
 
-export async function processOutreachInput(options: {
+export interface ProcessOutreachOptions {
   apiKey?: string;
   rawText?: string;
   imageBuffer?: Buffer;
   mimeType?: string;
   candidate: CandidateContext;
   pitchStyle?: PitchStyle;
-}): Promise<ExtractedOutreach> {
+  customInstructions?: string;
+}
+
+const singleExtractCache = new Map<string, ExtractedOutreach>();
+
+export async function processOutreachInput(options: ProcessOutreachOptions): Promise<ExtractedOutreach> {
   const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is missing. Please provide it in backend/.env or your settings.');
+  }
+
+  // Fast-path in-memory cache for text inputs
+  const cacheKey = options.rawText && !options.imageBuffer
+    ? `${options.rawText.trim()}_${options.pitchStyle || 'default'}_${options.customInstructions || ''}`
+    : null;
+
+  if (cacheKey && singleExtractCache.has(cacheKey)) {
+    return singleExtractCache.get(cacheKey)!;
   }
 
   const candidateProfileSummary = `
@@ -164,6 +178,26 @@ CRITICAL RULES:
 5. confidenceNotes:
    - If an email was found in the post: "Extracted recruiter email: [email]".
    - If NO email was in the post: "No email address found in the post. Please enter the recruiter's email."
+
+${options.customInstructions ? `
+6. CANDIDATE'S CUSTOM INSTRUCTIONS & SPECIAL MODIFICATIONS:
+"""
+${options.customInstructions}
+"""
+CRITICAL: You MUST strictly adapt the tone, focus, length, and content of emailBody to follow the above user modifications!
+` : ''}
+
+${options.pitchStyle === 'short-casual' ? `
+7. PITCH STYLE: SHORT & CASUAL (<65 words)
+- Keep body ultra-concise under 65 words.
+- Skip fluff, sound human and friendly.
+` : options.pitchStyle === 'value-prop' ? `
+7. PITCH STYLE: VALUE PROPOSITION
+- Highlight direct business/engineering value and problem-solving capability.
+` : `
+7. PITCH STYLE: PROOF OF WORK
+- Highlight concrete technical architecture and project implementations.
+`}
 
 Return ONLY valid JSON matching this schema:
 {
@@ -278,7 +312,7 @@ ${instructions}
     matchedProjects,
   });
 
-  return {
+  const result: ExtractedOutreach = {
     companyName: companyName,
     recipientName: parsed.recipientName || null,
     recipientEmail: finalEmail,
@@ -292,6 +326,12 @@ ${instructions}
       : 'No email address found in post. Please enter the recipient email.',
     suggestedEmailPatterns: fallbackEmailPatterns,
   };
+
+  if (cacheKey) {
+    singleExtractCache.set(cacheKey, result);
+  }
+
+  return result;
 }
 
 export async function processBatchOutreachInput(options: {
@@ -301,6 +341,7 @@ export async function processBatchOutreachInput(options: {
   mimeType?: string;
   candidate: CandidateContext;
   pitchStyle?: PitchStyle;
+  customInstructions?: string;
 }): Promise<BatchExtractionResult> {
   const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
   if (!apiKey) {
