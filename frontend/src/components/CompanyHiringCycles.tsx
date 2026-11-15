@@ -189,7 +189,7 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
           >
             🟡 Upcoming
           </button>
-          {['ALL', 'Big Tech', 'Finance & Banking', 'Indian Unicorns'].map((cat) => (
+          {['ALL', 'Big Tech', 'Finance & Banking', 'Indian Unicorns', 'Product & Enterprise', 'Semiconductors'].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
