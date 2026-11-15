@@ -1,5 +1,5 @@
-# AutoReach 🚀 (v2.5)
-> **Autonomous Multimodal Cold Outreach, Live ATS Job Tracker & Application Pipeline Engine for Software Engineering Candidates**
+# AutoReach 🚀 (v2.8)
+> **Autonomous Multimodal Cold Outreach, Live ATS Job Tracker, Hiring Cycles & Student Opportunities Radar for Software Engineering Candidates**
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-v24.16-green.svg)](https://nodejs.org/)
@@ -11,9 +11,11 @@
 AutoReach transforms the exhausting, repetitive, and error-prone process of tracking and applying for tech internships into a high-precision, automated workflow. 
 
 Instead of manually checking 100+ company career sites, copying recruiter names, guessing email addresses, and re-attaching resumes 50 times a day, AutoReach delivers:
-1. **Live ATS Scraping & Job Tracking Engine**: Directly monitors 100+ company career portals (Google, Apple, Microsoft, Amazon, Nvidia, Juspay, etc.) with real-time posting dates, 24–48h urgency badges, and graduation batch filters (2025–2028).
-2. **Multimodal AI Vision Pitch Composer**: Analyzes hiring announcements from screenshots or pasted text, matches candidate GitHub projects to the company's tech domain, and drafts structured 4-paragraph cold pitches with complete contact signatures and resume attachments.
-3. **Safe Dispatch & Threaded Follow-Up Queue**: Dispatches emails via personal Gmail SMTP relays with anti-spam jitter delays, tracks recruiter replies via background IMAP detection, and threads follow-ups directly in the same conversation.
+1. **Live ATS Scraping & Job Velocity Engine**: Directly monitors 100+ company career portals (Google, Apple, Microsoft, Amazon, Nvidia, Juspay, etc.) with real-time posting dates, 24–48h urgency badges, and graduation batch filters (2025–2028).
+2. **Dedicated Modular Opportunities Radar**: Decoupled, clean views for **Live ATS Openings**, **Company Hiring Cycles** (when closed, when reopens, 12-month calendar), **Flagship Hackathons** (20+ PPI challenges), and **Student Fellowships** (Google STEP, Microsoft Explore, GSoC, Campus Leadership).
+3. **Interactive 'Box-Opening' Dossier Architecture**: Clean, human-made editorial cards that open into complete round-by-round interview guides, compensation breakdowns, and a 1-click recruiter pitch bridge.
+4. **Multimodal AI Vision Pitch Composer**: Analyzes hiring announcements from screenshots or pasted text, matches candidate GitHub projects to the company's tech domain, and drafts structured 4-paragraph cold pitches with complete contact signatures and resume attachments.
+5. **Safe Dispatch & Threaded Follow-Up Queue**: Dispatches emails via personal Gmail SMTP relays with anti-spam jitter delays, tracks recruiter replies via background IMAP detection, and threads follow-ups directly in the same conversation.
 
 ---
 
@@ -23,7 +25,8 @@ Instead of manually checking 100+ company career sites, copying recruiter names,
    - [v1.0 — MVP Core Foundation](#version-10--mvp-core-foundation)
    - [v1.2 — Deliverability & Follow-Up Foundation](#version-12--deliverability--follow-up-foundation)
    - [v2.0 — Batch Scanner, Safe Throttler & Kanban Pipeline](#version-20--batch-scanner-safe-throttler--kanban-pipeline)
-   - [v2.5 — Live ATS Scraper & Job Velocity Tracking Engine](#version-25--live-ats-scraper--job-velocity-tracking-engine-current)
+   - [v2.5 — Live ATS Scraper & Job Velocity Tracking Engine](#version-25--live-ats-scraper--job-velocity-tracking-engine)
+   - [v2.8 — Modular Opportunities Radar & Editorial UX Overhaul (Current)](#version-28--modular-opportunities-radar--editorial-ux-overhaul-current)
    - [Future Roadmap (v3.0+)](#future-roadmap-v30)
 3. [Engineering Notebook & Technical Interview Deep-Dive](#-engineering-notebook--technical-interview-deep-dive)
    - *Technical Hurdles, Debugging Stories, and Architectural Decisions*
@@ -158,7 +161,7 @@ flowchart TD
 
 ---
 
-### Version 2.5 — Live ATS Scraper & Job Velocity Tracking Engine (Current)
+### Version 2.5 — Live ATS Scraper & Job Velocity Tracking Engine
 *Built to solve the critical "Apply within 24–48 Hours" problem in Indian tech hiring, where top internship roles close within 1–2 days once applicant limits are reached.*
 
 ```mermaid
@@ -184,28 +187,56 @@ flowchart TD
         C5["1-Click 'Pitch Recruiter' Action Bridge"]
     end
 
-    subgraph Outreach["4. Multi-Paragraph Cold Outreach"]
-        O1["Auto-Prefill Company, Role, and Domain"]
-        O2["Project Matcher: Selects Best GitHub Projects"]
-        O3["4-Paragraph Professional Letter Engine with Resume Attached"]
-        O4["Strict Email Rule: Empty if not in post; Helper Alias Pills"]
-    end
-
     Upstream --> Engine
     Engine --> Client
-    C5 --> Outreach
 ```
 
-- **Implemented Features in v2.5:**
-  - **Direct Live ATS Webhook & Scraping Service**: Integrates directly with company endpoints like Juspay (`joinus.juspay.in/api/careerJobOpening`) and syndicated open-source ATS streams covering 100+ employers (Google, Microsoft, Apple, Amazon, Nvidia, Caterpillar, Adobe, etc.).
-  - **24–48h Urgency Classifier (`isUrgentFresh`)**: Automatically identifies jobs posted within the last 48 hours and flags them with high-urgency badges (`🔥 Fresh`), warning applicants that top Indian tech openings routinely close within 1–2 days once reaching 500+ applications.
-  - **Graduation Batch Filtering**: Instant multi-year filtering for Batch 2025, Batch 2026, Batch 2027, and Batch 2028 (1st & 2nd year programs like Google STEP and Microsoft Explore).
-  - **Interactive 34-Company Master Radar**: Complete historical guides for 34 top firms in India, dynamically prioritized by current month activity (November open programs shown first).
-  - **Flagship Hackathon Directory**: Curated catalogue of 8 tier-1 hiring hackathons (Flipkart GRiD, Walmart CodeHers, Juspay Hiring Challenge, Amazon HackOn, etc.) offering direct pre-placement interview (PPI) calls.
-  - **4-Year B.Tech Career Roadmap**: Strategic yearly guide mapping freshmen foundational pipelines through final-year 6-month semester internships.
-  - **1-Click Recruiter Pitch Bridge**: Every live job card features a "Pitch Recruiter" button that instantly loads AutoReach's outreach composer with company name, target role, and domain pre-populated.
-  - **Strict Anti-Hallucination Email Extraction**: If an email is not explicitly present in the post or screenshot, `recipientEmail` is kept empty (`""`) and highlighted with an input warning rather than hallucinating or picking random web addresses.
-  - **Professional 4-Paragraph Letter Structuring**: Upgraded pitch synthesis into an executive 4-paragraph letter format with explicit resume attachment confirmation and complete contact signature block.
+---
+
+### Version 2.8 — Modular Opportunities Radar & Editorial UX Overhaul (Current)
+*Designed to eliminate cognitive overload and visual clumsiness by breaking monolithic mega-pages into 4 dedicated, human-crafted directories with an interactive 'Box-Opening' dossier pattern.*
+
+```mermaid
+flowchart TD
+    subgraph Navbar["Dedicated Navbar Architecture"]
+        N1["🚀 Cold Outreach"]
+        N2["⚡ Live Openings (Scraped ATS)"]
+        N3["📅 Hiring Cycles (34+ MNCs)"]
+        N4["🏆 Hackathons (20+ PPI Challenges)"]
+        N5["🎓 Student Programs (14+ Fellowships)"]
+        N6["📊 Applications Pipeline"]
+    end
+
+    subgraph Views["Decoupled View Controllers"]
+        V_Live["LiveOpeningsFeed.tsx"]
+        V_Cycles["CompanyHiringCycles.tsx"]
+        V_Hack["HackathonsDirectory.tsx"]
+        V_Prog["StudentPrograms.tsx"]
+    end
+
+    subgraph UXPattern["Interactive 'Box-Opening' Dossier Pattern"]
+        Card["Human-Made Editorial Card (Hand-drawn badge, yellow accent, clear metric)"]
+        Modal["Expanded Dossier Modal: Rounds walkthrough, real stipends, insider tips, official link, 1-click AutoReach Pitch"]
+        Card -->|Click to Expand| Modal
+    end
+
+    N2 --> V_Live
+    N3 --> V_Cycles
+    N4 --> V_Hack
+    N5 --> V_Prog
+    Views --> Card
+```
+
+- **Implemented Features in v2.8:**
+  - **Clean Separation of Concerns**: Completely decomposed the former monolithic `HiringGuide.tsx` into 4 dedicated, high-performance components:
+    1. `LiveOpeningsFeed`: Real-time ATS feed with granular partition tabs (`All`, `🔥 Closes in 1-2 Days`, `☀️ Summer Internships`, `💼 6-Month Semester Internships`, `🚀 PPO & Off-Campus Full-Time`).
+    2. `CompanyHiringCycles`: Comprehensive hiring calendar covering 34 major employers in India (Google, Microsoft, Amazon, Apple, Goldman Sachs, Juspay, Nvidia, Uber, Rippling, etc.) answering the three most critical questions: *When did the last cycle close? When does it reopen? What are the exact rounds?* Includes an interactive 12-month calendar selector (Jan–Dec).
+    3. `HackathonsDirectory`: Full catalog of 20+ flagship corporate hackathons and coding competitions (Flipkart GRiD, Walmart CodeHers, JPMC Code for Good, Adobe India Hackathon, Smart India Hackathon, Amazon ML Challenge) with direct PPI offer badges and prize pools.
+    4. `StudentPrograms`: Dedicated portal for undergraduate fellowships and diversity programs (Google STEP, Microsoft Explore, Uber STAR, LinkedIn CoachIN, DE Shaw DESIS, GSoC, Outreachy, DRDO & ISRO Internships, GitHub Campus Expert, MLSA, GDSC Lead).
+  - **Editorial Human-Crafted Aesthetic**: Designed inspired by architectural sketchbooks: crisp `rounded-xl` / `rounded-2xl` containers, warm neutral canvas (`#f6f7f9`), sunny yellow highlighter badges (`bg-amber-100 text-amber-950 border-amber-300`), and zero chaotic neon glow or bloated bubble radiuses.
+  - **Interactive 'Box-Opening' Dossier Modal**: Instead of overwhelming junior candidates with dense tables, every card displays an inviting high-level summary. Clicking any card smoothly opens a detailed dossier modal with round-by-round interview breakdowns, target batches, real compensation numbers, insider recruiter tips, official portal links, and the seamless AutoReach pitch bridge.
+  - **Zero-Latency Client Filtering**: Built with React `useMemo` hooks for instant search across company names, locations, categories, and graduating batches without redundant server roundtrips.
+
 
 ---
 
@@ -389,16 +420,44 @@ flowchart TD
 
 ---
 
+### Challenge 12: Cognitive Overload & Monolithic UI Decomposition (Why Separate Into Dedicated Views?)
+- **The Problem:**
+  In v2.5, all internship monitoring data (Live ATS feeds, 34-company hiring calendars, 20+ hackathons, student fellowship programs, and preparation guides) was packed into a single monolithic component (`HiringGuide.tsx`). Users and junior students reported severe cognitive fatigue:
+  1. *Sub-tab nesting confusion*: Having sub-tabs inside a tab bar hidden under "Guide" made it impossible to see where live jobs ended and historical hiring cycles began.
+  2. *Information density*: 34 multi-round hiring cycles alongside 100+ live ATS jobs created endless vertical scrolling with cluttered tables that looked overwhelming ("mind will blow up").
+  3. *Unclear user mental models*: A student looking for *when Google or Microsoft hires next year* has a completely different intent than a student looking to *apply to an urgent Workday opening that closes tomorrow*.
+- **The Solution:**
+  1. **Top-Level Architectural Separation**: Decomposed the monolithic view into four clean, dedicated top-level tabs on the navigation bar:
+     - ⚡ **Live Openings** (`LiveOpeningsFeed`): Scraped ATS feeds with partition tabs for Summer, 6-Month, PPO, and urgent <48h postings.
+     - 📅 **Hiring Cycles** (`CompanyHiringCycles`): Plain-English calendar answering *when did it close, when does it reopen, and what are the rounds* with an interactive 12-month calendar selector.
+     - 🏆 **Hackathons** (`HackathonsDirectory`): 20+ flagship competitions with direct PPI offer badges.
+     - 🎓 **Student Programs** (`StudentPrograms`): 1st/2nd year pipelines (STEP, Explore), open source (GSoC), and leadership programs.
+  2. **The "Box-Opening" Dossier Pattern**: Instead of exposing all 4 interview rounds, compensation numbers, and eligibility criteria on the screen simultaneously, each card displays an approachable visual summary with sunny yellow accents. Clicking any card smoothly triggers a modal dossier that provides the full deep-dive without cluttering the primary canvas.
+
+---
+
+### Challenge 13: Client-Side Search Optimization & Preventing Layout Thrashing
+- **The Problem:**
+  With 34 detailed company profiles, 20+ hackathons, 14+ student programs, and 100+ live ATS listings, naive client-side re-filtering on every keystroke in search inputs caused UI lag, frame drops, and layout thrashing.
+- **The Solution:**
+  1. **Fine-Grained Memoization (`useMemo`)**: Normalized all dataset filtering operations with strict dependency arrays (`searchQuery`, `selectedCategory`, `selectedStatus`, `selectedMonth`). Search queries are trimmed and lowercased once per pass.
+  2. **Decoupled Component Tree**: Because each view is now an independent React component, typing in the *Hackathons* search bar only re-evaluates `HackathonsDirectory` and never triggers reconciliation in `LiveOpeningsFeed` or `NewOutreach`.
+  3. **CSS Hardware Acceleration & Predictable Containers**: Containers use fixed padding, `rounded-xl` boundaries, and `backdrop-blur-md` transitions, ensuring smooth 60fps rendering even on low-powered laptops.
+
+---
+
 ## 🎯 Key Features Breakdown
 
 | Feature | Description | Status |
 | :--- | :--- | :--- |
-| **Live ATS Crawler & Feed** | Monitors 100+ top Indian tech portals (Juspay API, Apple, Google, Caterpillar) in real time. | ✅ Active (v2.5) |
+| **Live ATS Crawler & Feed** | Monitors 100+ top Indian tech portals (Juspay API, Apple, Google, Caterpillar) in real time. | ✅ Active (v2.8) |
+| **Partitioned Live Openings** | Dedicated tabs for Summer (2–3M), 6-Month, PPO/FTE, and urgent <48h postings. | ✅ Active (v2.8) |
+| **34-Company Hiring Cycles** | Plain-English calendar: when closed, when reopens, and 12-month calendar picker. | ✅ Active (v2.8) |
+| **20+ Flagship Hackathons** | Curated catalog of verified PPI hackathons (Flipkart GRiD, Walmart CodeHers, JPMC Code for Good). | ✅ Active (v2.8) |
+| **14+ Student Fellowships** | 1st/2nd-year pipelines (STEP, Explore, STAR), open source (GSoC), and campus ambassadorships. | ✅ Active (v2.8) |
+| **'Box-Opening' Modal Dossier** | Interactive modal revealing full interview rounds, stipends, insider tips, and pitch bridge. | ✅ Active (v2.8) |
 | **24–48h Velocity Classifier** | Flags postings `<48h` old with crimson urgency badges to beat 1–2 day application caps. | ✅ Active (v2.5) |
 | **Graduation Batch Filter** | Filter openings for Batch 2025, 2026, 2027, and 2028 (1st/2nd year programs). | ✅ Active (v2.5) |
-| **34-Company India Tech Radar** | Dynamic guides for 34 major firms, prioritized by current month activity (November first). | ✅ Active (v2.5) |
-| **8 Flagship Tech Hackathons** | Directory of verified PPI hackathons (Flipkart GRiD, Walmart CodeHers, Juspay Challenge). | ✅ Active (v2.5) |
-| **4-Year B.Tech Career Roadmap** | Comprehensive timeline guiding 1st through 4th year internship and FTE preparation. | ✅ Active (v2.5) |
 | **4-Paragraph Letter Engine** | Structured executive pitch letters with explicit resume attachment and full signature block. | ✅ Active (v2.5) |
 | **Strict Email Extraction** | Never hallucinates emails; requires verified address and provides optional alias pills. | ✅ Active (v2.5) |
 | **Multimodal Single Outreach** | Extracts company, role, recruiter name from single image or pasted text in ~1.5s. | ✅ Active (v1.0) |
@@ -408,9 +467,7 @@ flowchart TD
 | **Threaded RFC Follow-Up** | Dispatches follow-ups directly in the same conversation thread (`In-Reply-To`). | ✅ Active (v1.2) |
 | **Automated IMAP Listener** | Scans inbox every 60s for replies from applied recruiters. | ✅ Active (v1.2) |
 | **AI Reply Sentiment Classifier** | Classifies incoming recruiter responses into `INTERVIEW`, `QUESTION`, `REJECTED`. | ✅ Active (v2.0) |
-| **Deliverability Spam Meter** | Scores email health (0–100) based on length, spam triggers, and CTA. | ✅ Active (v1.2) |
 | **Kanban Pipeline Board** | 4-column visual board (`Sent` → `Follow-Up Due` → `Replies` → `Interviews`). | ✅ Active (v2.0) |
-| **CSV Pipeline Export** | 1-click export of application history for spreadsheet tracking. | ✅ Active (v1.2) |
 
 ---
 

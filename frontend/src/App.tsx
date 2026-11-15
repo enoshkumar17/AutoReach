@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
+import { Navbar, type TabType } from './components/Navbar';
 import { NewOutreach } from './components/NewOutreach';
 import { ApplicationsTracker } from './components/ApplicationsTracker';
 import { ProfileManager } from './components/ProfileManager';
 import { SettingsTab } from './components/SettingsTab';
-import { HiringGuide } from './components/HiringGuide';
+import { LiveOpeningsFeed } from './components/LiveOpeningsFeed';
+import { CompanyHiringCycles } from './components/CompanyHiringCycles';
+import { HackathonsDirectory } from './components/HackathonsDirectory';
+import { StudentPrograms } from './components/StudentPrograms';
 import type { CandidateProfile, Project, Application, EnvConfig } from './types';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'outreach' | 'tracker' | 'guide' | 'profile' | 'settings'>('outreach');
+  const [activeTab, setActiveTab] = useState<TabType>('outreach');
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [envConfig, setEnvConfig] = useState<EnvConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Prefill state from Hiring Guide -> Outreach
+  // Prefill state from Guides/Cycles/Live -> Outreach
   const [prefilledCompany, setPrefilledCompany] = useState<string | null>(null);
   const [prefilledRole, setPrefilledRole] = useState<string | null>(null);
 
@@ -141,14 +144,14 @@ export default function App() {
         hasResume={!!profile?.hasResume}
       />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
-        {/* Human-crafted Morning Greeting & Activity Glance */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
+        {/* Human-crafted Morning Greeting & Pipeline Status */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-3 border-b border-stone-200/60">
           <div>
             <span className="text-xs font-medium text-stone-400 block mb-0.5">
               {todayFormatted}
             </span>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-stone-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
               {greeting}, {candidateFirstName}
             </h1>
           </div>
@@ -167,6 +170,7 @@ export default function App() {
           </div>
         </div>
 
+        {/* 1. Cold Outreach Tab */}
         {activeTab === 'outreach' && (
           <NewOutreach
             profile={profile}
@@ -184,12 +188,35 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'guide' && (
-          <HiringGuide
+        {/* 2. Real-Time Scraped ATS Live Openings */}
+        {activeTab === 'live' && (
+          <LiveOpeningsFeed
             onSelectCompanyForPitch={handleSelectCompanyForPitch}
           />
         )}
 
+        {/* 3. Company Hiring Cycles & Reopening Timelines */}
+        {activeTab === 'cycles' && (
+          <CompanyHiringCycles
+            onSelectCompanyForPitch={handleSelectCompanyForPitch}
+          />
+        )}
+
+        {/* 4. Flagship Hackathons & Competitions */}
+        {activeTab === 'hackathons' && (
+          <HackathonsDirectory
+            onSelectCompanyForPitch={handleSelectCompanyForPitch}
+          />
+        )}
+
+        {/* 5. Student Opportunities & Fellowships */}
+        {activeTab === 'programs' && (
+          <StudentPrograms
+            onSelectCompanyForPitch={handleSelectCompanyForPitch}
+          />
+        )}
+
+        {/* 6. Applications Pipeline & Tracking */}
         {activeTab === 'tracker' && (
           <ApplicationsTracker
             applications={applications}
@@ -199,6 +226,7 @@ export default function App() {
           />
         )}
 
+        {/* 7. Candidate Profile & Resume */}
         {activeTab === 'profile' && (
           <ProfileManager
             profile={profile}
@@ -209,6 +237,7 @@ export default function App() {
           />
         )}
 
+        {/* 8. Settings & Credentials */}
         {activeTab === 'settings' && (
           <SettingsTab
             envConfig={envConfig}
@@ -218,7 +247,7 @@ export default function App() {
       </main>
 
       <footer className="border-t border-stone-200/80 bg-[#faf9f6] py-6 text-center text-[11px] text-stone-400">
-        AutoReach • Autonomous Cold Outreach & Application Tracking
+        AutoReach • Autonomous Cold Outreach, Live ATS Monitoring & Placement Radar
       </footer>
     </div>
   );
