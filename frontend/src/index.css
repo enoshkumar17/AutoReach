@@ -2,8 +2,8 @@
 
 @layer base {
   body {
-    background-color: #f8f6f0;
-    color: #292524;
+    background-color: #f6f7f9;
+    color: #1c1917;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -12,8 +12,8 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    letter-spacing: -0.02em;
-    color: #1c1917;
+    letter-spacing: -0.025em;
+    color: #0f172a;
   }
 
   /* Custom subtle scrollbar */
@@ -25,131 +25,10 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #d6d3d1;
+    background: #e2e8f0;
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #a8a29e;
+    background: #cbd5e1;
   }
-}
-
-/* ------------------------------------------------------------------------------------------------
- * Hand-Drawn Wabi-Sabi Aesthetics (The Peace & Art in Irregularities)
- * ------------------------------------------------------------------------------------------------ */
-
-.font-hand {
-  font-family: 'Patrick Hand', cursive, sans-serif;
-}
-
-.font-sketch {
-  font-family: 'Caveat', cursive, sans-serif;
-}
-
-/* Organic Hand-Inked Card Borders */
-.sketch-card {
-  border: 2px solid #292524;
-  border-radius: 255px 18px 225px 18px / 18px 225px 18px 255px;
-  box-shadow: 3.5px 3.5px 0px #292524;
-  background-color: #ffffff;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.sketch-card:hover {
-  transform: translate(-1.5px, -1.5px);
-  box-shadow: 5px 5px 0px #292524;
-}
-
-/* Secondary organic variation to prevent monotonous grids */
-.sketch-card-alt {
-  border: 2px solid #292524;
-  border-radius: 18px 255px 20px 235px / 240px 18px 230px 18px;
-  box-shadow: 3.5px 3.5px 0px #292524;
-  background-color: #ffffff;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.sketch-card-alt:hover {
-  transform: translate(-1.5px, -1.5px);
-  box-shadow: 5px 5px 0px #292524;
-}
-
-/* Hand-Inked Interactive Stamp Button */
-.sketch-btn {
-  border: 2px solid #292524;
-  border-radius: 255px 22px 225px 22px / 22px 225px 22px 255px;
-  box-shadow: 2.5px 3px 0px #292524;
-  transition: all 0.12s ease;
-  cursor: pointer;
-  user-select: none;
-}
-
-.sketch-btn:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 3.5px 4px 0px #292524;
-}
-
-.sketch-btn:active {
-  transform: translate(2.5px, 3px);
-  box-shadow: 0px 0px 0px #292524;
-}
-
-/* Hand-Inked Pill Badge */
-.sketch-pill {
-  border: 1.5px solid #292524;
-  border-radius: 255px 25px 225px 25px / 25px 225px 25px 255px;
-}
-
-/* Hand-Drawn Washi Tape Accent */
-.washi-tape {
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-1deg);
-  width: 90px;
-  height: 20px;
-  background: rgba(254, 240, 138, 0.85);
-  border-left: 2px dashed rgba(180, 83, 9, 0.35);
-  border-right: 2px dashed rgba(180, 83, 9, 0.35);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  pointer-events: none;
-  z-index: 10;
-}
-
-.washi-tape-sage {
-  background: rgba(187, 247, 208, 0.85);
-  border-left: 2px dashed rgba(22, 101, 52, 0.3);
-  border-right: 2px dashed rgba(22, 101, 52, 0.3);
-}
-
-/* Organic Watercolor Washes / Blotches Behind Linework */
-.watercolor-blob-1 {
-  border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
-}
-
-.watercolor-blob-2 {
-  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-}
-
-.watercolor-blob-3 {
-  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-}
-
-.watercolor-yellow {
-  background-color: #fde047;
-  opacity: 0.6;
-}
-
-.watercolor-terracotta {
-  background-color: #fb923c;
-  opacity: 0.45;
-}
-
-.watercolor-sage {
-  background-color: #86efac;
-  opacity: 0.5;
-}
-
-.watercolor-ochre {
-  background-color: #d97706;
-  opacity: 0.35;
 }

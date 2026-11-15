@@ -42,38 +42,38 @@ export const Navbar: React.FC<NavbarProps> = ({
     {
       id: 'outreach',
       label: 'Cold Outreach',
-      icon: <Send className="h-3.5 w-3.5" />,
+      icon: <Send className="h-4 w-4" />,
     },
     {
       id: 'live',
       label: 'Live Openings',
-      icon: <Zap className="h-3.5 w-3.5" />,
+      icon: <Zap className="h-4 w-4" />,
       badge: <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />,
     },
     {
       id: 'cycles',
       label: 'Hiring Cycles',
-      icon: <Calendar className="h-3.5 w-3.5" />,
+      icon: <Calendar className="h-4 w-4" />,
     },
     {
       id: 'hackathons',
       label: 'Hackathons',
-      icon: <Trophy className="h-3.5 w-3.5" />,
+      icon: <Trophy className="h-4 w-4" />,
     },
     {
       id: 'programs',
       label: 'Student Programs',
-      icon: <GraduationCap className="h-3.5 w-3.5" />,
+      icon: <GraduationCap className="h-4 w-4" />,
     },
     {
       id: 'tracker',
       label: 'Applications',
-      icon: <BarChart3 className="h-3.5 w-3.5" />,
+      icon: <BarChart3 className="h-4 w-4" />,
       badge: sentCount > 0 ? (
         <span
           className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
             activeTab === 'tracker'
-              ? 'bg-amber-300 text-stone-900 border border-stone-800'
+              ? 'bg-stone-800 text-stone-200'
               : 'bg-stone-200 text-stone-700'
           }`}
         >
@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     {
       id: 'profile',
       label: 'Profile',
-      icon: <User className="h-3.5 w-3.5" />,
+      icon: <User className="h-4 w-4" />,
       badge: !hasResume ? (
         <span className="h-2 w-2 rounded-full bg-amber-500" title="Resume required" />
       ) : null,
@@ -92,39 +92,39 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="border-b-2 border-stone-800/80 bg-[#fbf9f5]/95 backdrop-blur-md sticky top-0 z-50">
+    <header className="border-b border-stone-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo & Product Identity */}
           <div
-            className="flex items-center gap-2.5 cursor-pointer select-none shrink-0 group"
+            className="flex items-center gap-2.5 cursor-pointer select-none shrink-0"
             onClick={() => setActiveTab('outreach')}
           >
-            <div className="h-8 w-8 bg-stone-900 border-2 border-stone-900 -rotate-2 rounded-[6px_10px_7px_9px] shadow-[2px_2px_0px_#1c1917] flex items-center justify-center text-amber-200 group-hover:rotate-0 transition-transform">
+            <div className="h-8 w-8 rounded-lg bg-stone-900 flex items-center justify-center text-stone-50 shadow-xs">
               <span className="font-bold text-xs tracking-wider">AR</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-base tracking-tight text-stone-900">
                 AutoReach
               </span>
-              <span className="hidden sm:inline-block font-hand text-xs font-bold px-2 py-0.5 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] bg-amber-200 text-amber-950 border border-stone-800 rotate-1 shadow-2xs">
-                v2.8 sketchbook
+              <span className="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300/80">
+                v2.8 Live
               </span>
             </div>
           </div>
 
-          {/* Navigation Items (Scrollable on small screens with irregular sketch buttons) */}
-          <nav className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
+          {/* Navigation Items */}
+          <nav className="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none">
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold whitespace-nowrap cursor-pointer shrink-0 transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
                     isActive
-                      ? 'bg-stone-900 text-amber-100 border-2 border-stone-900 shadow-[2px_2.5px_0px_#1c1917] rounded-[255px_18px_225px_18px/18px_225px_18px_255px] -rotate-[0.5deg]'
-                      : 'text-stone-700 hover:text-stone-900 hover:bg-stone-200/60 rounded-lg'
+                      ? 'bg-stone-900 text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                   }`}
                 >
                   {item.icon}
@@ -137,10 +137,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Settings Icon */}
             <button
               onClick={() => setActiveTab('settings')}
-              className={`p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ml-1 border ${
+              className={`p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ml-1 ${
                 activeTab === 'settings'
-                  ? 'bg-stone-900 text-amber-100 border-stone-900 shadow-[2px_2px_0px_#1c1917]'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60 border-transparent'
+                  ? 'bg-stone-900 text-white shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
               }`}
               title="Settings & Credentials"
             >

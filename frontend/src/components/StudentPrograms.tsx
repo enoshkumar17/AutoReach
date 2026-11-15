@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   BookOpen,
 } from 'lucide-react';
-import { DoodleRecipeBook, DoodleWavyUnderline } from './DoodleIcons';
 
 interface StudentProgramsProps {
   onSelectCompanyForPitch: (companyName: string, role: string) => void;
@@ -64,38 +63,33 @@ export const StudentPrograms: React.FC<StudentProgramsProps> = ({
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Hand-crafted Sketchbook Header */}
-      <div className="bg-[#fffefc] border-2 border-stone-800 rounded-[255px_18px_225px_18px/18px_225px_18px_255px] p-6 sm:p-8 shadow-[3.5px_4px_0px_#1c1917] relative overflow-hidden">
-        {/* Soft Pastel Watercolor Washes */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-200/50 rounded-[45%_55%_65%_35%/40%_60%_40%_60%] blur-[3px] pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-36 h-28 bg-emerald-200/40 rounded-[60%_40%_30%_70%/50%_60%_40%_50%] blur-[3px] pointer-events-none" />
+      {/* 80% Clean + 20% Enhanced Editorial Header */}
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+        {/* Subtle Pastel Yellow Accent Glow */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-amber-200/35 via-yellow-100/20 to-transparent rounded-bl-full pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] bg-amber-200 text-amber-950 text-xs font-bold border-2 border-stone-800 shadow-[1.5px_2px_0px_#1c1917] -rotate-1">
-              <GraduationCap className="h-3.5 w-3.5 text-amber-700" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-950 text-xs font-semibold border border-amber-300">
+              <GraduationCap className="h-3.5 w-3.5 text-amber-600" />
               <span>College Opportunities & Student Fellowships</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
               Early Internships, Open Source Fellowships & Leadership
             </h2>
-            <DoodleWavyUnderline className="w-44 h-2 text-amber-500 mb-2" />
             <p className="text-sm text-stone-600 leading-relaxed">
               Curated opportunities specifically designed for college undergraduates: 1st & 2nd-year fast-track pipelines (Google STEP, Microsoft Explore, Uber STAR), premier open source fellowships (GSoC, Outreachy), and top global campus ambassador programs.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0">
-            <DoodleRecipeBook className="hidden sm:inline-block w-20 h-20 shrink-0" />
-            <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
-              <div className="p-3 bg-white border-2 border-stone-800 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[95px]">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Open Now</span>
-                <span className="text-lg font-extrabold text-emerald-800">{openNowCount} Programs</span>
-              </div>
-              <div className="p-3 bg-amber-100 border-2 border-stone-800 rounded-[12px_255px_12px_225px/225px_12px_255px_12px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[95px] rotate-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block mb-0.5">Tracked</span>
-                <span className="text-lg font-extrabold text-amber-950">{ALL_STUDENT_PROGRAMS.length} Total</span>
-              </div>
+          <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
+            <div className="p-3.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[105px]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Open Now</span>
+              <span className="text-xl font-bold text-emerald-700">{openNowCount} Programs</span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[105px]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Total Tracked</span>
+              <span className="text-xl font-bold text-amber-600">{ALL_STUDENT_PROGRAMS.length} Fellowships</span>
             </div>
           </div>
         </div>
@@ -158,70 +152,68 @@ export const StudentPrograms: React.FC<StudentProgramsProps> = ({
         ))}
       </div>
 
-      {/* Programs Grid */}
+      {/* Programs Grid: Clean, Minimal, Production-grade Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredPrograms.map((program, idx) => {
+        {filteredPrograms.map((program) => {
           const isOpenNow = program.status === 'OPEN_NOW';
           const isUpcoming = program.status === 'UPCOMING_SOON';
-          const cardClass = idx % 2 === 0 ? 'sketch-card' : 'sketch-card-alt';
 
           return (
             <div
               key={program.id}
               onClick={() => setActiveModalProgram(program)}
-              className={`p-5 flex flex-col justify-between group cursor-pointer relative ${cardClass}`}
+              className="bg-white border border-stone-200/90 hover:border-amber-400 rounded-xl p-5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group cursor-pointer relative"
             >
-              {/* Washi Tape on Open Programs */}
-              {isOpenNow && <div className="washi-tape" />}
+              {/* Top Strip */}
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-10 w-10 rounded-lg bg-[#fbfbfa] border border-stone-200/90 flex items-center justify-center text-stone-800 font-bold text-sm shrink-0 group-hover:border-amber-400 transition">
+                      {program.company.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-semibold text-stone-400 block tracking-wide">
+                        {program.company}
+                      </span>
+                      <h3 className="text-sm font-bold text-stone-900 group-hover:text-amber-800 transition leading-snug line-clamp-1">
+                        {program.name}
+                      </h3>
+                    </div>
+                  </div>
 
-              {/* Top Accent Strip */}
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-10 w-10 bg-[#fefce8] border-2 border-stone-800 rounded-[255px_8px_225px_8px/8px_225px_8px_255px] shadow-[1.5px_1.5px_0px_#1c1917] flex items-center justify-center text-stone-900 font-extrabold text-sm shrink-0 group-hover:scale-105 transition-transform">
-                    {program.company.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold text-stone-600 block tracking-wide">
-                      {program.company}
+                  {isOpenNow && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold tracking-tight whitespace-nowrap shrink-0 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Open Now
                     </span>
-                    <h3 className="text-sm font-extrabold text-stone-900 group-hover:text-amber-900 transition leading-snug line-clamp-1">
-                      {program.name}
-                    </h3>
-                  </div>
+                  )}
+                  {isUpcoming && (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold tracking-tight whitespace-nowrap shrink-0">
+                      Upcoming
+                    </span>
+                  )}
+                  {!isOpenNow && !isUpcoming && (
+                    <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold tracking-tight whitespace-nowrap shrink-0">
+                      Annual Cycle
+                    </span>
+                  )}
                 </div>
 
-                {isOpenNow && (
-                  <span className="px-2.5 py-0.5 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] bg-emerald-100 text-emerald-950 border-2 border-stone-800 text-[10px] font-bold tracking-tight whitespace-nowrap shrink-0 flex items-center gap-1 shadow-2xs rotate-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Open Now
+                {/* Tag / Category */}
+                <div className="mb-3">
+                  <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700">
+                    {program.type}
                   </span>
-                )}
-                {isUpcoming && (
-                  <span className="px-2.5 py-0.5 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] bg-amber-100 text-amber-950 border border-stone-800 text-[10px] font-bold tracking-tight whitespace-nowrap shrink-0">
-                    Upcoming
-                  </span>
-                )}
-                {!isOpenNow && !isUpcoming && (
-                  <span className="px-2 py-0.5 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] bg-stone-100 text-stone-600 border border-stone-300 text-[10px] font-semibold tracking-tight whitespace-nowrap shrink-0">
-                    Annual Cycle
-                  </span>
-                )}
+                </div>
+
+                {/* Overview Summary */}
+                <p className="text-xs text-stone-600 leading-relaxed line-clamp-2 mb-4">
+                  {program.overview}
+                </p>
               </div>
 
-              {/* Tag / Category */}
-              <div className="mb-3">
-                <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700">
-                  {program.type}
-                </span>
-              </div>
-
-              {/* Overview Summary */}
-              <p className="text-xs text-stone-600 leading-relaxed line-clamp-2 mb-4">
-                {program.overview}
-              </p>
-
-              {/* Highlights Pill Box */}
-              <div className="space-y-2 mb-4 pt-3 border-t border-stone-100 text-[11px]">
+              {/* Highlights Block */}
+              <div className="space-y-2 pt-3 border-t border-stone-100 text-[11px]">
                 <div className="flex items-center justify-between text-stone-600">
                   <span className="text-stone-400 font-medium">Timeline:</span>
                   <span className="font-semibold text-stone-800">{program.expectedMonth}</span>
@@ -238,15 +230,15 @@ export const StudentPrograms: React.FC<StudentProgramsProps> = ({
                     {program.stipendOrBenefit}
                   </span>
                 </div>
-              </div>
 
-              {/* Card Footer: Click for Details */}
-              <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-xs font-semibold text-stone-500 group-hover:text-stone-900 transition">
-                <span className="inline-flex items-center gap-1 text-[11px] text-amber-700">
-                  <span>View selection & requirements</span>
-                  <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
-                </span>
-                <span className="text-[10px] text-stone-400">Click to expand</span>
+                {/* Card Footer */}
+                <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-xs font-semibold text-stone-500 group-hover:text-stone-900 transition">
+                  <span className="inline-flex items-center gap-1 text-[11px] text-amber-700">
+                    <span>View selection & requirements</span>
+                    <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition" />
+                  </span>
+                  <span className="text-[10px] text-stone-400">Click to expand</span>
+                </div>
               </div>
             </div>
           );
