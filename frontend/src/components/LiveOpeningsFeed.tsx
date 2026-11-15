@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
+import { DoodleBagAndList, DoodleWavyUnderline } from './DoodleIcons';
 
 interface LiveOpeningsFeedProps {
   onSelectCompanyForPitch: (companyName: string, role: string) => void;
@@ -134,55 +135,59 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Editorial Header */}
-      <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
-        {/* Pastel Yellow Accent Ribbon */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-amber-200/40 via-yellow-100/30 to-transparent rounded-bl-full pointer-events-none" />
+      {/* Hand-crafted Sketchbook Header */}
+      <div className="bg-[#fffefc] border-2 border-stone-800 rounded-[255px_18px_225px_18px/18px_225px_18px_255px] p-6 sm:p-8 shadow-[3.5px_4px_0px_#1c1917] relative overflow-hidden">
+        {/* Soft Pastel Watercolor Washes Behind Linework */}
+        <div className="absolute top-0 right-0 w-52 h-52 bg-amber-200/50 rounded-[45%_55%_65%_35%/40%_60%_40%_60%] blur-[3px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-36 h-28 bg-emerald-200/40 rounded-[60%_40%_30%_70%/50%_60%_40%_50%] blur-[3px] pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-950 text-xs font-semibold border border-amber-300">
-              <Zap className="h-3.5 w-3.5 text-amber-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] bg-amber-200 text-amber-950 text-xs font-bold border-2 border-stone-800 shadow-[1.5px_2px_0px_#1c1917] -rotate-1">
+              <Zap className="h-3.5 w-3.5 text-amber-700" />
               <span>Real-Time ATS Career Portals Feed</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
               Live Tech Openings & Fast-Closing Applications
             </h2>
+            <DoodleWavyUnderline className="w-40 h-2 text-amber-500 mb-2" />
             <p className="text-sm text-stone-600 leading-relaxed">
               Top tech internship portals close within 24–48 hours of posting due to high applicant volume. This tracker scrapes official ATS boards (Workday, Greenhouse, Lever, Ashby) to catch openings the moment they drop.
             </p>
           </div>
 
-          {/* Metrics Glance */}
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
-            <div className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[75px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Total Live</span>
-              <span className="text-lg font-bold text-stone-900">{openCount}</span>
-            </div>
-            <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-center min-w-[90px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-0.5">Closes Fast</span>
-              <span className="text-lg font-bold text-amber-900 flex items-center justify-center gap-1">
-                <Flame className="h-3.5 w-3.5 text-amber-600" />
-                {freshCount}
-              </span>
-            </div>
-            <div className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[75px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Summer</span>
-              <span className="text-lg font-bold text-emerald-700">{summerCount}</span>
-            </div>
-            <div className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[75px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">6-Month</span>
-              <span className="text-lg font-bold text-stone-800">{sixMonthCount}</span>
-            </div>
-            <div className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[75px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">PPO / FTE</span>
-              <span className="text-lg font-bold text-blue-700">{ppoCount}</span>
+          <div className="flex items-center gap-4 shrink-0">
+            <DoodleBagAndList className="hidden sm:inline-block w-24 h-24 shrink-0" />
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <div className="p-3 bg-white border-2 border-stone-800 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[70px]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Total Live</span>
+                <span className="text-lg font-extrabold text-stone-900">{openCount}</span>
+              </div>
+              <div className="p-3 bg-amber-100 border-2 border-stone-800 rounded-[12px_255px_12px_225px/225px_12px_255px_12px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[85px] rotate-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block mb-0.5">Closes Fast</span>
+                <span className="text-lg font-extrabold text-amber-950 flex items-center justify-center gap-1">
+                  <Flame className="h-3.5 w-3.5 text-amber-600" />
+                  {freshCount}
+                </span>
+              </div>
+              <div className="p-3 bg-white border-2 border-stone-800 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[70px]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Summer</span>
+                <span className="text-lg font-extrabold text-emerald-800">{summerCount}</span>
+              </div>
+              <div className="p-3 bg-white border-2 border-stone-800 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[70px]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">6-Month</span>
+                <span className="text-lg font-extrabold text-stone-800">{sixMonthCount}</span>
+              </div>
+              <div className="p-3 bg-white border-2 border-stone-800 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[70px]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">PPO / FTE</span>
+                <span className="text-lg font-extrabold text-blue-800">{ppoCount}</span>
+              </div>
             </div>
           </div>
         </div>
 
         {lastFetched && (
-          <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-400">
+          <div className="mt-4 pt-3 border-t border-stone-200/80 flex items-center justify-between text-[11px] text-stone-500 font-hand">
             <span>🛡️ Official ATS Whitelist Verified: Workday, Greenhouse, Lever, Ashby, Eightfold</span>
             <span>Live Scan Active</span>
           </div>
@@ -284,28 +289,30 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           <p className="text-xs text-stone-400 mt-1">Try switching to "All Live Positions" or clearing your batch filter.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredListings.map((listing) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredListings.map((listing, idx) => {
             const isFresh = listing.isUrgentFresh;
+            const cardClass = idx % 2 === 0 ? 'sketch-card' : 'sketch-card-alt';
 
             return (
               <div
                 key={listing.id}
                 onClick={() => setActiveModalListing(listing)}
-                className={`bg-white border rounded-xl p-5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group cursor-pointer relative ${
-                  isFresh ? 'border-amber-400/90 hover:border-amber-500' : 'border-stone-200/90 hover:border-stone-300'
-                }`}
+                className={`p-5 flex flex-col justify-between group cursor-pointer relative ${cardClass}`}
               >
+                {/* Washi Tape Accent on Top for Urgent Openings */}
+                {isFresh && <div className="washi-tape" />}
+
                 {/* Header Strip */}
                 <div>
-                  <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-lg bg-[#fbfbfa] border border-stone-200/90 flex items-center justify-center text-stone-800 font-bold text-sm shrink-0 group-hover:border-amber-400 transition">
+                      <div className="h-10 w-10 bg-[#fefce8] border-2 border-stone-800 rounded-[255px_8px_225px_8px/8px_225px_8px_255px] shadow-[1.5px_1.5px_0px_#1c1917] flex items-center justify-center text-stone-900 font-extrabold text-sm shrink-0 group-hover:scale-105 transition-transform">
                         {listing.company.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide">
+                          <span className="text-[11px] font-bold text-stone-600 uppercase tracking-wide">
                             {listing.company}
                           </span>
                           <span title="Verified ATS Portal">
@@ -319,8 +326,8 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     </div>
 
                     {isFresh && (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 text-[10px] font-bold tracking-tight whitespace-nowrap shrink-0 flex items-center gap-1 animate-pulse">
-                        <Flame className="w-3 h-3 text-amber-600 fill-amber-500" />
+                      <span className="px-2.5 py-0.5 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] bg-amber-200 text-amber-950 border-2 border-stone-800 text-[10px] font-extrabold tracking-tight whitespace-nowrap shrink-0 flex items-center gap-1 shadow-2xs rotate-1">
+                        <Flame className="w-3 h-3 text-amber-700 fill-amber-500" />
                         Closes Fast
                       </span>
                     )}
@@ -328,21 +335,21 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
                   {/* Urgency Alert Bar for Fresh Postings */}
                   {isFresh && (
-                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-amber-50/80 border border-amber-200/90 text-[11px] text-amber-950 flex items-center gap-1.5 font-medium">
-                      <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                      <span>Posted {listing.postedAgoLabel} • Expected window: 1–2 days max!</span>
+                    <div className="mb-3 px-3 py-1.5 rounded-[255px_10px_225px_10px/10px_225px_10px_255px] bg-[#fef9c3] border border-amber-400 text-xs text-amber-950 font-hand flex items-center gap-1.5 shadow-2xs">
+                      <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                      <span>Posted {listing.postedAgoLabel} • Window: 1–2 days max!</span>
                     </div>
                   )}
 
                   {/* Pills Row */}
                   <div className="flex items-center gap-1.5 flex-wrap mb-3 text-[11px]">
-                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 font-semibold">
+                    <span className="px-2 py-0.5 rounded-[255px_8px_225px_8px/8px_225px_8px_255px] bg-[#f5f5f4] border border-stone-300 text-stone-800 font-bold">
                       {listing.roleType}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600">
+                    <span className="px-2 py-0.5 rounded-[255px_8px_225px_8px/8px_225px_8px_255px] bg-[#f5f5f4] border border-stone-300 text-stone-600">
                       {listing.categoryLabel}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-[255px_8px_225px_8px/8px_225px_8px_255px] bg-[#f5f5f4] border border-stone-300 text-stone-600 flex items-center gap-1">
                       <MapPin className="h-3 w-3 text-stone-400" />
                       {listing.locations[0] || 'India'}
                     </span>

@@ -8,6 +8,7 @@ import { LiveOpeningsFeed } from './components/LiveOpeningsFeed';
 import { CompanyHiringCycles } from './components/CompanyHiringCycles';
 import { HackathonsDirectory } from './components/HackathonsDirectory';
 import { StudentPrograms } from './components/StudentPrograms';
+import { DoodleRecipeBook, DoodleWavyUnderline, DoodleStar } from './components/DoodleIcons';
 import type { CandidateProfile, Project, Application, EnvConfig } from './types';
 
 export default function App() {
@@ -146,25 +147,39 @@ export default function App() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
         {/* Human-crafted Morning Greeting & Pipeline Status */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-3 border-b border-stone-200/60">
-          <div>
-            <span className="text-xs font-medium text-stone-400 block mb-0.5">
-              {todayFormatted}
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
-              {greeting}, {candidateFirstName}
-            </h1>
+        <div className="mb-8 p-5 sm:p-6 bg-[#fffefc] border-2 border-stone-800 rounded-[255px_18px_225px_18px/18px_225px_18px_255px] shadow-[3.5px_4px_0px_#1c1917] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Soft Watercolor Washes */}
+          <div className="absolute -top-6 -right-6 w-36 h-36 bg-amber-200/50 rounded-full blur-[4px] pointer-events-none" />
+          <div className="absolute -bottom-8 left-1/3 w-32 h-24 bg-emerald-200/40 rounded-full blur-[4px] pointer-events-none" />
+
+          <div className="flex items-center gap-4 relative z-10">
+            <DoodleRecipeBook className="w-16 h-16 sm:w-20 sm:h-20 shrink-0" />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-hand text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 border border-stone-800 px-2.5 py-0.5 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] -rotate-1 inline-flex items-center gap-1 shadow-2xs">
+                  <DoodleStar className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Daily Placement Notebook</span>
+                </span>
+                <span className="text-xs text-stone-500 font-medium font-hand">
+                  {todayFormatted}
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight flex items-center gap-2">
+                <span>{greeting}, {candidateFirstName}!</span>
+              </h1>
+              <DoodleWavyUnderline className="w-36 h-2 text-amber-500 mt-1" />
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs flex-wrap">
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="flex items-center gap-2.5 text-xs flex-wrap relative z-10">
+            <span className="px-3 py-1.5 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] bg-emerald-100 text-emerald-950 border-2 border-stone-800 font-bold flex items-center gap-1.5 shadow-[2px_2px_0px_#1c1917]">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Pipeline Active</span>
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-white text-stone-700 border border-stone-200/80 font-medium">
+            <span className="px-3 py-1.5 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] bg-white text-stone-900 border-2 border-stone-800 font-bold shadow-[2px_2px_0px_#1c1917]">
               {applications.length} Dispatched
             </span>
-            <span className={`px-2.5 py-1 rounded-lg border font-medium ${profile?.hasResume ? 'bg-white text-stone-700 border-stone-200/80' : 'bg-amber-50 text-amber-800 border-amber-200/80'}`}>
+            <span className={`px-3 py-1.5 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] border-2 border-stone-800 font-bold shadow-[2px_2px_0px_#1c1917] ${profile?.hasResume ? 'bg-amber-100 text-amber-950' : 'bg-red-50 text-red-900'}`}>
               {profile?.hasResume ? '✓ Resume Attached' : '⚠️ No Resume'}
             </span>
           </div>

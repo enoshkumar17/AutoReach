@@ -10,6 +10,7 @@ import {
   Award,
   Clock,
 } from 'lucide-react';
+import { DoodleWavyUnderline } from './DoodleIcons';
 
 interface HackathonsDirectoryProps {
   onSelectCompanyForPitch: (companyName: string, role: string) => void;
@@ -53,33 +54,35 @@ export const HackathonsDirectory: React.FC<HackathonsDirectoryProps> = ({
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Editorial Playful Header */}
-      <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
-        {/* Pastel Yellow Accent Glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-yellow-200/40 via-amber-100/30 to-transparent rounded-bl-full pointer-events-none" />
+      {/* Hand-crafted Sketchbook Header */}
+      <div className="bg-[#fffefc] border-2 border-stone-800 rounded-[255px_18px_225px_18px/18px_225px_18px_255px] p-6 sm:p-8 shadow-[3.5px_4px_0px_#1c1917] relative overflow-hidden">
+        {/* Soft Watercolor Washes */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-yellow-200/50 rounded-[45%_55%_65%_35%/40%_60%_40%_60%] blur-[3px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-36 h-28 bg-amber-200/40 rounded-[60%_40%_30%_70%/50%_60%_40%_50%] blur-[3px] pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-950 text-xs font-semibold border border-amber-300">
-              <Trophy className="h-3.5 w-3.5 text-amber-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] bg-amber-200 text-amber-950 text-xs font-bold border-2 border-stone-800 shadow-[1.5px_2px_0px_#1c1917] -rotate-1">
+              <Trophy className="h-3.5 w-3.5 text-amber-700" />
               <span>Flagship Tech Hackathons & Coding Competitions</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
               Top Big Company Hackathons Worth Participating In
             </h2>
+            <DoodleWavyUnderline className="w-44 h-2 text-amber-500 mb-2" />
             <p className="text-sm text-stone-600 leading-relaxed">
               Bypass 10,000+ standard resume applications. These 20+ verified corporate hackathons (Flipkart GRiD, Walmart CodeHers, JPMC Code for Good, Google Girl Hackathon) offer <strong>direct pre-placement interview (PPI) calls and summer internship offers</strong>.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
-            <div className="p-3.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[110px]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Open Now</span>
-              <span className="text-xl font-bold text-emerald-700">{openNowCount} Challenges</span>
+          <div className="flex items-center gap-2.5 self-start md:self-auto shrink-0">
+            <div className="p-3 bg-white border-2 border-stone-800 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[95px]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Open Now</span>
+              <span className="text-lg font-extrabold text-emerald-800">{openNowCount} Contests</span>
             </div>
-            <div className="p-3.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[110px]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Total Tracked</span>
-              <span className="text-xl font-bold text-amber-600">20+ Contests</span>
+            <div className="p-3 bg-amber-100 border-2 border-stone-800 rounded-[12px_255px_12px_225px/225px_12px_255px_12px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[95px] rotate-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block mb-0.5">Tracked</span>
+              <span className="text-lg font-extrabold text-amber-950">20+ Verified</span>
             </div>
           </div>
         </div>
@@ -143,23 +146,27 @@ export const HackathonsDirectory: React.FC<HackathonsDirectoryProps> = ({
         </span>
       </div>
 
-      {/* Cards Grid: Clean, Visual, Not Clumsy */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredHackathons.map((h) => {
+      {/* Cards Grid: Hand-drawn Irregular Wabi-Sabi Aesthetics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {filteredHackathons.map((h, idx) => {
           const isOpenNow = h.status === 'OPEN_NOW';
           const isUpcoming = h.status === 'UPCOMING_SOON';
+          const cardClass = idx % 2 === 0 ? 'sketch-card' : 'sketch-card-alt';
 
           return (
             <div
               key={h.id}
               onClick={() => setActiveModalHackathon(h)}
-              className="group bg-white border border-stone-200/90 hover:border-amber-400 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all duration-150 flex flex-col justify-between space-y-4 cursor-pointer"
+              className={`group p-5 flex flex-col justify-between space-y-4 cursor-pointer relative ${cardClass}`}
             >
+              {/* Washi Tape on Open Contests */}
+              {isOpenNow && <div className="washi-tape washi-tape-sage" />}
+
               <div className="space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-bold text-stone-900 text-base leading-tight group-hover:text-amber-800 transition">
+                    <h3 className="font-extrabold text-stone-900 text-base leading-tight group-hover:text-amber-900 transition">
                       {h.name}
                     </h3>
                     <span className="text-xs text-stone-500 font-medium block mt-0.5">

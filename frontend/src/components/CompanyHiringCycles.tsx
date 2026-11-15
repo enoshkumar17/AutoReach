@@ -11,6 +11,7 @@ import {
   Sparkles,
   MapPin,
 } from 'lucide-react';
+import { DoodleShelves, DoodleWavyUnderline } from './DoodleIcons';
 
 interface CompanyHiringCyclesProps {
   onSelectCompanyForPitch: (companyName: string, role: string) => void;
@@ -76,54 +77,58 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Playful & Clean Editorial Header with Hand-drawn Aesthetic */}
-      <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
-        {/* Pastel Yellow Accent Ribbon */}
-        <div className="absolute top-0 right-0 w-44 h-44 bg-gradient-to-bl from-amber-200/40 via-yellow-100/30 to-transparent rounded-bl-full pointer-events-none" />
+      {/* Hand-crafted Sketchbook Header */}
+      <div className="bg-[#fffefc] border-2 border-stone-800 rounded-[255px_18px_225px_18px/18px_225px_18px_255px] p-6 sm:p-8 shadow-[3.5px_4px_0px_#1c1917] relative overflow-hidden">
+        {/* Soft Watercolor Blotches */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-200/50 rounded-[45%_55%_65%_35%/40%_60%_40%_60%] blur-[3px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-28 bg-orange-200/40 rounded-[60%_40%_30%_70%/50%_60%_40%_50%] blur-[3px] pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-950 text-xs font-semibold border border-amber-300">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-[255px_15px_225px_15px/15px_225px_15px_255px] bg-amber-200 text-amber-950 text-xs font-bold border-2 border-stone-800 shadow-[1.5px_2px_0px_#1c1917] -rotate-1">
+              <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
               <span>Company Hiring Calendar & Drive Cycles</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
               Which company hires when, and when does it reopen?
             </h2>
+            <DoodleWavyUnderline className="w-40 h-2 text-amber-500 mb-2" />
             <p className="text-sm text-stone-600 leading-relaxed">
               Never miss a hiring window. Understand exact recruitment schedules: which companies are actively hiring right now, when past drives closed, and when the next off-campus drive returns.
             </p>
           </div>
 
-          {/* Quick Stats Pill Block */}
-          <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
-            <div className="p-3.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[100px]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Active In Nov</span>
-              <span className="text-xl font-bold text-emerald-700">5 Companies</span>
-            </div>
-            <div className="p-3.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[100px]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Next in Jan–Feb</span>
-              <span className="text-xl font-bold text-amber-600">8 Companies</span>
+          <div className="flex items-center gap-4 shrink-0">
+            <DoodleShelves className="hidden sm:inline-block w-28 h-20 shrink-0" />
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <div className="p-3 bg-white border-2 border-stone-800 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[90px]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Active In Nov</span>
+                <span className="text-lg font-extrabold text-emerald-800">5 Drives</span>
+              </div>
+              <div className="p-3 bg-amber-100 border-2 border-stone-800 rounded-[12px_255px_12px_225px/225px_12px_255px_12px] shadow-[2.5px_2.5px_0px_#1c1917] text-center min-w-[90px] rotate-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block mb-0.5">Next Jan–Feb</span>
+                <span className="text-lg font-extrabold text-amber-950">8 Drives</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Interactive Month-by-Month Timeline Bar */}
-        <div className="mt-6 pt-5 border-t border-stone-100">
+        <div className="mt-6 pt-5 border-t-2 border-dashed border-stone-300">
           <div className="flex items-center justify-between gap-2 mb-2.5">
-            <span className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-stone-500" />
-              Filter by Hiring Month:
+            <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5 font-hand text-sm">
+              <Calendar className="h-4 w-4 text-amber-700" />
+              Filter by Hiring Month (12-Month Calendar):
             </span>
             <button
               onClick={() => setSelectedMonth('ALL')}
-              className={`text-xs font-semibold cursor-pointer px-2 py-0.5 rounded transition ${
+              className={`text-xs font-bold cursor-pointer px-2.5 py-1 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] border-2 transition ${
                 selectedMonth === 'ALL'
-                  ? 'bg-stone-900 text-white'
-                  : 'text-stone-500 hover:text-stone-900'
+                  ? 'bg-stone-900 text-amber-100 border-stone-900 shadow-[1.5px_2px_0px_#1c1917]'
+                  : 'bg-white text-stone-600 border-stone-300 hover:border-stone-800'
               }`}
             >
-              Show Full Year (12 Months)
+              Show Full Year
             </button>
           </div>
 
@@ -135,17 +140,17 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
                 <button
                   key={m.num}
                   onClick={() => setSelectedMonth(m.num)}
-                  className={`py-2 px-1.5 rounded-lg text-xs font-semibold transition flex flex-col items-center justify-center cursor-pointer border ${
+                  className={`py-2 px-1 rounded-[255px_10px_225px_10px/10px_225px_10px_255px] text-xs transition flex flex-col items-center justify-center cursor-pointer border-2 ${
                     isSelected
-                      ? 'bg-amber-300 text-stone-950 border-amber-400 shadow-2xs font-bold'
+                      ? 'bg-amber-300 text-stone-950 border-stone-900 shadow-[2px_2.5px_0px_#1c1917] font-extrabold -rotate-1'
                       : isCurrent
-                      ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
-                      : 'bg-[#faf9f8] text-stone-600 border-stone-200/80 hover:bg-stone-100'
+                      ? 'bg-emerald-100 text-emerald-950 border-emerald-600 font-bold hover:bg-emerald-200'
+                      : 'bg-white text-stone-700 border-stone-300 hover:border-stone-800'
                   }`}
                 >
-                  <span>{m.name}</span>
+                  <span className="font-semibold">{m.name}</span>
                   {isCurrent && (
-                    <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-tight">Active</span>
+                    <span className="text-[8px] font-extrabold text-emerald-800 uppercase tracking-tight">Active</span>
                   )}
                 </button>
               );
@@ -215,33 +220,37 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
         </span>
       </div>
 
-      {/* Cards Grid: Clean, Visual, Not Clumsy */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredCompanies.map((c) => {
+      {/* Cards Grid: Hand-drawn Irregular Wabi-Sabi Aesthetics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {filteredCompanies.map((c, idx) => {
           const isOpenNow = c.currentStatus === 'OPEN_NOW';
           const isUpcoming = c.currentStatus === 'UPCOMING_SOON';
+          const cardClass = idx % 2 === 0 ? 'sketch-card' : 'sketch-card-alt';
 
           return (
             <div
               key={c.id}
               onClick={() => setActiveModalCompany(c)}
-              className="group bg-white border border-stone-200/90 hover:border-amber-400 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all duration-150 flex flex-col justify-between space-y-4 cursor-pointer relative"
+              className={`group p-5 flex flex-col justify-between space-y-4 cursor-pointer relative ${cardClass}`}
             >
+              {/* Washi Tape Accent on Open Cycles */}
+              {isOpenNow && <div className="washi-tape" />}
+
               {/* Card Top: Header & Live Pill */}
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div
-                      className="h-10 w-10 rounded-xl font-bold text-sm flex items-center justify-center shadow-2xs shrink-0"
+                      className="h-10 w-10 border-2 border-stone-800 rounded-[255px_8px_225px_8px/8px_225px_8px_255px] font-extrabold text-sm flex items-center justify-center shadow-[1.5px_1.5px_0px_#1c1917] shrink-0"
                       style={{ backgroundColor: c.logoBg, color: c.logoColor }}
                     >
                       {c.initials}
                     </div>
                     <div>
-                      <h3 className="font-bold text-stone-900 text-base leading-tight group-hover:text-amber-800 transition">
+                      <h3 className="font-extrabold text-stone-900 text-base leading-tight group-hover:text-amber-900 transition">
                         {c.name}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-xs text-stone-400 mt-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-stone-500 mt-0.5">
                         <MapPin className="h-3 w-3 shrink-0" />
                         <span>{c.locations.join(' · ')}</span>
                       </div>
@@ -251,32 +260,32 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
                   {/* Status Indicator */}
                   <div>
                     {isOpenNow ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                      <span className="px-2.5 py-1 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] text-xs font-bold bg-emerald-100 text-emerald-950 border-2 border-stone-800 flex items-center gap-1.5 shadow-[1.5px_2px_0px_#1c1917] rotate-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         <span>Active Now</span>
                       </span>
                     ) : isUpcoming ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-amber-600" />
-                        <span>Coming in Jan–Feb</span>
+                      <span className="px-2.5 py-1 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] text-xs font-bold bg-amber-100 text-amber-950 border border-stone-800 flex items-center gap-1 shadow-2xs">
+                        <Clock className="h-3 w-3 text-amber-700" />
+                        <span>Coming Soon</span>
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-600 border border-stone-200">
-                        Closed (Next Summer)
+                      <span className="px-2.5 py-0.5 rounded-[255px_12px_225px_12px/12px_225px_12px_255px] text-xs font-medium bg-stone-100 text-stone-600 border border-stone-300">
+                        Closed Cycle
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Plain English Timeline Strip */}
-                <div className="bg-[#f9fafb] p-3 rounded-xl border border-stone-200/80 space-y-1.5 text-xs">
+                <div className="bg-[#fefce8] p-3 rounded-[255px_10px_225px_10px/10px_225px_10px_255px] border border-amber-300/90 space-y-1.5 text-xs">
                   <div className="flex items-start gap-1.5">
-                    <span className="text-stone-400 font-semibold shrink-0">Recent Drive:</span>
-                    <span className="text-stone-700">{c.lastCycleDone}</span>
+                    <span className="text-stone-500 font-semibold shrink-0">Recent Drive:</span>
+                    <span className="text-stone-800 font-medium">{c.lastCycleDone}</span>
                   </div>
                   <div className="flex items-start gap-1.5">
-                    <span className="text-emerald-700 font-bold shrink-0">Next Intake:</span>
-                    <span className="text-stone-900 font-semibold">{c.nextCycleReopens}</span>
+                    <span className="text-emerald-800 font-bold shrink-0">Next Intake:</span>
+                    <span className="text-stone-900 font-bold">{c.nextCycleReopens}</span>
                   </div>
                 </div>
 
