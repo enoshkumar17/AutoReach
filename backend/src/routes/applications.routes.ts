@@ -40,6 +40,15 @@ router.get('/', async (_req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
     });
 
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const sentTodayCount = applications.filter((a) => a.sentAt && new Date(a.sentAt) >= oneDayAgo).length;
+    const quotaInfo = {
+      sentToday: sentTodayCount,
+      dailySafeLimit: 50,
+      remainingSafe: Math.max(0, 50 - sentTodayCount),
+      status: sentTodayCount >= 50 ? 'LIMIT_REACHED' : sentTodayCount >= 40 ? 'NEAR_LIMIT' : 'SAFE',
+    };
+
     const stats = {
       total: applications.length,
       sent: applications.filter((a) => a.status === 'SENT').length,
@@ -52,6 +61,7 @@ router.get('/', async (_req: Request, res: Response) => {
 
     res.json({
       stats,
+      quotaInfo,
       applications,
     });
   } catch (error: any) {
@@ -73,10 +83,33 @@ router.post('/send', async (req: Request, res: Response) => {
       matchedProjects,
       sourceType,
       attachResume = true,
+      overrideQuota = false,
     } = req.body;
 
     if (!recipientEmail || !emailSubject || !emailBody) {
       return res.status(400).json({ error: 'Recipient email, subject, and email body are required.' });
+    }
+
+    // Security: sanitize against header injection and validate email syntax
+    const sanitizedEmail = recipientEmail.replace(/[\r\n\t]/g, '').trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(sanitizedEmail)) {
+      return res.status(400).json({ error: 'Invalid recipient email format.' });
+    }
+
+    // Security & Deliverability Guard: Daily Quota Protection (50/day max)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const sentToday = await prisma.application.count({
+      where: {
+        sentAt: { gte: oneDayAgo },
+      },
+    });
+
+    if (sentToday >= 50 && !overrideQuota) {
+      return res.status(429).json({
+        error: 'Daily safe sending quota reached (50 emails/24h). To protect your Gmail domain reputation from Google spam detection, wait until tomorrow or pass overrideQuota: true.',
+        quotaReached: true,
+      });
     }
 
     const profile = await prisma.candidateProfile.findFirst();
@@ -84,7 +117,7 @@ router.post('/send', async (req: Request, res: Response) => {
 
     // Dispatch via nodemailer
     const sendResult = await sendApplicationEmail({
-      to: recipientEmail,
+      to: sanitizedEmail,
       subject: emailSubject,
       body: emailBody,
       resumePath: resumePath,
@@ -95,7 +128,7 @@ router.post('/send', async (req: Request, res: Response) => {
       data: {
         companyName: companyName || 'Company',
         recipientName: recipientName || null,
-        recipientEmail: recipientEmail.trim(),
+        recipientEmail: sanitizedEmail,
         role: role || 'Internship',
         jobType: jobType || 'Internship',
         status: 'SENT',

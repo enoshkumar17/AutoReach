@@ -69,7 +69,14 @@ export interface SpamAnalysis {
   recommendations: string[];
 }
 
-export type PitchStyle = 'proof-of-work' | 'short-casual' | 'value-prop';
+export type PitchStyle = 'five-line-founder' | 'proof-of-work' | 'short-casual' | 'value-prop';
+
+export interface QuotaInfo {
+  sentToday: number;
+  dailySafeLimit: number;
+  remainingSafe: number;
+  status: 'SAFE' | 'NEAR_LIMIT' | 'LIMIT_REACHED';
+}
 
 export interface BatchItem {
   id: string;

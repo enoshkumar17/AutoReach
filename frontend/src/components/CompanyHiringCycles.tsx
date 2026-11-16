@@ -199,7 +199,7 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
           >
             🔴 Recently Closed
           </button>
-          {['ALL', 'Big Tech', 'Finance & Banking', 'Indian Unicorns', 'Product & Enterprise', 'Semiconductors'].map((cat) => (
+          {['ALL', 'Funded Startups (YC & Peak XV)', 'Big Tech', 'Finance & Banking', 'Indian Unicorns', 'Product & Enterprise', 'Semiconductors'].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -425,16 +425,29 @@ export const CompanyHiringCycles: React.FC<CompanyHiringCyclesProps> = ({
                 <ExternalLink className="h-3.5 w-3.5 text-stone-300" />
               </a>
 
-              <button
-                onClick={() => {
-                  onSelectCompanyForPitch(activeModalCompany.name, 'Software Engineering Intern');
-                  setActiveModalCompany(null);
-                }}
-                className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
-              >
-                <Send className="h-3.5 w-3.5 text-stone-400" />
-                <span>Draft Referral Request Pitch</span>
-              </button>
+              {activeModalCompany.category === 'Funded Startups (YC & Peak XV)' ? (
+                <button
+                  onClick={() => {
+                    onSelectCompanyForPitch(activeModalCompany.name, 'Software Engineering Intern');
+                    setActiveModalCompany(null);
+                  }}
+                  className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-amber-400 hover:bg-amber-500 text-stone-950 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-2xs"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-stone-950" />
+                  <span>Draft 5-Line Founder Pitch</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    onSelectCompanyForPitch(activeModalCompany.name, 'Software Engineering Intern');
+                    setActiveModalCompany(null);
+                  }}
+                  className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <Send className="h-3.5 w-3.5 text-stone-400" />
+                  <span>Draft Referral Request Pitch</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

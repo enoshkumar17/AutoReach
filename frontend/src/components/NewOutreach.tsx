@@ -28,6 +28,7 @@ import type {
   Project,
   PitchStyle,
   BatchItem,
+  QuotaInfo,
 } from '../types';
 
 interface NewOutreachProps {
@@ -101,6 +102,27 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
   // Refs for throttling interval control
   const stopBatchRef = useRef(false);
   const pauseBatchRef = useRef(false);
+
+  // Safe Quota state (Daily 50 emails safety guard)
+  const [quotaInfo, setQuotaInfo] = useState<QuotaInfo | null>(null);
+
+  const fetchQuotaInfo = async () => {
+    try {
+      const res = await fetch('/api/applications');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.quotaInfo) {
+          setQuotaInfo(data.quotaInfo);
+        }
+      }
+    } catch {
+      // silent
+    }
+  };
+
+  useEffect(() => {
+    fetchQuotaInfo();
+  }, []);
 
   // Global clipboard listener for Ctrl+V image pasting
   useEffect(() => {
@@ -295,6 +317,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
       setSuccessMsg(`Application sent to ${draft.recipientEmail}! Logged in Applications pipeline.`);
       onApplicationSent(data.application);
+      fetchQuotaInfo();
 
       setTimeout(() => {
         setDraft(null);
@@ -392,6 +415,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
       handleUpdateBatchItem(item.id, { status: 'SENT' });
       onApplicationSent(data.application);
+      fetchQuotaInfo();
     } catch (err: any) {
       handleUpdateBatchItem(item.id, {
         status: 'FAILED',
@@ -460,6 +484,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
         handleUpdateBatchItem(currentItem.id, { status: 'SENT' });
         onApplicationSent(data.application);
+        fetchQuotaInfo();
       } catch (err: any) {
         handleUpdateBatchItem(currentItem.id, {
           status: 'FAILED',
@@ -541,6 +566,50 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
         </div>
       )}
 
+      {/* 🛡️ Safe Quota & Reputation Guard Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-white border border-stone-200/80 shadow-2xs text-xs">
+        <div className="flex items-center gap-2 text-stone-700">
+          <ShieldCheck
+            className={`h-4 w-4 ${
+              quotaInfo?.status === 'LIMIT_REACHED'
+                ? 'text-rose-500'
+                : quotaInfo?.status === 'NEAR_LIMIT'
+                ? 'text-amber-500'
+                : 'text-emerald-600'
+            }`}
+          />
+          <span className="font-semibold text-stone-900">Safe Outreach Quota:</span>
+          <span>
+            {quotaInfo ? (
+              <>
+                <strong
+                  className={
+                    quotaInfo.status === 'LIMIT_REACHED' ? 'text-rose-600 font-bold' : 'text-stone-900'
+                  }
+                >
+                  {quotaInfo.sentToday}
+                </strong>
+                <span className="text-stone-400"> / 50 sent today</span>
+                <span className="text-stone-500 ml-1.5 font-medium">
+                  ({quotaInfo.remainingSafe} remaining safe)
+                </span>
+              </>
+            ) : (
+              <span className="text-stone-400">Checking quota...</span>
+            )}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 text-stone-400 text-[11px]">
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>Anti-Spam Throttler Active</span>
+          </span>
+          <span>•</span>
+          <span>Max 10–20/day recommended for startups</span>
+        </div>
+      </div>
+
       {/* Mode Switcher: Single vs Batch Scanner (80% Clean SaaS Design) */}
       <div className="bg-white border border-stone-200/90 rounded-2xl p-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -572,6 +641,17 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
         {/* Pitch Style Pills & AI Customizer Toggle */}
         <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-medium flex-wrap">
           <span className="text-stone-400 font-semibold mr-1 hidden sm:inline text-xs">Style:</span>
+          <button
+            onClick={() => setPitchStyle('five-line-founder')}
+            title="The proven 5-line formula for YC & funded startup founders (<60 words)"
+            className={`px-3 py-1.5 rounded-lg border transition cursor-pointer font-bold ${
+              pitchStyle === 'five-line-founder'
+                ? 'bg-amber-400 text-stone-950 border-amber-500 shadow-2xs'
+                : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+            }`}
+          >
+            ⚡ 5-Line Founder
+          </button>
           <button
             onClick={() => setPitchStyle('proof-of-work')}
             title="Proof-of-work pitch with live demo and GitHub repo link"

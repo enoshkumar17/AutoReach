@@ -16,8 +16,12 @@ build/
 # SQLite Databases & Local Storage
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 dev.db
 backend/prisma/dev.db
+backend/prisma/dev.db-wal
+backend/prisma/dev.db-shm
 backend/dev.db
 
 # User Uploaded Resumes

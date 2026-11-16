@@ -16,7 +16,7 @@ export interface CandidateContext {
   }>;
 }
 
-export type PitchStyle = 'proof-of-work' | 'short-casual' | 'value-prop';
+export type PitchStyle = 'five-line-founder' | 'proof-of-work' | 'short-casual' | 'value-prop';
 
 export interface ExtractedOutreach {
   companyName: string;
@@ -187,7 +187,17 @@ ${options.customInstructions}
 CRITICAL: You MUST strictly adapt the tone, focus, length, and content of emailBody to follow the above user modifications!
 ` : ''}
 
-${options.pitchStyle === 'short-casual' ? `
+${options.pitchStyle === 'five-line-founder' ? `
+7. PITCH STYLE: 5-LINE FOUNDER PROOF-OF-WORK (<60 WORDS, NO CORPORATE FLUFF)
+- Tailored specifically for busy startup founders, CTOs, and tech leads (YC / Seed / Series A startups).
+- Enforce EXACTLY 5 short, punchy lines with single blank lines between them:
+  Line 1: Salutation + "Noticed [Company]'s recent expansion/work in [domain]."
+  Line 2: "I'm a CS student at [College] specializing in [specialty], and built [Project 1 Title] ([Tech Stack])."
+  Line 3: "Architecture & code: [GitHub/Live link if available, or brief technical highlight]"
+  Line 4: "My resume is attached — would love to contribute to your engineering goals if you have an intern opening."
+  Line 5: Best regards, \n${options.candidate.fullName} | ${options.candidate.email}
+- HARD CONSTRAINT: Strict maximum 60 words total. Do NOT write long paragraphs, do NOT say "I hope this email finds you well", keep it razor sharp.
+` : options.pitchStyle === 'short-casual' ? `
 7. PITCH STYLE: SHORT & CASUAL (<65 words)
 - Keep body ultra-concise under 65 words.
 - Skip fluff, sound human and friendly.
@@ -378,6 +388,15 @@ CRITICAL RULES:
    - role: "Software Engineering Intern" (or specific role if noted).
    - matchedProjects: 1 or 2 project titles from the candidate's portfolio that best fit this company's technical domain.
 
+${options.pitchStyle === 'five-line-founder' ? `
+4. COLD EMAIL FORMATTING - 5-LINE FOUNDER FORMULA (STRICTLY UNDER 60 WORDS TOTAL, 5 LINES):
+   Line 1: Hi [Company Name] Team,
+   Line 2: Came across [Company Name] and saw your rapid growth in this space.
+   Line 3: Built [Project Title] ([Tech Stack]) which [one high-impact feature/metric].
+   Line 4: Demo / GitHub: [liveUrl or githubUrl] - resume attached. Would love 5 mins to see if I can contribute.
+   Line 5: Best, ${options.candidate.fullName} | ${options.candidate.email}
+   (NO fluffy introductions, NO "I hope this email finds you well", NO corporate filler)
+` : `
 4. COLD EMAIL FORMATTING (MUST FOLLOW THIS EXACT 4-PARAGRAPH FORMAT WITH DOUBLE NEWLINES \\n\\n):
    - Paragraph 1: Salutation ("Hi [Company Name] Team,") followed by 1 sentence expressing interest in the [Role].
    - Paragraph 2: "As a [Degree] student at [College], I have hands-on experience building scalable applications. Notably, I developed [Project Title] utilizing [Tech Stack], [key technical accomplishment]."
@@ -387,6 +406,9 @@ CRITICAL RULES:
      ${options.candidate.fullName}
      ${options.candidate.email}${options.candidate.phone ? ` | ${options.candidate.phone}` : ''}
      ${options.candidate.linkedin ? `LinkedIn: ${options.candidate.linkedin}` : ''}${options.candidate.github ? ` | GitHub: ${options.candidate.github}` : ''}
+`}
+
+${options.customInstructions ? `USER CUSTOM TRAINING INSTRUCTIONS:\nApply these custom preferences to the generated pitch: "${options.customInstructions}"\n` : ''}
 
 Return ONLY valid JSON matching this schema:
 {
