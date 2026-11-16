@@ -25,6 +25,7 @@ interface NotificationDrawerProps {
   onDeleteNotification: (id: number) => void;
   onSelectCompanyForPitch: (companyName: string, role: string) => void;
   onSendTestEmail: () => Promise<{ success: boolean; message: string }>;
+  onSendDailyDigest?: () => Promise<{ success: boolean; message: string }>;
   onCheckPortalsNow: () => Promise<void>;
 }
 
@@ -38,12 +39,17 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   onDeleteNotification,
   onSelectCompanyForPitch,
   onSendTestEmail,
+  onSendDailyDigest,
   onCheckPortalsNow,
 }) => {
   const [filter, setFilter] = useState<'ALL' | 'UNREAD' | 'ALERTS' | 'URGENT'>('ALL');
   const [sendingTest, setSendingTest] = useState(false);
+  const [sendingDigest, setSendingDigest] = useState(false);
   const [checkingPortals, setCheckingPortals] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [browserPushEnabled, setBrowserPushEnabled] = useState(
+    typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
+  );
 
   if (!isOpen) return null;
 
@@ -63,6 +69,41 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
       setTimeout(() => setTestResult(null), 7000);
     } finally {
       setSendingTest(false);
+    }
+  };
+
+  const handleSendDigestClick = async () => {
+    if (!onSendDailyDigest) return;
+    setSendingDigest(true);
+    setTestResult(null);
+    try {
+      const res = await onSendDailyDigest();
+      setTestResult(res.message);
+      setTimeout(() => setTestResult(null), 7000);
+    } finally {
+      setSendingDigest(false);
+    }
+  };
+
+  const handleRequestPushPermission = async () => {
+    if ('Notification' in window) {
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          setBrowserPushEnabled(true);
+          new Notification('⚡ AutoReach Radar Active', {
+            body: 'Desktop notifications enabled! You will be alerted the second a matching SDE opening is verified.',
+          });
+          setTestResult('Desktop browser notifications successfully enabled!');
+          setTimeout(() => setTestResult(null), 7000);
+        } else {
+          setTestResult('Desktop notification permission was not granted.');
+        }
+      } catch (err: any) {
+        setTestResult('Unable to request notification permission: ' + err.message);
+      }
+    } else {
+      setTestResult('Browser desktop notifications not supported by this browser.');
     }
   };
 
@@ -123,24 +164,15 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
         </div>
 
         {/* Live Radar Actions Toolbar */}
-        <div className="px-5 py-3 border-b border-stone-100 bg-[#fcfcfb] flex items-center justify-between gap-2 text-xs">
-          <button
-            onClick={handleCheckNowClick}
-            disabled={checkingPortals}
-            className="flex items-center gap-1.5 text-stone-700 hover:text-stone-950 font-semibold cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${checkingPortals ? 'animate-spin text-amber-500' : 'text-stone-400'}`} />
-            <span>{checkingPortals ? 'Checking Portals...' : 'Sync ATS Portals'}</span>
-          </button>
-
-          <div className="flex items-center gap-3">
+        <div className="px-5 py-3 border-b border-stone-100 bg-[#fcfcfb] space-y-2 text-xs">
+          <div className="flex items-center justify-between gap-2">
             <button
-              onClick={handleTestClick}
-              disabled={sendingTest}
-              className="text-amber-800 hover:text-amber-950 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              onClick={handleCheckNowClick}
+              disabled={checkingPortals}
+              className="flex items-center gap-1.5 text-stone-700 hover:text-stone-950 font-semibold cursor-pointer disabled:opacity-50"
             >
-              <Mail className="h-3 w-3" />
-              <span>{sendingTest ? 'Sending...' : 'Test Mail Alert'}</span>
+              <RefreshCw className={`h-3.5 w-3.5 ${checkingPortals ? 'animate-spin text-amber-500' : 'text-stone-400'}`} />
+              <span>{checkingPortals ? 'Checking Portals...' : 'Sync 100+ Portals'}</span>
             </button>
 
             {unreadCount > 0 && (
@@ -149,9 +181,43 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 className="text-stone-500 hover:text-stone-800 font-medium flex items-center gap-1 cursor-pointer"
               >
                 <CheckCheck className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Mark Read</span>
+                <span>Mark All Read</span>
               </button>
             )}
+          </div>
+
+          <div className="flex items-center gap-2 pt-1 border-t border-stone-100/80 flex-wrap">
+            <button
+              onClick={handleTestClick}
+              disabled={sendingTest}
+              className="px-2 py-1 rounded-md bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium flex items-center gap-1 cursor-pointer disabled:opacity-50 text-[11px]"
+            >
+              <Mail className="h-3 w-3 text-amber-600" />
+              <span>{sendingTest ? 'Sending...' : 'Test Instant Alert'}</span>
+            </button>
+
+            {onSendDailyDigest && (
+              <button
+                onClick={handleSendDigestClick}
+                disabled={sendingDigest}
+                className="px-2 py-1 rounded-md bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium flex items-center gap-1 cursor-pointer disabled:opacity-50 text-[11px]"
+              >
+                <span>☀️</span>
+                <span>{sendingDigest ? 'Generating...' : 'Send Morning Digest'}</span>
+              </button>
+            )}
+
+            <button
+              onClick={handleRequestPushPermission}
+              className={`px-2 py-1 rounded-md text-[11px] font-medium flex items-center gap-1 cursor-pointer transition ${
+                browserPushEnabled
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+              }`}
+            >
+              <Bell className="h-3 w-3 text-stone-500" />
+              <span>{browserPushEnabled ? 'Desktop Push Active' : 'Enable Desktop Push'}</span>
+            </button>
           </div>
         </div>
 

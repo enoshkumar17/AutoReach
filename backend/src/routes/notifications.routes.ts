@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../prisma.js';
-import { sendTestJobAlert, processAndNotifyListings } from '../services/jobAlertEngine.js';
+import { sendTestJobAlert, sendDailyDigestAlert, processAndNotifyListings } from '../services/jobAlertEngine.js';
 import { syncLiveListings } from '../services/liveTracker.js';
 
 const router = Router();
@@ -71,6 +71,20 @@ router.post('/test-email', async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     const result = await sendTestJobAlert(email);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/notifications/daily-digest - send morning digest email to candidate
+router.post('/daily-digest', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const result = await sendDailyDigestAlert(email);
     if (!result.success) {
       return res.status(400).json({ error: result.message });
     }

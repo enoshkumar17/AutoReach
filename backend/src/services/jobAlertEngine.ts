@@ -376,3 +376,152 @@ export async function sendTestJobAlert(customEmail?: string): Promise<{ success:
     };
   }
 }
+
+/**
+ * Send Daily Morning Digest Email to Candidate
+ */
+export async function sendDailyDigestAlert(
+  customEmail?: string
+): Promise<{ success: boolean; message: string; count?: number }> {
+  try {
+    const profile = await prisma.candidateProfile.findFirst();
+    const recipient = customEmail || profile?.email || 'enoshkumar2006@gmail.com';
+    const candidateName = profile?.fullName ? profile.fullName.split(' ')[0] : 'Enosh';
+    const targetBatch = profile?.targetBatch || 2028;
+
+    // Import syncLiveListings to get fresh data
+    const { syncLiveListings } = await import('./liveTracker.js');
+    const allListings = await syncLiveListings(false);
+
+    // Filter and score matching open listings
+    const matched = allListings
+      .filter((l) => l.status === 'open')
+      .map((l) => ({
+        listing: l,
+        match: matchJobWithProfile(l, {
+          targetBatch,
+          targetRoles: profile?.targetRoles,
+          degree: profile?.degree,
+        }),
+      }))
+      .filter((item) => item.match.isMatch)
+      .sort((a, b) => b.match.score - a.match.score)
+      .slice(0, 6); // Top 6 matches
+
+    if (matched.length === 0) {
+      return { success: false, message: 'No open listings currently match your profile criteria.' };
+    }
+
+    const todayDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+    });
+
+    const listingsCardsHtml = matched
+      .map(({ listing, match }) => `
+        <div style="background-color: #fafaf9; border: 1px solid #e7e5e4; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td>
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #78716c; letter-spacing: 0.5px;">
+                  ${listing.company}
+                </span>
+                <h3 style="margin: 2px 0 6px 0; font-size: 16px; font-weight: 700; color: #0c0a09;">
+                  ${listing.title}
+                </h3>
+                <div style="font-size: 12px; color: #57534e; margin-bottom: 8px;">
+                  <span style="display: inline-block; background-color: #ecfdf5; color: #047857; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-right: 6px;">
+                    🎯 ${listing.eligibleBatchesLabel || `Batch ${targetBatch}`}
+                  </span>
+                  <span>📍 ${listing.locations.join(', ')}</span> • 
+                  <span>💰 ${listing.stipend || 'Competitive'}</span>
+                </div>
+                <div style="font-size: 11px; color: #78716c;">
+                  ${match.reason}
+                </div>
+              </td>
+              <td width="120" align="right" style="vertical-align: middle;">
+                <a href="${listing.url}" target="_blank" style="display: inline-block; background-color: #09090b; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 8px; white-space: nowrap;">
+                  Apply &rarr;
+                </a>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `)
+      .join('');
+
+    const digestHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>AutoReach Morning Career Digest</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f6f7f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1c1917;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="padding: 32px 16px;">
+        <tr>
+          <td align="center">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 620px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e7e5e4; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+              
+              <!-- Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #09090b 0%, #1c1917 100%); padding: 24px 28px;">
+                  <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #fbbf24; letter-spacing: 1px;">
+                    ☀️ Morning Placement Digest • ${todayDate}
+                  </span>
+                  <h1 style="margin: 8px 0 0 0; font-size: 20px; font-weight: 800; color: #ffffff;">
+                    ${matched.length} Top Verified Tech Roles for Batch ${targetBatch}
+                  </h1>
+                </td>
+              </tr>
+
+              <!-- Intro -->
+              <tr>
+                <td style="padding: 20px 28px 10px 28px; font-size: 14px; color: #44403c; line-height: 1.5;">
+                  Good morning <strong>${candidateName}</strong>! AutoReach scanned 100+ company career portals overnight. Here are the top active engineering opportunities verified and accepting applications for your graduation year today:
+                </td>
+              </tr>
+
+              <!-- Listings -->
+              <tr>
+                <td style="padding: 10px 28px 20px 28px;">
+                  ${listingsCardsHtml}
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #f5f5f4; border-top: 1px solid #e7e5e4; padding: 16px 28px; text-align: center; font-size: 11px; color: #78716c;">
+                  AutoReach Autonomous Placement Radar • Powered by verified direct ATS adapters.<br/>
+                  Sent daily to ${recipient} for Batch ${targetBatch} engineering opportunities.
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    `;
+
+    await sendHtmlEmail({
+      to: recipient,
+      subject: `☀️ [Morning Digest] ${matched.length} Verified Tech Roles for Batch ${targetBatch} (${todayDate})`,
+      html: digestHtml,
+    });
+
+    return {
+      success: true,
+      message: `Morning digest successfully delivered to ${recipient} (${matched.length} matched roles)!`,
+      count: matched.length,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.message || 'Failed to dispatch daily digest email.',
+    };
+  }
+}

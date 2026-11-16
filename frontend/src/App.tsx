@@ -112,6 +112,23 @@ export default function App() {
     }
   };
 
+  const handleSendDailyDigest = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/notifications/daily-digest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: profile?.email || 'enoshkumar2006@gmail.com' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        return { success: true, message: data.message || 'Morning placement digest delivered!' };
+      }
+      return { success: false, message: data.error || 'Failed to dispatch daily digest.' };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Network error delivering digest.' };
+    }
+  };
+
   const handleCheckPortalsNow = async () => {
     try {
       const res = await fetch('/api/notifications/check-now', { method: 'POST' });
@@ -539,6 +556,7 @@ export default function App() {
           onDeleteNotification={handleDeleteNotification}
           onSelectCompanyForPitch={handleSelectCompanyForPitch}
           onSendTestEmail={handleSendTestEmail}
+          onSendDailyDigest={handleSendDailyDigest}
           onCheckPortalsNow={handleCheckPortalsNow}
         />
       </main>
