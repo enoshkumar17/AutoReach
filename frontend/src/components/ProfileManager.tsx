@@ -31,6 +31,8 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [parseSuccessMsg, setParseSuccessMsg] = useState<string | null>(null);
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isSendingTestAlert, setIsSendingTestAlert] = useState(false);
   const [testAlertNotice, setTestAlertNotice] = useState<string | null>(null);
@@ -81,6 +83,73 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       setProfileMsg({ type: 'error', text: err.message || 'Error saving profile.' });
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleParseResume = async () => {
+    if (!resumeFile && !profile?.hasResume) {
+      setProfileMsg({
+        type: 'error',
+        text: 'Please select a resume PDF or upload one first.',
+      });
+      return;
+    }
+
+    setIsParsingResume(true);
+    setProfileMsg(null);
+    setParseSuccessMsg(null);
+
+    try {
+      const formData = new FormData();
+      if (resumeFile) {
+        formData.append('resume', resumeFile);
+      }
+
+      const res = await fetch('/api/profile/parse-resume', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to extract resume details.');
+
+      // Auto-update form fields with extracted details
+      if (data.extracted) {
+        if (data.extracted.fullName) setFullName(data.extracted.fullName);
+        if (data.extracted.email) setEmail(data.extracted.email);
+        if (data.extracted.phone) setPhone(data.extracted.phone);
+        if (data.extracted.college) setCollege(data.extracted.college);
+        if (data.extracted.degree) setDegree(data.extracted.degree);
+        if (data.extracted.targetBatch) setTargetBatch(data.extracted.targetBatch);
+        if (data.extracted.linkedin) setLinkedin(data.extracted.linkedin);
+        if (data.extracted.github) setGithub(data.extracted.github);
+        if (data.extracted.portfolio) setPortfolio(data.extracted.portfolio);
+      }
+
+      if (data.profile) {
+        onProfileUpdated(data.profile);
+      }
+
+      if (Array.isArray(data.projects)) {
+        for (const p of data.projects) {
+          if (!projects.some((existing) => existing.id === p.id)) {
+            onProjectAdded(p);
+          }
+        }
+      }
+
+      setParseSuccessMsg(
+        `✨ AI extracted resume: profile updated and ${data.newlyAddedCount || 0} technical projects imported into your portfolio!`
+      );
+      setResumeFile(null);
+      setTimeout(() => setParseSuccessMsg(null), 8000);
+    } catch (err: any) {
+      setProfileMsg({
+        type: 'error',
+        text: err.message || 'Error parsing resume with Gemini.',
+      });
+    } finally {
+      setIsParsingResume(false);
     }
   };
 
@@ -383,14 +452,34 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                 </span>
               )}
 
-              <button
-                type="submit"
-                disabled={isSavingProfile}
-                className="px-5 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-sm font-medium transition disabled:opacity-50 self-end sm:self-auto shadow-xs cursor-pointer"
-              >
-                {isSavingProfile ? 'Saving...' : 'Save Profile'}
-              </button>
+              <div className="flex items-center gap-2 flex-wrap self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={handleParseResume}
+                  disabled={isParsingResume || (!resumeFile && !profile?.hasResume)}
+                  className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-500 text-stone-950 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition disabled:opacity-40 cursor-pointer shadow-2xs"
+                  title="Gemini will analyze your resume PDF and automatically extract your profile details & projects"
+                >
+                  <Sparkles className={`h-4 w-4 ${isParsingResume ? 'animate-spin' : ''}`} />
+                  <span>{isParsingResume ? 'Extracting with Gemini...' : 'Auto-Fill from Resume (AI)'}</span>
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-5 py-2 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 text-sm font-medium transition disabled:opacity-50 shadow-xs cursor-pointer"
+                >
+                  {isSavingProfile ? 'Saving...' : 'Save Profile'}
+                </button>
+              </div>
             </div>
+
+            {parseSuccessMsg && (
+              <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-medium flex items-center gap-2 animate-in fade-in duration-150">
+                <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                <span>{parseSuccessMsg}</span>
+              </div>
+            )}
           </div>
         </form>
       </div>

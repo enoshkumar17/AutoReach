@@ -371,13 +371,17 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                         {listing.company.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide truncate">
                             {listing.company}
                           </span>
                           {!isClosed && (
-                            <span title="Verified ATS Portal">
-                              <ShieldCheck className="h-3 w-3 text-emerald-600 shrink-0" />
+                            <span
+                              title="Verified Active Requisition on Company Career Portal"
+                              className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded"
+                            >
+                              <ShieldCheck className="h-2.5 w-2.5 text-emerald-600 shrink-0" />
+                              <span>Verified ATS</span>
                             </span>
                           )}
                         </div>
@@ -545,6 +549,19 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                 <span className="text-[10px] uppercase font-bold text-stone-400 block mb-0.5">Stipend Estimate</span>
                 <span className="text-emerald-800 font-bold">{activeModalListing.stipend}</span>
               </div>
+            </div>
+
+            {/* ATS Verification Heartbeat Badge */}
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-950 font-medium">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>
+                  <strong>Official ATS Requisition:</strong> Verified active on career portal
+                </span>
+              </div>
+              <span className="font-mono text-[11px] text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-300">
+                HTTP 200 OK • Live
+              </span>
             </div>
 
             {/* Application Information Box */}

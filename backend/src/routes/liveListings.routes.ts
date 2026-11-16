@@ -62,4 +62,56 @@ router.post('/refresh', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/live-listings/verify-link
+ * Fast HEAD/GET status verification to confirm the official ATS job link is still live
+ */
+router.post('/verify-link', async (req: Request, res: Response) => {
+  try {
+    const { url } = req.body;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'Valid URL is required.' });
+    }
+
+    let isAlive = false;
+    let statusCode = 0;
+
+    try {
+      const pingRes = await fetch(url, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(4000),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AutoReach-Verifier/4.0',
+        },
+      });
+      statusCode = pingRes.status;
+      isAlive = pingRes.ok || pingRes.status === 403 || pingRes.status === 401; // 403/401 indicates origin exists but enforces auth/session
+    } catch {
+      try {
+        const getRes = await fetch(url, {
+          method: 'GET',
+          signal: AbortSignal.timeout(4000),
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AutoReach-Verifier/4.0',
+            'Range': 'bytes=0-100',
+          },
+        });
+        statusCode = getRes.status;
+        isAlive = getRes.ok || getRes.status === 206 || getRes.status === 403;
+      } catch {
+        isAlive = false;
+      }
+    }
+
+    res.json({
+      url,
+      isAlive,
+      statusCode,
+      verifiedAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

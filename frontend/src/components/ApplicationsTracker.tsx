@@ -127,6 +127,22 @@ Best regards,`);
     document.body.removeChild(link);
   };
 
+  const handleExportJson = () => {
+    if (applications.length === 0) return;
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+      JSON.stringify(applications, null, 2)
+    )}`;
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', jsonString);
+    downloadAnchor.setAttribute(
+      'download',
+      `autoreach_applications_backup_${new Date().toISOString().slice(0, 10)}.json`
+    );
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   const getStatusBadge = (status: Application['status']) => {
     switch (status) {
       case 'SENT':
@@ -189,13 +205,24 @@ Best regards,`);
             </button>
 
             {applications.length > 0 && (
-              <button
-                onClick={handleExportCSV}
-                title="Export as CSV"
-                className="p-2 rounded-lg bg-stone-100 hover:bg-stone-200/70 border border-stone-200 text-stone-700 text-sm transition cursor-pointer"
-              >
-                <Download className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleExportCSV}
+                  title="Export outreach pipeline as CSV spreadsheet"
+                  className="px-2.5 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>CSV</span>
+                </button>
+                <button
+                  onClick={handleExportJson}
+                  title="Export complete outreach backup as JSON"
+                  className="px-2.5 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>JSON</span>
+                </button>
+              </div>
             )}
           </div>
         </div>

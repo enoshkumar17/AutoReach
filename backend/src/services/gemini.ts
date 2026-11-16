@@ -548,3 +548,173 @@ ${instructions}
     confidenceNotes: parsed.confidenceNotes || `Parsed ${companies.length} companies from list. Recruiter emails must be provided before sending.`,
   };
 }
+
+export interface ExtractedResumeData {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  college?: string;
+  degree?: string;
+  targetBatch?: number;
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
+  skills?: string[];
+  projects: Array<{
+    title: string;
+    description: string;
+    tags: string;
+    githubUrl?: string | null;
+    liveUrl?: string | null;
+  }>;
+}
+
+/**
+ * Parses an uploaded Resume PDF using Gemini Multimodal document understanding
+ */
+export async function parseResumeWithGemini(options: {
+  pdfBuffer: Buffer;
+  apiKey?: string;
+}): Promise<ExtractedResumeData> {
+  const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is missing. Please configure it in Settings first.');
+  }
+
+  const promptText = `
+You are an expert technical resume parser and student career advisor.
+Analyze this resume PDF and extract the candidate's complete profile information and portfolio projects.
+
+EXTRACTION INSTRUCTIONS:
+1. Contact & Education:
+   - fullName: Full legal/professional name of candidate.
+   - email: Email address.
+   - phone: Phone number with country code if present.
+   - college: University / College / Institute name.
+   - degree: Degree title (e.g. "B.Tech Computer Science and Engineering", "B.E. Information Technology").
+   - targetBatch: Expected graduation year as 4-digit number (e.g. 2026, 2027, 2028). Infer from dates if needed.
+   - linkedin: LinkedIn profile link or username.
+   - github: GitHub profile link or username.
+   - portfolio: Personal portfolio URL if listed.
+   - skills: Array of core languages, tools, frameworks (e.g. ["TypeScript", "Python", "React", "PostgreSQL"]).
+
+2. Projects (Extract ALL technical / software engineering projects):
+   For each project:
+   - title: Name of project.
+   - description: 1-2 punchy sentences describing what it does, architecture, and quantified impact (e.g. "Real-time collaborative code editor built with WebSockets and CRDTs, handling 100+ concurrent clients").
+   - tags: Tech stack tags comma-separated (e.g. "React, Node.js, WebSockets, Redis").
+   - githubUrl: GitHub link if provided on the resume, or null.
+   - liveUrl: Live demo link if provided on the resume, or null.
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "fullName": "string",
+  "email": "string",
+  "phone": "string",
+  "college": "string",
+  "degree": "string",
+  "targetBatch": 2028,
+  "linkedin": "string",
+  "github": "string",
+  "portfolio": "string",
+  "skills": ["string"],
+  "projects": [
+    {
+      "title": "string",
+      "description": "string",
+      "tags": "string",
+      "githubUrl": "string or null",
+      "liveUrl": "string or null"
+    }
+  ]
+}
+`;
+
+  const parts = [
+    {
+      inlineData: {
+        mimeType: 'application/pdf',
+        data: options.pdfBuffer.toString('base64'),
+      },
+    },
+    { text: promptText },
+  ];
+
+  const requestPayload = {
+    contents: [{ parts }],
+    generationConfig: {
+      responseMimeType: 'application/json',
+      temperature: 0.1,
+    },
+  };
+
+  const modelsToTry = [
+    'gemini-2.5-flash',
+    'gemini-1.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
+  ];
+
+  let responseData: any = null;
+  let lastError: string = '';
+
+  for (const model of modelsToTry) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestPayload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        lastError = `Model ${model} returned ${response.status}: ${errorText}`;
+        continue;
+      }
+
+      const json = await response.json();
+      const textCandidate = json.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textCandidate) {
+        responseData = textCandidate;
+        break;
+      }
+    } catch (err: any) {
+      lastError = `Error calling model ${model}: ${err.message}`;
+    }
+  }
+
+  if (!responseData) {
+    throw new Error(`Failed to parse resume with Gemini models. ${lastError}`);
+  }
+
+  let parsed: any = {};
+  try {
+    const cleanedText = responseData.replace(/```json/g, '').replace(/```/g, '').trim();
+    parsed = JSON.parse(cleanedText);
+  } catch (err: any) {
+    throw new Error(`Invalid JSON returned from Gemini resume parser: ${err.message}`);
+  }
+
+  return {
+    fullName: parsed.fullName || '',
+    email: parsed.email || '',
+    phone: parsed.phone || '',
+    college: parsed.college || '',
+    degree: parsed.degree || '',
+    targetBatch: typeof parsed.targetBatch === 'number' ? parsed.targetBatch : undefined,
+    linkedin: parsed.linkedin || '',
+    github: parsed.github || '',
+    portfolio: parsed.portfolio || '',
+    skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+    projects: Array.isArray(parsed.projects)
+      ? parsed.projects.map((p: any) => ({
+          title: p.title || 'Untitled Project',
+          description: p.description || '',
+          tags: p.tags || 'Engineering',
+          githubUrl: p.githubUrl || null,
+          liveUrl: p.liveUrl || null,
+        }))
+      : [],
+  };
+}

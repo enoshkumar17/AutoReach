@@ -5,6 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { prisma } from '../prisma.js';
 import { verifyEmailCredentials } from '../services/mailer.js';
+import { parseResumeWithGemini } from '../services/gemini.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -157,6 +158,93 @@ router.post('/', upload.single('resume'), async (req: Request, res: Response) =>
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/profile/parse-resume - 1-click AI Resume PDF extraction
+router.post('/parse-resume', upload.single('resume'), async (req: Request, res: Response) => {
+  try {
+    let pdfBuffer: Buffer | null = null;
+
+    if (req.file) {
+      pdfBuffer = fs.readFileSync(req.file.path);
+    } else {
+      const profile = await prisma.candidateProfile.findFirst();
+      if (profile?.resumePath && fs.existsSync(profile.resumePath)) {
+        pdfBuffer = fs.readFileSync(profile.resumePath);
+      }
+    }
+
+    if (!pdfBuffer) {
+      return res.status(400).json({ error: 'No resume PDF found. Please upload a resume PDF first.' });
+    }
+
+    const extracted = await parseResumeWithGemini({ pdfBuffer });
+
+    // Update profile with extracted non-empty fields
+    let profile = await prisma.candidateProfile.findFirst();
+    const updateData: any = {};
+    if (extracted.fullName) updateData.fullName = extracted.fullName;
+    if (extracted.email) updateData.email = extracted.email;
+    if (extracted.phone) updateData.phone = extracted.phone;
+    if (extracted.college) updateData.college = extracted.college;
+    if (extracted.degree) updateData.degree = extracted.degree;
+    if (extracted.targetBatch) updateData.targetBatch = extracted.targetBatch;
+    if (extracted.linkedin) updateData.linkedin = extracted.linkedin;
+    if (extracted.github) updateData.github = extracted.github;
+    if (extracted.portfolio) updateData.portfolio = extracted.portfolio;
+
+    if (req.file) {
+      updateData.resumePath = req.file.path;
+    }
+
+    if (!profile) {
+      profile = await prisma.candidateProfile.create({ data: updateData });
+    } else {
+      profile = await prisma.candidateProfile.update({
+        where: { id: profile.id },
+        data: updateData,
+      });
+    }
+
+    // Add extracted projects to database if not duplicate
+    const existingProjects = await prisma.project.findMany();
+    const existingTitles = new Set(existingProjects.map((p) => p.title.toLowerCase().trim()));
+
+    const newlyAddedProjects = [];
+    for (const proj of extracted.projects) {
+      if (!existingTitles.has(proj.title.toLowerCase().trim())) {
+        const created = await prisma.project.create({
+          data: {
+            title: proj.title,
+            description: proj.description,
+            tags: proj.tags || 'Engineering',
+            githubUrl: proj.githubUrl || null,
+            liveUrl: proj.liveUrl || null,
+          },
+        });
+        newlyAddedProjects.push(created);
+        existingTitles.add(proj.title.toLowerCase().trim());
+      }
+    }
+
+    const allProjects = await prisma.project.findMany({ orderBy: { id: 'desc' } });
+
+    res.json({
+      success: true,
+      message: `Parsed resume successfully: updated profile & extracted ${newlyAddedProjects.length} projects.`,
+      extracted,
+      profile: {
+        ...profile,
+        hasResume: !!(profile.resumePath && fs.existsSync(profile.resumePath)),
+        resumeFileName: profile.resumePath ? path.basename(profile.resumePath) : null,
+      },
+      projects: allProjects,
+      newlyAddedCount: newlyAddedProjects.length,
+    });
+  } catch (error: any) {
+    console.error('[Resume Parser Route Error]:', error);
+    res.status(500).json({ error: error.message || 'Failed to parse resume.' });
   }
 });
 
