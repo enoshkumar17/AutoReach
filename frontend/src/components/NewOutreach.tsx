@@ -31,6 +31,49 @@ import type {
   QuotaInfo,
 } from '../types';
 
+export interface PitchStyleOption {
+  id: PitchStyle;
+  label: string;
+  shortLabel: string;
+  badge?: string;
+  description: string;
+  icon: string;
+  isDefault?: boolean;
+}
+
+export const PITCH_STYLE_OPTIONS: PitchStyleOption[] = [
+  {
+    id: 'five-line-founder',
+    label: '5-Line Founder Formula',
+    shortLabel: '5-Line Founder',
+    badge: 'Default (High Conversion)',
+    description: 'Strictly 5 punchy lines (<60 words) with GitHub link for founders & CTOs.',
+    icon: '⚡',
+    isDefault: true,
+  },
+  {
+    id: 'proof-of-work',
+    label: 'Proof-of-Work Pitch',
+    shortLabel: 'Proof-of-Work',
+    description: 'Highlights live portfolio demo and engineering repository proof.',
+    icon: '🛠️',
+  },
+  {
+    id: 'short-casual',
+    label: 'Short & Casual (<65 words)',
+    shortLabel: 'Short (<65w)',
+    description: 'Ultra-brief coffee chat format for quick referral checks.',
+    icon: '☕',
+  },
+  {
+    id: 'value-prop',
+    label: 'Technical Value-Add',
+    shortLabel: 'Value-Add',
+    description: 'Focuses on specific architectural contributions to their product.',
+    icon: '💡',
+  },
+];
+
 interface NewOutreachProps {
   profile: CandidateProfile | null;
   projects?: Project[];
@@ -56,7 +99,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 }) => {
   // Outreach mode: Single Post vs Batch List Scanner (LinkedIn / Spreadsheet list)
   const [outreachMode, setOutreachMode] = useState<'single' | 'batch'>('single');
-  const [pitchStyle, setPitchStyle] = useState<PitchStyle>('proof-of-work');
+  const [pitchStyle, setPitchStyle] = useState<PitchStyle>('five-line-founder');
+  const [isStyleDropdownOpen, setIsStyleDropdownOpen] = useState(false);
+  const styleDropdownRef = useRef<HTMLDivElement>(null);
   const [customInstructions, setCustomInstructions] = useState<string>(() => {
     return localStorage.getItem('autoreach_custom_instructions') || '';
   });
@@ -122,6 +167,31 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
   useEffect(() => {
     fetchQuotaInfo();
+  }, []);
+
+  // Click outside & Escape key to close pitch style MCQ dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        styleDropdownRef.current &&
+        !styleDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsStyleDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsStyleDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // Global clipboard listener for Ctrl+V image pasting
@@ -536,6 +606,9 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
     ? draft.emailBody.trim().split(/\s+/).filter(Boolean).length
     : 0;
 
+  const activeStyleOption =
+    PITCH_STYLE_OPTIONS.find((opt) => opt.id === pitchStyle) || PITCH_STYLE_OPTIONS[0];
+
   const batchSentCount = batchQueue.filter((item) => item.status === 'SENT').length;
   const batchReadyCount = batchQueue.filter(
     (item) => item.status === 'PENDING' && item.recipientEmail && item.recipientEmail.includes('@')
@@ -638,53 +711,87 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
           </button>
         </div>
 
-        {/* Pitch Style Pills & AI Customizer Toggle */}
-        <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-medium flex-wrap">
-          <span className="text-stone-400 font-semibold mr-1 hidden sm:inline text-xs">Style:</span>
-          <button
-            onClick={() => setPitchStyle('five-line-founder')}
-            title="The proven 5-line formula for YC & funded startup founders (<60 words)"
-            className={`px-3 py-1.5 rounded-lg border transition cursor-pointer font-bold ${
-              pitchStyle === 'five-line-founder'
-                ? 'bg-amber-400 text-stone-950 border-amber-500 shadow-2xs'
-                : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
-            }`}
-          >
-            ⚡ 5-Line Founder
-          </button>
-          <button
-            onClick={() => setPitchStyle('proof-of-work')}
-            title="Proof-of-work pitch with live demo and GitHub repo link"
-            className={`px-3 py-1.5 rounded-lg border transition cursor-pointer font-semibold ${
-              pitchStyle === 'proof-of-work'
-                ? 'bg-amber-100 text-amber-950 border-amber-300'
-                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-            }`}
-          >
-            Proof-of-Work
-          </button>
-          <button
-            onClick={() => setPitchStyle('short-casual')}
-            title="Ultra-brief casual coffee chat pitch (under 65 words)"
-            className={`px-3 py-1.5 rounded-lg border transition cursor-pointer font-semibold ${
-              pitchStyle === 'short-casual'
-                ? 'bg-amber-100 text-amber-950 border-amber-300'
-                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-            }`}
-          >
-            Short (&lt;65 words)
-          </button>
-          <button
-            onClick={() => setPitchStyle('value-prop')}
-            title="Emphasizes specific technical contributions to their product"
-            className={`px-3 py-1.5 rounded-lg border transition cursor-pointer font-semibold ${
-              pitchStyle === 'value-prop'
-                ? 'bg-amber-100 text-amber-950 border-amber-300'
-                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-            }`}
-          >
-            Value-Add
-          </button>
+        {/* Pitch Style MCQ Dropdown & AI Customizer Toggle */}
+        <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-medium">
+          <div className="relative" ref={styleDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsStyleDropdownOpen(!isStyleDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-[#faf9f8] hover:bg-stone-100 text-stone-800 text-xs font-semibold transition cursor-pointer shadow-2xs"
+              title="Click to select pitch style formula (MCQ)"
+            >
+              <span className="text-stone-400 font-normal hidden sm:inline">Formula:</span>
+              <span className="font-bold text-stone-900 flex items-center gap-1.5">
+                <span>{activeStyleOption.icon}</span>
+                <span>{activeStyleOption.shortLabel}</span>
+              </span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 text-stone-500 transition-transform duration-150 ${
+                  isStyleDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {/* MCQ Floating Selection Menu */}
+            {isStyleDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-stone-200/90 rounded-2xl shadow-xl z-50 p-2 space-y-1 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3 py-2 border-b border-stone-100 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
+                    Choose Pitch Formula (MCQ)
+                  </span>
+                  <span className="text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    Select 1 of 4
+                  </span>
+                </div>
+
+                <div className="p-1 space-y-1">
+                  {PITCH_STYLE_OPTIONS.map((opt) => {
+                    const isSelected = pitchStyle === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setPitchStyle(opt.id);
+                          setIsStyleDropdownOpen(false);
+                        }}
+                        className={`w-full text-left p-2.5 rounded-xl transition cursor-pointer flex items-start gap-3 border ${
+                          isSelected
+                            ? 'bg-amber-50/80 border-amber-300 text-stone-900 shadow-2xs'
+                            : 'bg-white border-transparent hover:bg-stone-50 hover:border-stone-200 text-stone-700'
+                        }`}
+                      >
+                        {/* MCQ Radio selection dot */}
+                        <div
+                          className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                            isSelected ? 'border-amber-500 bg-amber-400' : 'border-stone-300 bg-white'
+                          }`}
+                        >
+                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-stone-950" />}
+                        </div>
+
+                        <div className="flex-1 min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-xs text-stone-900">
+                              {opt.icon} {opt.label}
+                            </span>
+                            {opt.badge && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-950">
+                                {opt.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-stone-500 leading-snug">
+                            {opt.description}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={() => setShowCustomizer(!showCustomizer)}
