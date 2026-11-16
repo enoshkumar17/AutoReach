@@ -6,6 +6,27 @@ import type { LiveListingItem } from './liveTracker.js';
 const notifiedUrls = new Set<string>();
 
 /**
+ * Preload persisted historical notifications from SQLite database into memory cache on server boot
+ */
+export async function initNotificationDeduplication() {
+  try {
+    const historical = await prisma.notification.findMany({
+      select: { url: true, company: true, role: true },
+    });
+    for (const item of historical) {
+      if (item.url) notifiedUrls.add(item.url);
+      if (item.company && item.role) notifiedUrls.add(`${item.company}:${item.role}`);
+    }
+    console.log(`[JobAlertEngine] Initialized deduplication cache with ${historical.length} persisted records from SQLite.`);
+  } catch (err: any) {
+    console.warn('[JobAlertEngine] Notice preloading notifications cache:', err.message);
+  }
+}
+
+// Auto-initialize deduplication cache
+initNotificationDeduplication();
+
+/**
  * Check if a listing matches candidate's profile
  */
 export function matchJobWithProfile(
@@ -242,6 +263,26 @@ export async function processAndNotifyListings(listings: LiveListingItem[]): Pro
 
       const listingKey = listing.url || `${listing.company}:${listing.title}`;
       if (notifiedUrls.has(listingKey)) continue;
+
+      // Persisted SQLite Check: Never notify a job that already exists in the database
+      const existing = await prisma.notification.findFirst({
+        where: {
+          OR: [
+            ...(listing.url ? [{ url: listing.url }] : []),
+            {
+              AND: [
+                { company: listing.company },
+                { role: listing.title },
+              ],
+            },
+          ],
+        },
+      });
+
+      if (existing) {
+        notifiedUrls.add(listingKey);
+        continue;
+      }
 
       const match = matchJobWithProfile(listing, {
         targetBatch: profile.targetBatch,
