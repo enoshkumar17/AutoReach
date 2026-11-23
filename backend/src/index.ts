@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 // Load environment variables
@@ -41,10 +42,29 @@ app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
     service: 'AutoReach Core API',
-    version: '3.0.0',
+    version: '4.5.0',
     timestamp: new Date().toISOString(),
   });
 });
+
+// Production: Serve static frontend build if present
+const possibleFrontendPaths = [
+  path.join(__dirname, '../../frontend/dist'),
+  path.resolve(process.cwd(), 'frontend/dist'),
+  path.resolve(process.cwd(), '../frontend/dist'),
+];
+const frontendDist = possibleFrontendPaths.find((p) => fs.existsSync(p));
+
+if (frontendDist) {
+  console.log(`[AutoReach] Serving static frontend from: ${frontendDist}`);
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`[AutoReach API] Running smoothly at http://localhost:${PORT}`);

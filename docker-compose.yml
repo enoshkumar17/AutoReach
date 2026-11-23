@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  autoreach:
+    build: .
+    container_name: autoreach
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DATABASE_URL=file:./dev.db
+      # Add your credentials here or in a local .env file
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GMAIL_USER=${GMAIL_USER:-}
+      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD:-}
+    volumes:
+      # Persist SQLite database and resume uploads across container restarts
+      - autoreach_data:/app/backend/prisma
+      - autoreach_uploads:/app/backend/uploads
+
+volumes:
+  autoreach_data:
+  autoreach_uploads:

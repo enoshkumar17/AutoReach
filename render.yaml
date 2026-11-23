@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: autoreach
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm run build && npx --prefix backend prisma db push
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        value: "file:./dev.db"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
