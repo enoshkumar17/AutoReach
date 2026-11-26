@@ -20,8 +20,9 @@ import {
   Radar,
   EyeOff,
   Sparkles,
-  LayoutList,
   LayoutGrid,
+  Rows,
+  Columns2,
 } from 'lucide-react';
 
 interface LiveOpeningsFeedProps {
@@ -61,17 +62,17 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
   const APPLIED_META_KEY = `${userPrefix}_applied_meta`;
   const LAYOUT_PREF_KEY = `${userPrefix}_layout_mode`;
 
-  // Layout mode: Option 2 Split-Pane Command Center as default
-  const [layoutMode, setLayoutMode] = useState<'split' | 'grid'>(() => {
+  // Layout mode: 'stacked' (Full-width bars on top, details below), 'split' (side-by-side), or 'grid' (classic cards)
+  const [layoutMode, setLayoutMode] = useState<'stacked' | 'split' | 'grid'>(() => {
     try {
       const saved = localStorage.getItem(LAYOUT_PREF_KEY);
-      return saved === 'grid' || saved === 'split' ? saved : 'split';
+      return saved === 'stacked' || saved === 'split' || saved === 'grid' ? saved : 'stacked';
     } catch {
-      return 'split';
+      return 'stacked';
     }
   });
 
-  const handleLayoutModeChange = (mode: 'split' | 'grid') => {
+  const handleLayoutModeChange = (mode: 'stacked' | 'split' | 'grid') => {
     setLayoutMode(mode);
     try {
       localStorage.setItem(LAYOUT_PREF_KEY, mode);
@@ -798,8 +799,21 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           )}
         </div>
 
-        {/* Layout Switcher: Split Command vs Cards */}
-        <div className="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 shadow-2xs">
+        {/* Layout Switcher: 3 Modes (Full-Width List, Side-by-Side Split, Card Grid) */}
+        <div className="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 shadow-2xs flex-wrap">
+          <button
+            onClick={() => handleLayoutModeChange('stacked')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              layoutMode === 'stacked'
+                ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
+            }`}
+            title="Full-Width List on top + Opening Dossier below"
+          >
+            <Rows className="h-3.5 w-3.5 text-stone-800" />
+            <span>Full-Width List</span>
+            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">Default</span>
+          </button>
           <button
             onClick={() => handleLayoutModeChange('split')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
@@ -807,11 +821,10 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                 ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
             }`}
-            title="Split Command Center: Scannable Directory (Left) + Instant Requisition Dossier (Right)"
+            title="Side-by-Side Split Command (Left Directory + Right Dossier)"
           >
-            <LayoutList className="h-3.5 w-3.5 text-stone-800" />
-            <span>Split Command</span>
-            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">Default</span>
+            <Columns2 className="h-3.5 w-3.5 text-stone-700" />
+            <span>Side-by-Side</span>
           </button>
           <button
             onClick={() => handleLayoutModeChange('grid')}
@@ -832,61 +845,60 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
       {loading ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-stone-200">
           <div className="h-6 w-6 border-2 border-stone-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <span className="text-xs font-semibold text-stone-600">Connecting to official ATS pipelines...</span>
+          <span className="text-sm font-bold text-stone-700">Connecting to official ATS pipelines...</span>
         </div>
       ) : currentFeedListings.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-stone-200 p-8 space-y-2">
           {feedView === 'applied' ? (
             <>
-              <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto mb-2" />
-              <h4 className="text-sm font-semibold text-stone-800">No applications recorded yet.</h4>
-              <p className="text-xs text-stone-500 max-w-md mx-auto">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-2" />
+              <h4 className="text-base font-bold text-stone-800">No applications recorded yet.</h4>
+              <p className="text-sm text-stone-600 max-w-md mx-auto">
                 When you apply on a company’s portal, click the <strong>&ldquo;Applied&rdquo;</strong> button on their card in the Active Radar. It will move here so you never have to scroll past it again!
               </p>
             </>
           ) : feedView === 'archived' ? (
             <>
-              <Archive className="h-10 w-10 text-amber-400 mx-auto mb-2" />
-              <h4 className="text-sm font-semibold text-stone-800">No archived or hidden listings.</h4>
-              <p className="text-xs text-stone-500 max-w-md mx-auto">
-                Seeing companies you aren’t interested in (like Juspay)? Click the <strong>Archive</strong> icon in the top right of any card to hide them and deduct them from your active count.
+              <Archive className="h-10 w-10 text-amber-500 mx-auto mb-2" />
+              <h4 className="text-base font-bold text-stone-800">No archived or hidden listings.</h4>
+              <p className="text-sm text-stone-600 max-w-md mx-auto">
+                Seeing companies you aren’t interested in (like Juspay)? Click the <strong>Archive</strong> icon to hide them and deduct them from your active count.
               </p>
             </>
           ) : feedView === 'closed' ? (
             <>
-              <Clock className="h-10 w-10 text-stone-300 mx-auto mb-2" />
-              <h4 className="text-sm font-semibold text-stone-700">No recently closed postings recorded in the last 30 days.</h4>
-              <p className="text-xs text-stone-400">Closed listings are automatically tracked for retrospective reference.</p>
+              <Clock className="h-10 w-10 text-stone-400 mx-auto mb-2" />
+              <h4 className="text-base font-bold text-stone-700">No recently closed postings recorded in the last 30 days.</h4>
+              <p className="text-sm text-stone-500">Closed listings are automatically tracked for retrospective reference.</p>
             </>
           ) : (
             <>
-              <Building2 className="h-10 w-10 text-stone-300 mx-auto mb-2" />
-              <h4 className="text-sm font-semibold text-stone-700">No active openings match your criteria.</h4>
-              <p className="text-xs text-stone-400">Try clearing your search query or selecting a different role or batch filter.</p>
+              <Building2 className="h-10 w-10 text-stone-400 mx-auto mb-2" />
+              <h4 className="text-base font-bold text-stone-800">No active openings match your criteria.</h4>
+              <p className="text-sm text-stone-500">Try clearing your search query or selecting a different role or batch filter.</p>
             </>
           )}
         </div>
-      ) : layoutMode === 'split' ? (
+      ) : layoutMode === 'stacked' ? (
         /* ========================================================================= */
-        /* CONCEPT 2: SPLIT-PANE COMMAND CENTER (Superhuman / Linear Style)          */
-        /* Left: Scannable Directory (5 cols) | Right: Sticky Live Dossier (7 cols)  */
+        /* MODE 1: FULL-WIDTH STACKED VIEW (Wide Bars on top, Full Dossier below)   */
         /* ========================================================================= */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[700px] items-start">
-          {/* Left Column: 5 Cols Scannable Directory List */}
-          <div className="lg:col-span-5 bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs flex flex-col space-y-3">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100 text-xs">
-              <div className="flex items-center gap-1.5 font-bold text-stone-900">
-                <span>Directory</span>
-                <span className="text-[11px] font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+        <div className="space-y-6">
+          {/* Top: Full-Width List of Wide Requisition Bars */}
+          <div className="bg-white border border-stone-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 text-sm">
+              <div className="flex items-center gap-2 font-bold text-stone-900">
+                <span className="text-base sm:text-lg">Scannable Directory</span>
+                <span className="text-xs font-bold text-stone-700 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
                   {currentFeedListings.length}
                 </span>
               </div>
-              <span className="text-stone-400 text-[11px] font-medium hidden sm:inline">
-                Click any opening to view details
+              <span className="text-stone-500 text-xs sm:text-sm font-semibold hidden sm:inline">
+                Click any opening to inspect full dossier below ↓
               </span>
             </div>
 
-            <div className="space-y-2 overflow-y-auto max-h-[720px] pr-1.5 scrollbar-thin">
+            <div className="space-y-3 overflow-y-auto max-h-[520px] pr-2 scrollbar-thin">
               {currentFeedListings.map((listing) => {
                 const isSelected = selectedSplitListing?.id === listing.id;
                 const isItemApplied = appliedIdSet.has(listing.id);
@@ -898,7 +910,317 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                   <div
                     key={listing.id}
                     onClick={() => setSelectedSplitId(listing.id)}
-                    className={`p-3.5 rounded-xl border transition-all cursor-pointer text-left relative group ${
+                    className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer text-left relative group ${
+                      isSelected
+                        ? 'border-2 border-stone-900 bg-amber-50/30 shadow-xs ring-2 ring-stone-900/10'
+                        : 'border-stone-200/90 hover:border-stone-400 bg-white hover:bg-stone-50/50'
+                    }`}
+                  >
+                    {/* Header Strip: Company + Status / Stipend */}
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`h-8 w-8 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 border transition ${
+                            isSelected
+                              ? 'bg-stone-900 text-white border-stone-900'
+                              : 'bg-stone-100 text-stone-900 border-stone-200 group-hover:border-stone-400'
+                          }`}
+                        >
+                          {listing.company.slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="text-sm sm:text-base font-extrabold text-stone-900 uppercase tracking-wide truncate">
+                          {listing.company}
+                        </span>
+                        {!isItemClosed && (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md shrink-0">
+                            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <span>Verified ATS</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="shrink-0 flex items-center gap-2">
+                        {isItemArchived ? (
+                          <span className="text-xs font-bold text-stone-800 bg-stone-100 border border-stone-300 px-3 py-1 rounded-full flex items-center gap-1">
+                            <EyeOff className="w-3.5 h-3.5" /> Hidden
+                          </span>
+                        ) : isItemApplied ? (
+                          <span className="text-xs font-bold text-emerald-900 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-full flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5 text-emerald-700" /> Applied
+                          </span>
+                        ) : isItemClosed ? (
+                          <span className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
+                            Closed
+                          </span>
+                        ) : (
+                          <span className="text-xs sm:text-sm font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-300/80 px-3 py-1 rounded-full">
+                            {listing.stipend}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Role Title with Large High-Legibility Font */}
+                    <h4 className="font-extrabold text-base sm:text-lg text-stone-900 leading-snug group-hover:text-amber-950 transition">
+                      {listing.title}
+                    </h4>
+
+                    {/* Specs Row with Bold Highlighted Batches */}
+                    <div className="flex items-center gap-2.5 text-xs sm:text-sm text-stone-600 mt-2 flex-wrap">
+                      <span className="font-semibold text-stone-800">{listing.roleType}</span>
+                      <span className="text-stone-300">•</span>
+                      <span className="text-stone-700 font-medium">{listing.locations.join(', ') || 'India Multiple'}</span>
+                      <span className="text-stone-300">•</span>
+                      <span className="font-bold text-stone-900 bg-stone-100 px-2.5 py-0.5 rounded-md border border-stone-300/80">
+                        {listing.eligibleBatchesLabel}
+                      </span>
+                      {isItemFresh && !isItemApplied && !isItemArchived && !isItemClosed && (
+                        <>
+                          <span className="text-stone-300">•</span>
+                          <span className="text-amber-950 font-bold bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Flame className="w-3.5 h-3.5 text-orange-600 fill-orange-500" /> &lt;48h Fast Closing
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom: Full-Width Dossier Card */}
+          {selectedSplitListing ? (
+            <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col justify-between space-y-6">
+              {/* Header */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-stone-100 pb-5">
+                  <div className="space-y-2 min-w-0">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-stone-900 text-white font-black text-sm sm:text-base flex items-center justify-center shrink-0 shadow-xs">
+                        {selectedSplitListing.company.slice(0, 2).toUpperCase()}
+                      </div>
+                      <span className="text-sm sm:text-base font-extrabold text-stone-800 uppercase tracking-wide">
+                        {selectedSplitListing.company}
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-2xs">
+                        <ShieldCheck className="h-4 w-4 text-emerald-600" /> Verified ATS • HTTP 200 Live
+                      </span>
+                      {appliedIdSet.has(selectedSplitListing.id) && (
+                        <span className="text-xs sm:text-sm font-bold text-emerald-900 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-md flex items-center gap-1.5 shadow-2xs">
+                          <Check className="h-4 w-4 text-emerald-700" /> Applied by You
+                        </span>
+                      )}
+                      {archivedIdSet.has(selectedSplitListing.id) && (
+                        <span className="text-xs sm:text-sm font-bold text-stone-800 bg-stone-100 border border-stone-300 px-3 py-1 rounded-md flex items-center gap-1.5">
+                          <EyeOff className="h-4 w-4 text-stone-600" /> Archived / Hidden
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight leading-snug">
+                      {selectedSplitListing.title}
+                    </h3>
+                  </div>
+
+                  <div className="text-left sm:text-right shrink-0">
+                    <span className="text-2xl sm:text-3xl font-black text-emerald-800 block">
+                      {selectedSplitListing.stipend}
+                    </span>
+                    <span className="text-sm sm:text-base text-stone-600 font-semibold block mt-0.5">
+                      {selectedSplitListing.roleType}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3 Key Specs at a Glance with High Legibility */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-sm">
+                  <div className="p-4 rounded-xl bg-stone-50/90 border border-stone-200">
+                    <span className="text-stone-500 block text-xs font-bold uppercase tracking-wider mb-1.5">
+                      Locations
+                    </span>
+                    <span className="font-bold text-base text-stone-900 block truncate" title={selectedSplitListing.locations.join(', ')}>
+                      {selectedSplitListing.locations.join(', ') || 'India Multiple'}
+                    </span>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-stone-50/90 border border-stone-200">
+                    <span className="text-stone-500 block text-xs font-bold uppercase tracking-wider mb-1.5">
+                      Eligible Batches
+                    </span>
+                    <span className="font-extrabold text-base text-stone-950 block truncate">
+                      {selectedSplitListing.eligibleBatchesLabel}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`p-4 rounded-xl border ${
+                      selectedSplitListing.isUrgentFresh
+                        ? 'bg-amber-50 border-amber-300/80'
+                        : selectedSplitListing.status === 'closed'
+                        ? 'bg-rose-50 border-rose-200'
+                        : 'bg-emerald-50 border-emerald-300/80'
+                    }`}
+                  >
+                    <span
+                      className={`block text-xs font-bold uppercase tracking-wider mb-1.5 ${
+                        selectedSplitListing.isUrgentFresh
+                          ? 'text-amber-900'
+                          : selectedSplitListing.status === 'closed'
+                          ? 'text-rose-900'
+                          : 'text-emerald-900'
+                      }`}
+                    >
+                      Closing Window
+                    </span>
+                    <span
+                      className={`font-black text-base block truncate ${
+                        selectedSplitListing.isUrgentFresh
+                          ? 'text-amber-950 flex items-center gap-1.5'
+                          : selectedSplitListing.status === 'closed'
+                          ? 'text-rose-900'
+                          : 'text-emerald-900'
+                      }`}
+                    >
+                      {selectedSplitListing.isUrgentFresh ? (
+                        <>
+                          <Flame className="w-4 h-4 text-orange-600 fill-orange-500" />
+                          <span>Closes in 24–48h</span>
+                        </>
+                      ) : selectedSplitListing.status === 'closed' ? (
+                        <span>Closed (Filled on ATS)</span>
+                      ) : (
+                        <span>Rolling Requisition</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Requisition Context & Education Fit */}
+                <div className="space-y-3.5 text-sm text-stone-700 bg-[#faf9f6] p-5 rounded-xl border border-stone-200">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-stone-900 uppercase text-xs sm:text-sm tracking-wider">
+                      Requisition Context & Core Fit:
+                    </h4>
+                    <span className="text-xs sm:text-sm font-mono text-stone-500 font-semibold">
+                      Posted: {selectedSplitListing.postedAgoLabel}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-stone-700">
+                    <div>
+                      <span className="text-stone-500 font-medium block text-xs">Role Discipline:</span>
+                      <span className="font-bold text-stone-900 text-sm sm:text-base">{selectedSplitListing.categoryLabel}</span>
+                    </div>
+                    <div>
+                      <span className="text-stone-500 font-medium block text-xs">Degree Requirement:</span>
+                      <span className="font-bold text-stone-900 text-sm sm:text-base">{selectedSplitListing.degreeRequired}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons: Applied, Apply, Archive */}
+              <div className="pt-5 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                {/* Archive / Restore Button */}
+                {archivedIdSet.has(selectedSplitListing.id) ? (
+                  <button
+                    onClick={() => handleUnarchiveListing(selectedSplitListing.id)}
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-sm transition cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
+                  >
+                    <RotateCcw className="h-4 w-4 text-amber-300" />
+                    <span>Restore to Feed</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleArchiveListing(selectedSplitListing)}
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl border border-stone-300 bg-stone-100 hover:bg-stone-200 text-stone-900 font-bold text-sm transition cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
+                    title="Hide this listing and deduct from active count"
+                  >
+                    <Archive className="h-4 w-4 text-stone-800" />
+                    <span>Dismiss / Archive ✕</span>
+                  </button>
+                )}
+
+                {/* Right Actions: Pitch AI, Applied, Apply on ATS */}
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end flex-wrap">
+                  {selectedSplitListing.status === 'open' && (
+                    <button
+                      onClick={() => onSelectCompanyForPitch(selectedSplitListing.company, selectedSplitListing.title)}
+                      className="px-4 py-3 rounded-xl border border-stone-300 hover:bg-stone-50 text-stone-800 text-sm font-semibold flex items-center gap-2 transition cursor-pointer"
+                      title="Generate an AI pitch or referral ask"
+                    >
+                      <Send className="h-4 w-4 text-stone-500" />
+                      <span>Pitch AI</span>
+                    </button>
+                  )}
+
+                  {appliedIdSet.has(selectedSplitListing.id) ? (
+                    <button
+                      onClick={() => handleUnmarkApplied(selectedSplitListing.id)}
+                      className="px-5 py-3 rounded-xl border border-emerald-400 bg-emerald-100 text-emerald-950 font-bold text-sm hover:bg-emerald-200 transition cursor-pointer flex items-center gap-2 shadow-2xs"
+                    >
+                      <Check className="h-4 w-4 text-emerald-700" />
+                      <span>Applied (Click to Unmark)</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleMarkApplied(selectedSplitListing)}
+                      className="px-5 py-3 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-bold text-sm hover:bg-emerald-100 transition shadow-2xs cursor-pointer flex items-center gap-2"
+                    >
+                      <Check className="h-4 w-4 text-emerald-600" />
+                      <span>Applied</span>
+                    </button>
+                  )}
+
+                  <a
+                    href={selectedSplitListing.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-6 py-3 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-sm flex items-center gap-2 transition shadow-xs cursor-pointer"
+                  >
+                    <span>Apply on Portal</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center text-stone-500 text-sm">
+              Select an opening from the directory above to view its full requisition dossier.
+            </div>
+          )}
+        </div>
+      ) : layoutMode === 'split' ? (
+        /* ========================================================================= */
+        /* MODE 2: SIDE-BY-SIDE SPLIT VIEW (Left: 5 cols List | Right: 7 cols Card)  */
+        /* ========================================================================= */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[700px] items-start">
+          {/* Left Column: 5 Cols Scannable Directory List */}
+          <div className="lg:col-span-5 bg-white border border-stone-200/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 text-xs sm:text-sm">
+              <div className="flex items-center gap-1.5 font-bold text-stone-900">
+                <span className="text-sm sm:text-base">Directory</span>
+                <span className="text-xs font-bold text-stone-600 bg-stone-100 px-2.5 py-0.5 rounded-full border border-stone-200">
+                  {currentFeedListings.length}
+                </span>
+              </div>
+              <span className="text-stone-500 text-xs font-semibold hidden sm:inline">
+                Click any opening to view
+              </span>
+            </div>
+
+            <div className="space-y-2.5 overflow-y-auto max-h-[720px] pr-1.5 scrollbar-thin">
+              {currentFeedListings.map((listing) => {
+                const isSelected = selectedSplitListing?.id === listing.id;
+                const isItemApplied = appliedIdSet.has(listing.id);
+                const isItemArchived = archivedIdSet.has(listing.id);
+                const isItemClosed = listing.status === 'closed' || feedView === 'closed';
+                const isItemFresh = listing.isUrgentFresh;
+
+                return (
+                  <div
+                    key={listing.id}
+                    onClick={() => setSelectedSplitId(listing.id)}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer text-left relative group ${
                       isSelected
                         ? 'border-2 border-stone-900 bg-amber-50/25 shadow-xs ring-1 ring-stone-900/10'
                         : 'border-stone-200/90 hover:border-stone-400 bg-white hover:bg-stone-50/50'
@@ -908,7 +1230,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2 min-w-0">
                         <div
-                          className={`h-6 w-6 rounded-md font-bold text-[10px] flex items-center justify-center shrink-0 border transition ${
+                          className={`h-7 w-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 border transition ${
                             isSelected
                               ? 'bg-stone-900 text-white border-stone-900'
                               : 'bg-stone-100 text-stone-800 border-stone-200 group-hover:border-stone-400'
@@ -916,12 +1238,12 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                         >
                           {listing.company.slice(0, 2).toUpperCase()}
                         </div>
-                        <span className="text-xs font-bold text-stone-800 uppercase tracking-wide truncate">
+                        <span className="text-xs sm:text-sm font-extrabold text-stone-800 uppercase tracking-wide truncate">
                           {listing.company}
                         </span>
                         {!isItemClosed && (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shrink-0">
-                            <ShieldCheck className="h-2.5 w-2.5 text-emerald-600 shrink-0" />
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded shrink-0">
+                            <ShieldCheck className="h-3 w-3 text-emerald-600 shrink-0" />
                             <span>ATS</span>
                           </span>
                         )}
@@ -929,19 +1251,19 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
                       <div className="shrink-0">
                         {isItemArchived ? (
-                          <span className="text-[10px] font-semibold text-stone-700 bg-stone-100 border border-stone-300 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                            <EyeOff className="w-2.5 h-2.5" /> Hidden
+                          <span className="text-[11px] font-bold text-stone-700 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                            <EyeOff className="w-3 h-3" /> Hidden
                           </span>
                         ) : isItemApplied ? (
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                            <Check className="w-2.5 h-2.5 text-emerald-700" /> Applied
+                          <span className="text-[11px] font-bold text-emerald-900 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-0.5">
+                            <Check className="w-3 h-3 text-emerald-700" /> Applied
                           </span>
                         ) : isItemClosed ? (
-                          <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">
+                          <span className="text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
                             Closed
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 rounded-full">
                             {listing.stipend}
                           </span>
                         )}
@@ -949,22 +1271,24 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     </div>
 
                     {/* Role Title */}
-                    <h4 className="font-bold text-xs sm:text-[13px] text-stone-900 line-clamp-1 group-hover:text-amber-950 transition">
+                    <h4 className="font-bold text-sm sm:text-base text-stone-900 line-clamp-1 group-hover:text-amber-950 transition">
                       {listing.title}
                     </h4>
 
-                    {/* Quick Specs Row */}
-                    <div className="flex items-center gap-2 text-[11px] text-stone-500 mt-1.5 flex-wrap">
+                    {/* Quick Specs Row with Highlighted Batches */}
+                    <div className="flex items-center gap-2 text-xs text-stone-600 mt-2 flex-wrap">
                       <span className="font-medium text-stone-700">{listing.roleType}</span>
                       <span>•</span>
-                      <span className="truncate max-w-[120px]">{listing.locations[0] || 'India'}</span>
+                      <span className="truncate max-w-[120px] font-medium">{listing.locations[0] || 'India'}</span>
                       <span>•</span>
-                      <span>{listing.eligibleBatchesLabel}</span>
+                      <span className="font-bold text-stone-900 bg-stone-100 px-2 py-0.5 rounded border border-stone-300/80">
+                        {listing.eligibleBatchesLabel}
+                      </span>
                       {isItemFresh && !isItemApplied && !isItemArchived && !isItemClosed && (
                         <>
                           <span>•</span>
-                          <span className="text-amber-800 font-bold flex items-center gap-0.5">
-                            <Flame className="w-3 h-3 text-orange-500 fill-orange-500" /> &lt;48h
+                          <span className="text-amber-950 font-bold flex items-center gap-0.5 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">
+                            <Flame className="w-3 h-3 text-orange-600 fill-orange-500" /> &lt;48h
                           </span>
                         </>
                       )}
@@ -984,45 +1308,45 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                   <div className="flex items-start justify-between gap-4 border-b border-stone-100 pb-4">
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <div className="h-8 w-8 rounded-lg bg-stone-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        <div className="h-9 w-9 rounded-lg bg-stone-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
                           {selectedSplitListing.company.slice(0, 2).toUpperCase()}
                         </div>
-                        <span className="text-xs font-bold text-stone-600 uppercase tracking-wide">
+                        <span className="text-sm font-extrabold text-stone-700 uppercase tracking-wide">
                           {selectedSplitListing.company}
                         </span>
-                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <ShieldCheck className="h-3 w-3 text-emerald-600" /> Verified ATS • HTTP 200 Live
+                        <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Verified ATS • HTTP 200 Live
                         </span>
                         {appliedIdSet.has(selectedSplitListing.id) && (
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <Check className="h-3 w-3 text-emerald-700" /> Applied by Candidate
+                          <span className="text-xs font-bold text-emerald-900 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                            <Check className="h-3.5 w-3.5 text-emerald-700" /> Applied
                           </span>
                         )}
                         {archivedIdSet.has(selectedSplitListing.id) && (
-                          <span className="text-[10px] font-semibold text-stone-800 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <EyeOff className="h-3 w-3 text-stone-600" /> Archived / Hidden
+                          <span className="text-xs font-bold text-stone-800 bg-stone-100 border border-stone-300 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                            <EyeOff className="h-3.5 w-3.5 text-stone-600" /> Archived / Hidden
                           </span>
                         )}
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight mt-1">
+                      <h3 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight mt-1">
                         {selectedSplitListing.title}
                       </h3>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-lg sm:text-xl font-bold text-emerald-800 block">
+                      <span className="text-xl sm:text-2xl font-black text-emerald-800 block">
                         {selectedSplitListing.stipend}
                       </span>
-                      <span className="text-xs text-stone-500 font-medium">
+                      <span className="text-xs sm:text-sm text-stone-600 font-semibold">
                         {selectedSplitListing.roleType}
                       </span>
                     </div>
                   </div>
 
-                  {/* 3 Key Specs at a Glance */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div className="p-3.5 rounded-xl bg-stone-50/80 border border-stone-200/90">
-                      <span className="text-stone-400 block text-[10px] font-bold uppercase tracking-wider mb-1">
+                  {/* 3 Key Specs at a Glance with High Legibility */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                    <div className="p-3.5 rounded-xl bg-stone-50/80 border border-stone-200">
+                      <span className="text-stone-500 block text-xs font-bold uppercase tracking-wider mb-1">
                         Locations
                       </span>
                       <span className="font-bold text-stone-900 block truncate" title={selectedSplitListing.locations.join(', ')}>
@@ -1030,11 +1354,11 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                       </span>
                     </div>
 
-                    <div className="p-3.5 rounded-xl bg-stone-50/80 border border-stone-200/90">
-                      <span className="text-stone-400 block text-[10px] font-bold uppercase tracking-wider mb-1">
-                        Eligibility
+                    <div className="p-3.5 rounded-xl bg-stone-50/80 border border-stone-200">
+                      <span className="text-stone-500 block text-xs font-bold uppercase tracking-wider mb-1">
+                        Eligible Batches
                       </span>
-                      <span className="font-bold text-stone-900 block truncate">
+                      <span className="font-extrabold text-stone-950 block truncate">
                         {selectedSplitListing.eligibleBatchesLabel}
                       </span>
                     </div>
@@ -1042,25 +1366,25 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     <div
                       className={`p-3.5 rounded-xl border ${
                         selectedSplitListing.isUrgentFresh
-                          ? 'bg-amber-50/80 border-amber-200'
+                          ? 'bg-amber-50/90 border-amber-300/80'
                           : selectedSplitListing.status === 'closed'
                           ? 'bg-rose-50 border-rose-200'
-                          : 'bg-emerald-50/70 border-emerald-200'
+                          : 'bg-emerald-50/80 border-emerald-300/80'
                       }`}
                     >
                       <span
-                        className={`block text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                        className={`block text-xs font-bold uppercase tracking-wider mb-1 ${
                           selectedSplitListing.isUrgentFresh
-                            ? 'text-amber-800'
+                            ? 'text-amber-900'
                             : selectedSplitListing.status === 'closed'
-                            ? 'text-rose-800'
-                            : 'text-emerald-800'
+                            ? 'text-rose-900'
+                            : 'text-emerald-900'
                         }`}
                       >
                         Closing Window
                       </span>
                       <span
-                        className={`font-bold block truncate ${
+                        className={`font-black block truncate ${
                           selectedSplitListing.isUrgentFresh
                             ? 'text-amber-950 flex items-center gap-1'
                             : selectedSplitListing.status === 'closed'
@@ -1070,36 +1394,36 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                       >
                         {selectedSplitListing.isUrgentFresh ? (
                           <>
-                            <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
-                            <span>Closes within 24–48h</span>
+                            <Flame className="w-3.5 h-3.5 text-orange-600 fill-orange-500" />
+                            <span>Closes in 24–48h</span>
                           </>
                         ) : selectedSplitListing.status === 'closed' ? (
                           <span>Closed (Filled on ATS)</span>
                         ) : (
-                          <span>Rolling Application</span>
+                          <span>Rolling Requisition</span>
                         )}
                       </span>
                     </div>
                   </div>
 
                   {/* Requisition Context & Education Fit */}
-                  <div className="space-y-3 text-xs text-stone-700 bg-[#faf9f6] p-4 sm:p-5 rounded-xl border border-stone-200/90">
+                  <div className="space-y-3 text-sm text-stone-700 bg-[#faf9f6] p-4 sm:p-5 rounded-xl border border-stone-200">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-stone-900 uppercase text-[11px] tracking-wider">
+                      <h4 className="font-extrabold text-stone-900 uppercase text-xs sm:text-sm tracking-wider">
                         Requisition Context & Core Fit:
                       </h4>
-                      <span className="text-[11px] font-mono text-stone-400">
+                      <span className="text-xs font-mono text-stone-500 font-semibold">
                         Posted: {selectedSplitListing.postedAgoLabel}
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-stone-600">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-stone-700">
                       <div>
-                        <span className="text-stone-400 font-medium block text-[11px]">Category:</span>
-                        <span className="font-semibold text-stone-800">{selectedSplitListing.categoryLabel}</span>
+                        <span className="text-stone-500 font-medium block text-xs">Role Discipline:</span>
+                        <span className="font-bold text-stone-900 text-sm sm:text-base">{selectedSplitListing.categoryLabel}</span>
                       </div>
                       <div>
-                        <span className="text-stone-400 font-medium block text-[11px]">Degree Requirement:</span>
-                        <span className="font-semibold text-stone-800">{selectedSplitListing.degreeRequired}</span>
+                        <span className="text-stone-500 font-medium block text-xs">Degree Requirement:</span>
+                        <span className="font-bold text-stone-900 text-sm sm:text-base">{selectedSplitListing.degreeRequired}</span>
                       </div>
                     </div>
                   </div>
@@ -1111,31 +1435,31 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                   {archivedIdSet.has(selectedSplitListing.id) ? (
                     <button
                       onClick={() => handleUnarchiveListing(selectedSplitListing.id)}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-sm transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
                     >
-                      <RotateCcw className="h-3.5 w-3.5 text-amber-300" />
+                      <RotateCcw className="h-4 w-4 text-amber-300" />
                       <span>Restore to Feed</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => handleArchiveListing(selectedSplitListing)}
-                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-stone-300 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-stone-300 bg-stone-100 hover:bg-stone-200 text-stone-900 font-bold text-sm transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
                       title="Hide this listing and deduct from active count"
                     >
-                      <Archive className="h-3.5 w-3.5 text-stone-800" />
-                      <span>Archive Listing</span>
+                      <Archive className="h-4 w-4 text-stone-800" />
+                      <span>Dismiss / Archive ✕</span>
                     </button>
                   )}
 
-                  {/* Right Actions: Pitch AI, I Applied, Apply on ATS */}
+                  {/* Right Actions: Pitch AI, Applied, Apply on ATS */}
                   <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
                     {selectedSplitListing.status === 'open' && (
                       <button
                         onClick={() => onSelectCompanyForPitch(selectedSplitListing.company, selectedSplitListing.title)}
-                        className="px-3.5 py-2.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                        title="Generate a high-converting cold email pitch or referral ask"
+                        className="px-3.5 py-2.5 rounded-xl border border-stone-300 hover:bg-stone-50 text-stone-800 text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                        title="Generate an AI pitch or referral ask"
                       >
-                        <Send className="h-3.5 w-3.5 text-stone-400" />
+                        <Send className="h-4 w-4 text-stone-500" />
                         <span>Pitch AI</span>
                       </button>
                     )}
@@ -1143,18 +1467,18 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     {appliedIdSet.has(selectedSplitListing.id) ? (
                       <button
                         onClick={() => handleUnmarkApplied(selectedSplitListing.id)}
-                        className="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-100 text-emerald-900 font-bold text-xs hover:bg-emerald-200 transition cursor-pointer flex items-center gap-1.5"
+                        className="px-4 py-2.5 rounded-xl border border-emerald-400 bg-emerald-100 text-emerald-950 font-bold text-sm hover:bg-emerald-200 transition cursor-pointer flex items-center gap-1.5"
                       >
-                        <Check className="h-3.5 w-3.5 text-emerald-700" />
-                        <span>✓ Applied (Unmark)</span>
+                        <Check className="h-4 w-4 text-emerald-700" />
+                        <span>Applied (Click to Unmark)</span>
                       </button>
                     ) : (
                       <button
                         onClick={() => handleMarkApplied(selectedSplitListing)}
-                        className="px-4 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-bold text-xs hover:bg-emerald-100 transition shadow-2xs cursor-pointer flex items-center gap-1.5"
+                        className="px-4 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-bold text-sm hover:bg-emerald-100 transition shadow-2xs cursor-pointer flex items-center gap-1.5"
                       >
-                        <Check className="h-3.5 w-3.5 text-emerald-600" />
-                        <span>✓ I Applied</span>
+                        <Check className="h-4 w-4 text-emerald-600" />
+                        <span>Applied</span>
                       </button>
                     )}
 
@@ -1162,16 +1486,16 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                       href={selectedSplitListing.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-sm flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
                     >
-                      <span>Apply on Official Portal</span>
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <span>Apply on Portal</span>
+                      <ExternalLink className="h-4 w-4" />
                     </a>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center text-stone-400 text-xs">
+              <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center text-stone-500 text-sm">
                 Select an opening on the left to inspect requisition details.
               </div>
             )}
@@ -1389,14 +1713,14 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                       </span>
                     ) : (
                       <>
-                        {/* 1-Click "I Applied" Button */}
+                        {/* 1-Click "Applied" Button */}
                         <button
                           onClick={() => handleMarkApplied(listing)}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold transition shadow-2xs cursor-pointer"
                           title="Mark that you submitted an application on the portal"
                         >
                           <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                          <span>I Applied</span>
+                          <span>Applied</span>
                         </button>
 
                         {/* Direct Official ATS Portal Application Link */}
@@ -1545,7 +1869,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     onClick={() => handleMarkApplied(activeModalListing)}
                     className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold text-xs hover:bg-emerald-100 transition cursor-pointer"
                   >
-                    + I Applied
+                    ✓ Applied
                   </button>
                 )}
 
