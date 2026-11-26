@@ -582,7 +582,7 @@ export default function App() {
             profile={profile}
             projects={projects}
             onApplicationSent={handleApplicationSent}
-            onNavigateToSettings={() => setActiveTab('settings')}
+            onNavigateToSettings={() => setActiveTab('profile')}
             hasGeminiKey={!!envConfig?.hasGeminiKey}
             hasGmailConfig={!!envConfig?.hasGmailConfig}
             prefilledCompany={prefilledCompany}

@@ -134,6 +134,7 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
   const [attachResume, setAttachResume] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   // Batch Staging Queue state
   const [batchQueue, setBatchQueue] = useState<BatchItem[]>([]);
@@ -344,6 +345,57 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
       : [...draft.matchedProjects, projectTitle];
 
     setDraft({ ...draft, matchedProjects: newMatched });
+  };
+
+  const handleCopyPitch = () => {
+    if (!draft) return;
+    const fullText = `To: ${draft.recipientEmail}\nSubject: ${draft.emailSubject}\n\n${draft.emailBody}`;
+    navigator.clipboard.writeText(fullText);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2500);
+  };
+
+  const handleOpenInGmailWeb = async () => {
+    if (!draft) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!draft.recipientEmail || !draft.recipientEmail.includes('@')) {
+      setErrorMsg('Recipient email is required to open Gmail compose.');
+      return;
+    }
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      draft.recipientEmail
+    )}&su=${encodeURIComponent(draft.emailSubject)}&body=${encodeURIComponent(draft.emailBody)}`;
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+
+    try {
+      const res = await fetch('/api/applications/log-manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: draft.companyName,
+          recipientName: draft.recipientName,
+          recipientEmail: draft.recipientEmail,
+          role: draft.role,
+          jobType: draft.jobType,
+          emailSubject: draft.emailSubject,
+          emailBody: draft.emailBody,
+          matchedProjects: draft.matchedProjects,
+          sourceType,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSuccessMsg(`Opened Gmail compose tab! Logged application for ${draft.companyName} in your Applications pipeline.`);
+        if (data.application) {
+          onApplicationSent(data.application);
+          fetchQuotaInfo();
+        }
+      }
+    } catch (_) {}
   };
 
   // Send Single Outreach
@@ -619,22 +671,20 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-7 pb-24">
-      {/* Subtle Setup Notice */}
-      {(!hasGeminiKey || !hasGmailConfig || !profile?.hasResume) && (
-        <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200/80 text-sm text-amber-900 flex items-center justify-between gap-4">
+      {/* Resume Upload Recommendation */}
+      {!profile?.hasResume && (
+        <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200/80 text-xs sm:text-sm text-amber-900 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="h-2 w-2 rounded-full bg-amber-600 shrink-0" />
             <span>
-              Setup items pending: {!hasGeminiKey && 'Gemini Key • '}
-              {!hasGmailConfig && 'Gmail App Password • '}
-              {!profile?.hasResume && 'Resume PDF'}
+              <strong>Next Step:</strong> Upload your Resume PDF in the <strong>Profile</strong> tab. AutoReach will auto-extract your skills and projects with AI!
             </span>
           </div>
           <button
             onClick={onNavigateToSettings}
-            className="text-amber-900 hover:text-amber-950 underline font-semibold text-sm cursor-pointer"
+            className="text-amber-900 hover:text-amber-950 underline font-bold text-xs sm:text-sm cursor-pointer shrink-0"
           >
-            Configure
+            Upload Resume
           </button>
         </div>
       )}
@@ -1229,39 +1279,71 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-2.5 self-end sm:self-auto">
-              {profile?.email && (
+            <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={handleCopyPitch}
+                title="Copy entire pitch and subject to clipboard"
+                className="px-3.5 py-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+              >
+                {isCopied ? (
+                  <>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Clipboard className="h-3.5 w-3.5" />
+                    <span>Copy Pitch</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenInGmailWeb}
+                disabled={!draft.recipientEmail}
+                title="Open Gmail compose tab with pre-filled pitch and auto-log to tracker"
+                className="px-4 py-2.5 rounded-lg bg-amber-400 hover:bg-amber-500 text-stone-950 font-bold text-xs transition disabled:opacity-40 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span>Open in Gmail</span>
+              </button>
+
+              {profile?.email && hasGmailConfig && (
                 <button
                   type="button"
                   onClick={handleSendTestToSelf}
                   disabled={isSendingTest || isSending}
                   title="Send a test copy to your own email to preview format"
-                  className="px-4 py-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-sm font-medium transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-3.5 w-3.5" />
                   {isSendingTest ? 'Sending Test...' : 'Test to Myself'}
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={handleSendSingleEmail}
-                disabled={isSending || !draft.recipientEmail}
-                title={!draft.recipientEmail ? 'Please provide recipient email first' : 'Dispatch email'}
-                className="px-5 py-2.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-50 font-medium text-sm transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-              >
-                {isSending ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    {!draft.recipientEmail ? 'Enter Email to Send' : 'Dispatch Application'}
-                  </>
-                )}
-              </button>
+              {hasGmailConfig && (
+                <button
+                  type="button"
+                  onClick={handleSendSingleEmail}
+                  disabled={isSending || !draft.recipientEmail}
+                  title={!draft.recipientEmail ? 'Please provide recipient email first' : 'Dispatch via SMTP'}
+                  className="px-5 py-2.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                >
+                  {isSending ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5" />
+                      {!draft.recipientEmail ? 'Enter Email to Send' : 'Auto-Send (SMTP)'}
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

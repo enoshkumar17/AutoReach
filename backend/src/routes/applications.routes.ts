@@ -174,6 +174,54 @@ router.post('/send', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/applications/log-manual - record outreach sent via Gmail Web compose or mailto
+router.post('/log-manual', async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const {
+      companyName,
+      recipientName,
+      recipientEmail,
+      role,
+      jobType,
+      emailSubject,
+      emailBody,
+      matchedProjects,
+      sourceType,
+    } = req.body;
+
+    if (!recipientEmail || !emailSubject || !emailBody) {
+      return res.status(400).json({ error: 'Recipient email, subject, and email body are required.' });
+    }
+
+    const application = await prisma.application.create({
+      data: {
+        userId,
+        companyName: companyName || 'Company',
+        recipientName: recipientName || null,
+        recipientEmail: recipientEmail.trim(),
+        role: role || 'Internship',
+        jobType: jobType || 'Internship',
+        status: 'SENT',
+        emailSubject,
+        emailBody,
+        matchedProjects: Array.isArray(matchedProjects) ? matchedProjects.join(', ') : matchedProjects,
+        sourceType: sourceType || 'TEXT',
+        sentAt: new Date(),
+        notes: 'Dispatched via 1-click Gmail Web compose',
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Application logged successfully to your pipeline tracker.',
+      application,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to log application.' });
+  }
+});
+
 // POST /api/applications/:id/follow-up - 1-click threaded follow-up bump
 router.post('/:id/follow-up', async (req: Request, res: Response) => {
   try {
