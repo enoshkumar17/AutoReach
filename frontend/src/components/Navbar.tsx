@@ -130,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13.5px] font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
                     isActive
                       ? 'bg-stone-900 text-white shadow-xs'
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -146,7 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Settings Icon */}
             <button
               onClick={() => setActiveTab('settings')}
-              className={`p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ml-0.5 ${
+              className={`p-2 rounded-lg text-[13.5px] font-semibold transition-all cursor-pointer shrink-0 ml-0.5 ${
                 activeTab === 'settings'
                   ? 'bg-stone-900 text-white shadow-xs'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -163,13 +163,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className="flex items-center gap-2 pl-1 pr-2.5 py-1 bg-stone-100 hover:bg-stone-200/90 rounded-full border border-stone-200 text-xs font-semibold text-stone-900 transition-all cursor-pointer shadow-2xs shrink-0"
+                  className="flex items-center gap-2 pl-1 pr-2.5 py-1 bg-stone-100 hover:bg-stone-200/90 rounded-full border border-stone-200 text-[13px] font-semibold text-stone-900 transition-all cursor-pointer shadow-2xs shrink-0"
                   title={`Logged in as ${user.name} (${user.email})`}
                 >
                   <div className="h-6 w-6 rounded-full bg-stone-900 text-amber-300 flex items-center justify-center text-[11px] font-bold uppercase shrink-0">
                     {user.name.charAt(0) || 'U'}
                   </div>
-                  <span className="font-semibold text-xs text-stone-900 whitespace-nowrap">
+                  <span className="font-semibold text-[13px] text-stone-900 whitespace-nowrap">
                     {user.name.trim().split(' ')[0]}
                   </span>
                 </button>

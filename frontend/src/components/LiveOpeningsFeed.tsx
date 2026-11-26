@@ -584,10 +584,10 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
             feedView === 'archived'
               ? 'bg-amber-900 text-white shadow-xs'
-              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/70'
+              : 'text-stone-700 hover:text-stone-900 hover:bg-stone-200/70'
           }`}
         >
-          <Archive className="h-4 w-4 text-amber-300 shrink-0" />
+          <Archive className={`h-4 w-4 shrink-0 ${feedView === 'archived' ? 'text-amber-300' : 'text-stone-800'}`} />
           <span>Archived / Hidden</span>
           <span
             className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
@@ -775,7 +775,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {currentFeedListings.map((listing) => {
             const isFresh = listing.isUrgentFresh;
             const isClosed = listing.status === 'closed' || feedView === 'closed';
@@ -785,7 +785,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
             return (
               <div
                 key={listing.id}
-                className={`bg-white border rounded-xl p-5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group relative ${
+                className={`bg-white border rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group relative ${
                   isArchived
                     ? 'border-stone-200 bg-stone-50/50 opacity-90'
                     : isApplied
@@ -799,75 +799,76 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               >
                 {/* Header Strip */}
                 <div>
-                  <div className="flex items-start justify-between gap-3 mb-2.5">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="h-10 w-10 rounded-lg bg-[#fbfbfa] border border-stone-200/90 flex items-center justify-center text-stone-800 font-bold text-sm shrink-0 group-hover:border-amber-400 transition">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-11 w-11 rounded-xl bg-stone-100 border border-stone-200/90 flex items-center justify-center text-stone-900 font-bold text-sm shrink-0 group-hover:border-amber-400 transition">
                         {listing.company.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wide truncate">
+                          <span className="text-xs font-bold text-stone-500 uppercase tracking-wide truncate">
                             {listing.company}
                           </span>
                           {!isClosed && (
                             <span
                               title="Verified Active Requisition on Company Career Portal"
-                              className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded"
+                              className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded"
                             >
-                              <ShieldCheck className="h-2.5 w-2.5 text-emerald-600 shrink-0" />
+                              <ShieldCheck className="h-3 w-3 text-emerald-600 shrink-0" />
                               <span>Verified ATS</span>
                             </span>
                           )}
                         </div>
                         <h3
                           onClick={() => setActiveModalListing(listing)}
-                          className="text-sm font-bold text-stone-900 group-hover:text-amber-900 transition leading-snug line-clamp-1 cursor-pointer"
+                          className="text-base font-bold text-stone-900 group-hover:text-amber-900 transition leading-snug line-clamp-1 cursor-pointer mt-0.5"
                         >
                           {listing.title}
                         </h3>
                       </div>
                     </div>
 
-                    {/* Status Pill & Top Card Controls */}
-                    <div className="flex items-center gap-1 shrink-0">
+                    {/* Status Pill & Dark Gray Archive Button */}
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {isArchived ? (
-                        <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-300 text-[10px] font-semibold flex items-center gap-1">
-                          <EyeOff className="w-3 h-3 text-stone-500" />
+                        <span className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-800 border border-stone-300 text-xs font-semibold flex items-center gap-1">
+                          <EyeOff className="w-3.5 h-3.5 text-stone-700" />
                           Hidden
                         </span>
                       ) : isApplied ? (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold flex items-center gap-1">
-                          <Check className="w-3 h-3 text-emerald-600" />
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
                           Applied
                         </span>
                       ) : isClosed ? (
-                        <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold flex items-center gap-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                           Closed
                         </span>
                       ) : isFresh ? (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 text-[10px] font-bold flex items-center gap-1 animate-pulse">
-                          <Flame className="w-3 h-3 text-amber-600 fill-amber-500" />
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 text-xs font-bold flex items-center gap-1 animate-pulse">
+                          <Flame className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
                           Closes Fast
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold flex items-center gap-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           Live
                         </span>
                       )}
 
-                      {/* 1-Click Quick Archive / Dismiss Button (on Active feed cards) */}
+                      {/* 1-Click Dark Gray / Black Archive Button */}
                       {!isArchived && feedView === 'active' && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleArchiveListing(listing);
                           }}
-                          title="Archive / Dismiss this listing (removes from feed)"
-                          className="p-1 rounded-lg text-stone-400 hover:text-amber-800 hover:bg-amber-50 transition cursor-pointer"
+                          title="Archive / Hide this listing (removes from feed)"
+                          className="p-1.5 rounded-lg text-stone-800 hover:text-stone-950 bg-stone-100 hover:bg-stone-200 border border-stone-300 transition cursor-pointer flex items-center gap-1 shadow-2xs shrink-0"
                         >
-                          <Archive className="h-3.5 w-3.5" />
+                          <Archive className="h-3.5 w-3.5 text-stone-800 shrink-0" />
+                          <span className="text-[11px] font-bold text-stone-800 hidden 2xl:inline">Archive</span>
                         </button>
                       )}
                     </div>
@@ -875,9 +876,9 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
                   {/* Urgency Alert Bar */}
                   {isArchived ? (
-                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-stone-100 border border-stone-200 text-[11px] text-stone-700 flex items-center justify-between font-medium">
+                    <div className="mb-3 px-3 py-1.5 rounded-lg bg-stone-100 border border-stone-200 text-xs text-stone-800 flex items-center justify-between font-medium">
                       <span className="flex items-center gap-1.5">
-                        <Archive className="w-3 h-3 text-stone-500 shrink-0" />
+                        <Archive className="w-3.5 h-3.5 text-stone-700 shrink-0" />
                         Dismissed from live radar
                       </span>
                       <button
@@ -888,7 +889,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                       </button>
                     </div>
                   ) : isApplied ? (
-                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 flex items-center justify-between font-medium">
+                    <div className="mb-3 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between font-medium">
                       <span className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                         Applied via official ATS portal
@@ -901,116 +902,112 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                       </button>
                     </div>
                   ) : isClosed ? (
-                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200/80 text-[11px] text-rose-900 flex items-center gap-1.5 font-medium">
-                      <Clock className="w-3 h-3 text-rose-600 shrink-0" />
+                    <div className="mb-3 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200/80 text-xs text-rose-900 flex items-center gap-1.5 font-medium">
+                      <Clock className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                       <span>{listing.closedAgoLabel || 'Application window closed'} • Requisition filled on ATS</span>
                     </div>
                   ) : isFresh ? (
-                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-amber-50/80 border border-amber-200/90 text-[11px] text-amber-950 flex items-center gap-1.5 font-medium">
-                      <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+                    <div className="mb-3 px-3 py-1.5 rounded-lg bg-amber-50/80 border border-amber-200/90 text-xs text-amber-950 flex items-center gap-1.5 font-medium">
+                      <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                       <span>Posted {listing.postedAgoLabel} • Closes within 24–48h once capacity reached</span>
                     </div>
                   ) : null}
 
                   {/* Badges Row */}
-                  <div className="flex items-center gap-1.5 flex-wrap mb-3 text-[11px]">
+                  <div className="flex items-center gap-1.5 flex-wrap mb-3.5 text-xs">
                     {!isClosed && (listing.eligibleBatches.includes(candidateTargetBatch) || listing.eligibleBatches.length === 0) && (
-                      <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300 font-bold">
+                      <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300 font-bold text-[11px]">
                         ⭐ Match (Batch {candidateTargetBatch})
                       </span>
                     )}
-                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 font-semibold">
+                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 font-semibold text-[11px]">
                       {listing.roleType}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600">
+                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[11px]">
                       {listing.categoryLabel}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 flex items-center gap-1 text-[11px]">
                       <MapPin className="h-3 w-3 text-stone-400" />
                       {listing.locations[0] || 'India'}
                     </span>
                   </div>
                 </div>
 
-                {/* Details Footer */}
-                <div className="space-y-2 pt-3 border-t border-stone-100 text-[11px]">
-                  <div className="flex items-center justify-between text-stone-600">
-                    <span className="text-stone-400 font-medium">Eligible:</span>
-                    <span className="font-semibold text-stone-800">{listing.eligibleBatchesLabel}</span>
+                {/* Details Footer: Clean 2-Column Grid (No Vertical Tightness) */}
+                <div className="grid grid-cols-2 gap-2.5 py-3 border-t border-stone-100 text-xs">
+                  <div>
+                    <span className="text-stone-400 font-medium text-[11px] block">Stipend:</span>
+                    <span className="font-bold text-emerald-800 text-xs truncate block">{listing.stipend}</span>
                   </div>
-                  <div className="flex items-center justify-between text-stone-600">
-                    <span className="text-stone-400 font-medium">Stipend:</span>
-                    <span className="font-bold text-emerald-800">{listing.stipend}</span>
+                  <div>
+                    <span className="text-stone-400 font-medium text-[11px] block">Eligible:</span>
+                    <span className="font-semibold text-stone-800 text-xs truncate block">{listing.eligibleBatchesLabel}</span>
                   </div>
-                  <div className="flex items-center justify-between text-stone-600">
-                    <span className="text-stone-400 font-medium">Status:</span>
-                    <span className={`font-semibold ${isClosed ? 'text-rose-700' : 'text-stone-800'}`}>
-                      {isClosed ? 'Requisition Closed' : listing.deadline}
-                    </span>
-                  </div>
+                </div>
 
-                  {/* Real-World Action Buttons with Archive, Applied, & Portal Integration */}
-                  <div className="flex items-center justify-between pt-2.5 border-t border-stone-100 gap-1.5 flex-wrap">
-                    <button
-                      onClick={() => setActiveModalListing(listing)}
-                      className="text-[11px] font-semibold text-stone-600 hover:text-stone-900 cursor-pointer flex items-center gap-0.5"
-                    >
-                      View Details <ChevronRight className="h-3 w-3" />
-                    </button>
+                {/* Real-World Action Buttons with I Applied, Portal Link, & Details */}
+                <div className="flex items-center justify-between pt-3 border-t border-stone-100 gap-2">
+                  <button
+                    onClick={() => setActiveModalListing(listing)}
+                    className="text-xs font-semibold text-stone-500 hover:text-stone-900 cursor-pointer flex items-center gap-0.5"
+                  >
+                    Details <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
 
-                    <div className="flex items-center gap-1.5">
-                      {isArchived ? (
+                  <div className="flex items-center gap-2">
+                    {isArchived ? (
+                      <button
+                        onClick={() => handleUnarchiveListing(listing.id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold transition shadow-2xs cursor-pointer"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5 text-amber-300" /> Restore to Feed
+                      </button>
+                    ) : isApplied ? (
+                      <>
                         <button
-                          onClick={() => handleUnarchiveListing(listing.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold transition shadow-2xs cursor-pointer"
+                          onClick={() => onSelectCompanyForPitch(listing.company, listing.title)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold transition cursor-pointer"
+                          title="Draft email pitch or referral bump"
                         >
-                          <RotateCcw className="h-3 w-3" /> Restore to Feed
+                          <Send className="h-3 w-3 text-stone-400" /> Pitch AI
                         </button>
-                      ) : isApplied ? (
-                        <>
-                          <button
-                            onClick={() => onSelectCompanyForPitch(listing.company, listing.title)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-700 text-[11px] font-semibold transition cursor-pointer"
-                            title="Draft email pitch or referral bump"
-                          >
-                            <Send className="h-3 w-3 text-stone-400" /> Pitch AI
-                          </button>
-                          <a
-                            href={listing.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-[11px] font-bold transition shadow-2xs"
-                          >
-                            Portal <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </>
-                      ) : isClosed ? (
-                        <span className="text-[11px] text-stone-400 font-medium">
-                          Drive Ended
-                        </span>
-                      ) : (
-                        <>
-                          {/* 1-Click "Applied?" Button: Immediately moves listing to Applied section */}
-                          <button
-                            onClick={() => handleMarkApplied(listing)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold transition shadow-2xs cursor-pointer"
-                            title="Mark as Applied (moves out of active feed into Applied tab)"
-                          >
-                            <Check className="h-3 w-3 text-emerald-600" /> Applied?
-                          </button>
+                        <a
+                          href={listing.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold transition shadow-2xs"
+                        >
+                          Portal <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </>
+                    ) : isClosed ? (
+                      <span className="text-xs text-stone-400 font-medium">
+                        Drive Ended
+                      </span>
+                    ) : (
+                      <>
+                        {/* 1-Click "I Applied" Button */}
+                        <button
+                          onClick={() => handleMarkApplied(listing)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold transition shadow-2xs cursor-pointer"
+                          title="Mark that you submitted an application on the portal"
+                        >
+                          <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <span>I Applied</span>
+                        </button>
 
-                          {/* Direct Official ATS Portal Application Link */}
-                          <a
-                            href={listing.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-[11px] font-bold transition shadow-2xs"
-                          >
-                            Apply <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </>
-                      )}
-                    </div>
+                        {/* Direct Official ATS Portal Application Link */}
+                        <a
+                          href={listing.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold transition shadow-2xs"
+                        >
+                          <span>Apply</span>
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1145,7 +1142,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     onClick={() => handleMarkApplied(activeModalListing)}
                     className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold text-xs hover:bg-emerald-100 transition cursor-pointer"
                   >
-                    + Mark as Applied
+                    + I Applied
                   </button>
                 )}
 
@@ -1159,9 +1156,9 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                 ) : (
                   <button
                     onClick={() => handleArchiveListing(activeModalListing)}
-                    className="px-3 py-1.5 rounded-lg border border-stone-200 bg-white text-stone-700 font-semibold text-xs hover:bg-stone-100 transition cursor-pointer flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg border border-stone-300 bg-stone-100 text-stone-800 font-bold text-xs hover:bg-stone-200 transition cursor-pointer flex items-center gap-1.5"
                   >
-                    <Archive className="h-3.5 w-3.5 text-stone-400" />
+                    <Archive className="h-3.5 w-3.5 text-stone-800" />
                     <span>Archive / Hide</span>
                   </button>
                 )}
