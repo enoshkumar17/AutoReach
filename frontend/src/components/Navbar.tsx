@@ -130,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
                     isActive
                       ? 'bg-stone-900 text-white shadow-xs'
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -146,7 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Settings Icon */}
             <button
               onClick={() => setActiveTab('settings')}
-              className={`p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ml-1 ${
+              className={`p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ml-0.5 ${
                 activeTab === 'settings'
                   ? 'bg-stone-900 text-white shadow-xs'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -160,10 +160,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="h-5 w-px bg-stone-200 mx-1 shrink-0" />
 
             {user ? (
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className="flex items-center gap-2 pl-1 pr-3 py-1 bg-stone-100 hover:bg-stone-200/90 rounded-full border border-stone-200 text-xs font-semibold text-stone-900 transition-all cursor-pointer shadow-2xs shrink-0"
+                  className="flex items-center gap-2 pl-1 pr-2.5 py-1 bg-stone-100 hover:bg-stone-200/90 rounded-full border border-stone-200 text-xs font-semibold text-stone-900 transition-all cursor-pointer shadow-2xs shrink-0"
                   title={`Logged in as ${user.name} (${user.email})`}
                 >
                   <div className="h-6 w-6 rounded-full bg-stone-900 text-amber-300 flex items-center justify-center text-[11px] font-bold uppercase shrink-0">
@@ -189,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer shrink-0"
               >
                 <LogIn className="h-3.5 w-3.5" />
-                <span>Sign In / Register</span>
+                <span>Sign In <span className="hidden xl:inline">/ Register</span></span>
               </button>
             )}
           </nav>
