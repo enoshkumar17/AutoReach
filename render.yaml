@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm run build && npx --prefix backend prisma db push
+    buildCommand: npm run build && cd backend && npx prisma db push
     startCommand: npm start
     envVars:
       - key: NODE_ENV

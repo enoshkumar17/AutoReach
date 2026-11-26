@@ -10,19 +10,19 @@ COPY backend/prisma ./backend/prisma/
 COPY frontend/package*.json ./frontend/
 
 # Install dependencies
-RUN npm --prefix backend install
-RUN npm --prefix frontend install
+RUN cd backend && npm install
+RUN cd frontend && npm install
 
 # Generate Prisma Client
-RUN npx --prefix backend prisma generate
+RUN cd backend && npx prisma generate
 
 # Copy application source code
 COPY backend ./backend
 COPY frontend ./frontend
 
 # Build backend and frontend
-RUN npm --prefix backend run build
-RUN npm --prefix frontend run build
+RUN cd backend && npm run build
+RUN cd frontend && npm run build
 
 # Runner stage
 FROM node:20-alpine AS runner
@@ -43,4 +43,4 @@ COPY --from=builder /app/frontend/dist ./frontend/dist
 EXPOSE 5000
 
 # Push database schema & start unified server
-CMD ["sh", "-c", "npx --prefix backend prisma db push && npm --prefix backend start"]
+CMD ["sh", "-c", "cd backend && npx prisma db push && npm start"]
