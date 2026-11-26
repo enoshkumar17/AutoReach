@@ -50,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }> = [
     {
       id: 'outreach',
-      label: 'Cold Outreach',
+      label: 'Outreach',
       icon: <Send className="h-4 w-4" />,
     },
     {
@@ -71,7 +71,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'programs',
-      label: 'Student Programs',
+      label: 'Programs',
       icon: <GraduationCap className="h-4 w-4" />,
     },
     {
@@ -189,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer shrink-0"
               >
                 <LogIn className="h-3.5 w-3.5" />
-                <span>Sign In <span className="hidden xl:inline">/ Register</span></span>
+                <span>Sign In</span>
               </button>
             )}
           </nav>
