@@ -597,6 +597,9 @@ export default function App() {
           <LiveOpeningsFeed
             onSelectCompanyForPitch={handleSelectCompanyForPitch}
             candidateTargetBatch={profile?.targetBatch || 2028}
+            userId={user?.id}
+            onStatsUpdate={(stats) => setLiveStats(stats)}
+            onApplicationLogged={loadInitialData}
           />
         )}
 

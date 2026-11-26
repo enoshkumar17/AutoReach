@@ -14,26 +14,119 @@ import {
   ShieldCheck,
   AlertCircle,
   Archive,
+  CheckCircle2,
+  Check,
+  RotateCcw,
+  Radar,
+  EyeOff,
+  Sparkles,
 } from 'lucide-react';
 
 interface LiveOpeningsFeedProps {
   onSelectCompanyForPitch: (companyName: string, role: string) => void;
   candidateTargetBatch?: number;
+  userId?: string;
+  onStatsUpdate?: (stats: { openCount: number; freshCount: number }) => void;
+  onApplicationLogged?: () => void;
+}
+
+type FeedView = 'active' | 'applied' | 'archived' | 'closed';
+
+interface ToastNotice {
+  message: string;
+  undoAction?: () => void;
 }
 
 export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
   onSelectCompanyForPitch,
   candidateTargetBatch = 2028,
+  userId,
+  onStatsUpdate,
+  onApplicationLogged,
 }) => {
   const [liveListings, setLiveListings] = useState<LiveListingItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [openCount, setOpenCount] = useState<number>(0);
-  const [closedCount, setClosedCount] = useState<number>(0);
-  const [freshCount, setFreshCount] = useState<number>(0);
   const [lastFetched, setLastFetched] = useState<string>('');
 
-  // Filters
+  // Primary Feed Section: Active Radar vs Applied vs Archived vs Closed
+  const [feedView, setFeedView] = useState<FeedView>('active');
+
+  // Persistence keys scoped per user
+  const userPrefix = userId ? `autoreach_${userId}` : 'autoreach_guest';
+  const ARCHIVE_KEY = `${userPrefix}_archived_jobs`;
+  const APPLIED_KEY = `${userPrefix}_applied_jobs`;
+  const APPLIED_META_KEY = `${userPrefix}_applied_meta`;
+
+  // Archived & Applied state initialized from localStorage
+  const [archivedIds, setArchivedIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(ARCHIVE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [appliedIds, setAppliedIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(APPLIED_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [appliedMetadata, setAppliedMetadata] = useState<Record<string, { appliedAt: string; title?: string; company?: string }>>(() => {
+    try {
+      const stored = localStorage.getItem(APPLIED_META_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [toast, setToast] = useState<ToastNotice | null>(null);
+
+  // Sync state when userId changes (e.g. login / logout)
+  useEffect(() => {
+    try {
+      const storedArchived = localStorage.getItem(ARCHIVE_KEY);
+      setArchivedIds(storedArchived ? JSON.parse(storedArchived) : []);
+
+      const storedApplied = localStorage.getItem(APPLIED_KEY);
+      setAppliedIds(storedApplied ? JSON.parse(storedApplied) : []);
+
+      const storedMeta = localStorage.getItem(APPLIED_META_KEY);
+      setAppliedMetadata(storedMeta ? JSON.parse(storedMeta) : {});
+    } catch {
+      // fallback
+    }
+  }, [ARCHIVE_KEY, APPLIED_KEY, APPLIED_META_KEY]);
+
+  // Persist archivedIds
+  useEffect(() => {
+    try {
+      localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archivedIds));
+    } catch {}
+  }, [archivedIds, ARCHIVE_KEY]);
+
+  // Persist appliedIds & metadata
+  useEffect(() => {
+    try {
+      localStorage.setItem(APPLIED_KEY, JSON.stringify(appliedIds));
+      localStorage.setItem(APPLIED_META_KEY, JSON.stringify(appliedMetadata));
+    } catch {}
+  }, [appliedIds, appliedMetadata, APPLIED_KEY, APPLIED_META_KEY]);
+
+  // Auto-dismiss toast after 4s
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  // Active radar sub-filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleType, setSelectedRoleType] = useState<string>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
@@ -55,9 +148,6 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
       if (res.ok) {
         const data = await res.json();
         setLiveListings(data.listings || []);
-        setOpenCount(data.openCount || 0);
-        setClosedCount(data.closedCount || (data.listings || []).filter((i: LiveListingItem) => i.status === 'closed').length);
-        setFreshCount(data.freshCount || 0);
         setLastFetched(data.lastFetchedAt || new Date().toISOString());
       }
     } catch (err) {
@@ -72,33 +162,162 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
     fetchLiveListings();
   }, []);
 
-  // Compute live counts
-  const summerOpenCount = useMemo(() => {
-    return liveListings.filter((i) => i.status === 'open' && i.roleType === 'Summer Intern').length;
-  }, [liveListings]);
+  // Sets for O(1) membership lookups
+  const archivedIdSet = useMemo(() => new Set(archivedIds), [archivedIds]);
+  const appliedIdSet = useMemo(() => new Set(appliedIds), [appliedIds]);
 
-  const sixMonthOpenCount = useMemo(() => {
-    return liveListings.filter((i) => i.status === 'open' && i.roleType === '6-Month Intern').length;
-  }, [liveListings]);
-
-  const ppoOpenCount = useMemo(() => {
-    return liveListings.filter((i) => i.status === 'open' && i.roleType === 'PPO / Full-Time').length;
-  }, [liveListings]);
-
-  const matchedForMeCount = useMemo(() => {
+  // Partition Listings
+  // 1. ACTIVE listings: open, NOT archived, NOT applied
+  const activeListings = useMemo(() => {
     return liveListings.filter(
-      (i) => i.status === 'open' && (i.eligibleBatches.includes(candidateTargetBatch) || i.eligibleBatches.length === 0)
-    ).length;
-  }, [liveListings, candidateTargetBatch]);
+      (item) => item.status === 'open' && !archivedIdSet.has(item.id) && !appliedIdSet.has(item.id)
+    );
+  }, [liveListings, archivedIdSet, appliedIdSet]);
 
+  // 2. APPLIED listings: marked applied
+  const appliedListings = useMemo(() => {
+    return liveListings.filter((item) => appliedIdSet.has(item.id));
+  }, [liveListings, appliedIdSet]);
+
+  // 3. ARCHIVED listings: marked archived / hidden
+  const archivedListings = useMemo(() => {
+    return liveListings.filter((item) => archivedIdSet.has(item.id));
+  }, [liveListings, archivedIdSet]);
+
+  // 4. CLOSED listings: status === 'closed' on official ATS
+  const closedListings = useMemo(() => {
+    return liveListings.filter(
+      (item) => item.status === 'closed' && !archivedIdSet.has(item.id) && !appliedIdSet.has(item.id)
+    );
+  }, [liveListings, archivedIdSet, appliedIdSet]);
+
+  // Dynamic metrics: Strictly exclude archived & applied from live counts!
+  const activeOpenCount = activeListings.length;
+  const activeFreshCount = useMemo(() => activeListings.filter((i) => i.isUrgentFresh).length, [activeListings]);
+  const activeSummerCount = useMemo(() => activeListings.filter((i) => i.roleType === 'Summer Intern').length, [activeListings]);
+  const activeSixMonthCount = useMemo(() => activeListings.filter((i) => i.roleType === '6-Month Intern').length, [activeListings]);
+  const activePpoCount = useMemo(() => activeListings.filter((i) => i.roleType === 'PPO / Full-Time').length, [activeListings]);
+  const activeMatchedCount = useMemo(() => {
+    return activeListings.filter(
+      (i) => i.eligibleBatches.includes(candidateTargetBatch) || i.eligibleBatches.length === 0
+    ).length;
+  }, [activeListings, candidateTargetBatch]);
+
+  // Keep parent header widgets updated with active, deduplicated counts
+  useEffect(() => {
+    if (onStatsUpdate && activeOpenCount > 0) {
+      onStatsUpdate({ openCount: activeOpenCount, freshCount: activeFreshCount });
+    }
+  }, [activeOpenCount, activeFreshCount, onStatsUpdate]);
+
+  // Action: Archive a listing
+  const handleArchiveListing = (listing: LiveListingItem) => {
+    const prevArchived = [...archivedIds];
+    const prevApplied = [...appliedIds];
+
+    setArchivedIds((prev) => Array.from(new Set([...prev, listing.id])));
+    setAppliedIds((prev) => prev.filter((id) => id !== listing.id));
+
+    setToast({
+      message: `Archived ${listing.company} (${listing.title}). Removed from live feed.`,
+      undoAction: () => {
+        setArchivedIds(prevArchived);
+        setAppliedIds(prevApplied);
+      },
+    });
+
+    if (activeModalListing?.id === listing.id) {
+      setActiveModalListing(null);
+    }
+  };
+
+  // Action: Unarchive / Restore a listing
+  const handleUnarchiveListing = (listingId: string) => {
+    const restoredItem = liveListings.find((l) => l.id === listingId);
+    setArchivedIds((prev) => prev.filter((id) => id !== listingId));
+    setToast({
+      message: `Restored ${restoredItem?.company || 'listing'} back to Active Live Radar.`,
+    });
+  };
+
+  // Action: Restore all archived listings
+  const handleRestoreAllArchived = () => {
+    const prevArchived = [...archivedIds];
+    setArchivedIds([]);
+    setToast({
+      message: `All ${prevArchived.length} archived listings restored to Active Radar.`,
+      undoAction: () => setArchivedIds(prevArchived),
+    });
+  };
+
+  // Action: Mark as Applied
+  const handleMarkApplied = async (listing: LiveListingItem) => {
+    const prevApplied = [...appliedIds];
+    const prevArchived = [...archivedIds];
+
+    setAppliedIds((prev) => Array.from(new Set([...prev, listing.id])));
+    setArchivedIds((prev) => prev.filter((id) => id !== listing.id));
+    setAppliedMetadata((prev) => ({
+      ...prev,
+      [listing.id]: {
+        appliedAt: new Date().toISOString(),
+        title: listing.title,
+        company: listing.company,
+      },
+    }));
+
+    // Auto-record to user's pipeline if logged in
+    if (userId) {
+      try {
+        await fetch('/api/applications/log-manual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyName: listing.company,
+            role: listing.title,
+            recipientEmail: `careers@${listing.companySlug || 'ats-portal'}.com`,
+            emailSubject: `Application: ${listing.title} at ${listing.company}`,
+            emailBody: `Applied via official ATS careers portal: ${listing.url}`,
+            jobType: listing.roleType,
+            sourceType: 'PORTAL',
+          }),
+        });
+        onApplicationLogged?.();
+      } catch {
+        // Log in background
+      }
+    }
+
+    setToast({
+      message: `Marked ${listing.company} as Applied! Moved to your Applied section.`,
+      undoAction: () => {
+        setAppliedIds(prevApplied);
+        setArchivedIds(prevArchived);
+      },
+    });
+
+    if (activeModalListing?.id === listing.id) {
+      setActiveModalListing(null);
+    }
+  };
+
+  // Action: Unmark Applied (Move back to Active)
+  const handleUnmarkApplied = (listingId: string) => {
+    const unappliedItem = liveListings.find((l) => l.id === listingId);
+    setAppliedIds((prev) => prev.filter((id) => id !== listingId));
+    setToast({
+      message: `Moved ${unappliedItem?.company || 'listing'} back to Active Live Radar.`,
+    });
+  };
+
+  // Role Type tabs under Active view
   const roleTypeTabs = [
-    { id: 'ALL', label: `All Live Openings (${openCount})` },
-    { id: 'MATCHED_FOR_ME', label: `⭐ Matched for Batch ${candidateTargetBatch} (${matchedForMeCount})` },
-    { id: 'FRESH_URGENT', label: `🔥 Closes in 1-2 Days (${freshCount})` },
-    { id: 'Summer Intern', label: `☀️ Summer Internships (${summerOpenCount})` },
-    { id: '6-Month Intern', label: `💼 6-Month Semester (${sixMonthOpenCount})` },
-    { id: 'PPO / Full-Time', label: `🚀 PPO & Full-Time (${ppoOpenCount})` },
-    { id: 'RECENTLY_CLOSED', label: `🔴 Recently Closed (<30 Days) (${closedCount})` },
+    { id: 'ALL', label: `All Live Openings (${activeOpenCount})` },
+    { id: 'MATCHED_FOR_ME', label: `⭐ Matched for Batch ${candidateTargetBatch} (${activeMatchedCount})` },
+    { id: 'FRESH_URGENT', label: `🔥 Closes in 1-2 Days (${activeFreshCount})` },
+    { id: 'Summer Intern', label: `☀️ Summer Internships (${activeSummerCount})` },
+    { id: '6-Month Intern', label: `💼 6-Month Semester (${activeSixMonthCount})` },
+    { id: 'PPO / Full-Time', label: `🚀 PPO & Full-Time (${activePpoCount})` },
   ];
 
   const categories = [
@@ -111,15 +330,23 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
   const batches = ['ALL', '2028', '2027', '2026', '2025'];
 
-  const filteredListings = useMemo(() => {
-    return liveListings.filter((item) => {
-      // 1. STATUS SEPARATION (Strictly separate open vs closed)
-      if (selectedRoleType === 'RECENTLY_CLOSED') {
-        if (item.status !== 'closed') return false;
-      } else {
-        // All active live tabs MUST ONLY contain open positions!
-        if (item.status !== 'open') return false;
+  // Current display list depending on feedView
+  const currentFeedListings = useMemo(() => {
+    let sourceList: LiveListingItem[] = [];
 
+    if (feedView === 'active') {
+      sourceList = activeListings;
+    } else if (feedView === 'applied') {
+      sourceList = appliedListings;
+    } else if (feedView === 'archived') {
+      sourceList = archivedListings;
+    } else if (feedView === 'closed') {
+      sourceList = closedListings;
+    }
+
+    return sourceList.filter((item) => {
+      // 1. Role Type sub-filter (only in active view)
+      if (feedView === 'active') {
         if (selectedRoleType === 'MATCHED_FOR_ME') {
           if (!item.eligibleBatches.includes(candidateTargetBatch) && item.eligibleBatches.length > 0) return false;
         } else if (selectedRoleType === 'FRESH_URGENT') {
@@ -154,15 +381,35 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
       return true;
     }).sort((a, b) => {
-      if (selectedRoleType === 'RECENTLY_CLOSED') {
+      if (feedView === 'closed') {
         return a.daysOld - b.daysOld;
+      }
+      if (feedView === 'applied') {
+        const timeA = appliedMetadata[a.id]?.appliedAt || a.datePosted;
+        const timeB = appliedMetadata[b.id]?.appliedAt || b.datePosted;
+        return new Date(timeB).getTime() - new Date(timeA).getTime();
+      }
+      if (feedView === 'archived') {
+        return a.company.localeCompare(b.company);
       }
       // Urgent fresh always first for active openings
       if (a.isUrgentFresh && !b.isUrgentFresh) return -1;
       if (!a.isUrgentFresh && b.isUrgentFresh) return 1;
       return a.hoursOld - b.hoursOld;
     });
-  }, [liveListings, selectedRoleType, selectedCategory, selectedBatch, searchQuery]);
+  }, [
+    feedView,
+    activeListings,
+    appliedListings,
+    archivedListings,
+    closedListings,
+    selectedRoleType,
+    selectedCategory,
+    selectedBatch,
+    searchQuery,
+    candidateTargetBatch,
+    appliedMetadata,
+  ]);
 
   const formattedLastChecked = useMemo(() => {
     if (!lastFetched) return 'Just now';
@@ -176,6 +423,27 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
   return (
     <div className="space-y-6 pb-20">
+      {/* Toast Notice Bar with 1-Click Undo */}
+      {toast && (
+        <div className="bg-stone-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center justify-between text-xs animate-in slide-in-from-top duration-200 border border-stone-800">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+            <span className="font-medium">{toast.message}</span>
+          </div>
+          {toast.undoAction && (
+            <button
+              onClick={() => {
+                toast.undoAction?.();
+                setToast(null);
+              }}
+              className="ml-4 px-2.5 py-1 rounded bg-amber-400 text-stone-950 font-bold hover:bg-amber-300 transition text-[11px] cursor-pointer"
+            >
+              Undo
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 80% Clean SaaS Header + 20% Enhanced Warm Accent */}
       <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
         <div className="absolute top-0 right-0 w-44 h-44 bg-gradient-to-bl from-amber-200/35 via-yellow-100/15 to-transparent rounded-bl-full pointer-events-none" />
@@ -190,34 +458,63 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               Live Tech Openings & Fast-Closing Applications
             </h2>
             <p className="text-sm text-stone-600 leading-relaxed">
-              Top tech internship portals close within 24–48 hours of posting due to high applicant volume. This tracker scrapes official ATS boards (Workday, Greenhouse, Lever, Ashby, Eightfold) to surface verified openings the moment they drop.
+              Top tech internship portals close within 24–48 hours of posting. Archive listings you don’t need, mark applied openings to keep your radar clean, and pitch hiring managers with 1 click.
             </p>
           </div>
 
-          {/* Quick Metrics */}
+          {/* Quick Metrics: Deducted dynamically when jobs are archived or marked applied */}
           <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto shrink-0">
-            <div className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Total Live</span>
-              <span className="text-lg font-bold text-stone-900">{openCount}</span>
+            <div
+              onClick={() => setFeedView('active')}
+              className={`p-3 rounded-xl border text-center min-w-[85px] cursor-pointer transition ${
+                feedView === 'active' ? 'bg-amber-50/80 border-amber-300 ring-2 ring-amber-400/30' : 'bg-[#fbfbfa] border-stone-200 hover:border-stone-300'
+              }`}
+            >
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block mb-0.5">Total Live</span>
+              <span className="text-lg font-bold text-stone-900">{activeOpenCount}</span>
             </div>
-            <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-center min-w-[85px]">
+            <div
+              onClick={() => {
+                setFeedView('active');
+                setSelectedRoleType('FRESH_URGENT');
+              }}
+              className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-center min-w-[85px] cursor-pointer hover:border-amber-300 transition"
+            >
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-0.5">Closes Fast</span>
               <span className="text-lg font-bold text-amber-900 flex items-center justify-center gap-0.5">
                 <Flame className="h-4 w-4 text-orange-500 fill-orange-500" />
-                {freshCount}
+                {activeFreshCount}
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px]">
+            <div
+              onClick={() => {
+                setFeedView('active');
+                setSelectedRoleType('Summer Intern');
+              }}
+              className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px] cursor-pointer hover:border-stone-300 transition"
+            >
               <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Summer</span>
-              <span className="text-lg font-bold text-emerald-800">{summerOpenCount}</span>
+              <span className="text-lg font-bold text-emerald-800">{activeSummerCount}</span>
             </div>
-            <div className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px]">
+            <div
+              onClick={() => {
+                setFeedView('active');
+                setSelectedRoleType('6-Month Intern');
+              }}
+              className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px] cursor-pointer hover:border-stone-300 transition"
+            >
               <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">6-Month</span>
-              <span className="text-lg font-bold text-indigo-800">{sixMonthOpenCount}</span>
+              <span className="text-lg font-bold text-indigo-800">{activeSixMonthCount}</span>
             </div>
-            <div className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px]">
+            <div
+              onClick={() => {
+                setFeedView('active');
+                setSelectedRoleType('PPO / Full-Time');
+              }}
+              className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px] cursor-pointer hover:border-stone-300 transition"
+            >
               <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">PPO / FTE</span>
-              <span className="text-lg font-bold text-purple-800">{ppoOpenCount}</span>
+              <span className="text-lg font-bold text-purple-800">{activePpoCount}</span>
             </div>
           </div>
         </div>
@@ -242,39 +539,152 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
         </div>
       </div>
 
-      {/* Primary Role Type Tabs (Strict Separation of Live Openings vs Recently Closed) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {roleTypeTabs.map((tab) => {
-          const isSelected = selectedRoleType === tab.id;
-          const isClosedTab = tab.id === 'RECENTLY_CLOSED';
+      {/* MASTER FEED VIEW TOGGLE: Live Radar vs Applied vs Archived vs Closed */}
+      <div className="bg-stone-100/90 p-1.5 rounded-2xl border border-stone-200 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <button
+          onClick={() => setFeedView('active')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
+            feedView === 'active'
+              ? 'bg-stone-900 text-white shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/70'
+          }`}
+        >
+          <Radar className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>Active Radar</span>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+              feedView === 'active' ? 'bg-stone-800 text-stone-200' : 'bg-stone-200 text-stone-700'
+            }`}
+          >
+            {activeOpenCount}
+          </span>
+        </button>
 
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedRoleType(tab.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
-                isSelected
-                  ? isClosedTab
-                    ? 'bg-rose-950 text-rose-100 border-rose-900 shadow-2xs'
-                    : 'bg-stone-900 text-white border-stone-900 shadow-2xs'
-                  : isClosedTab
-                  ? 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
-                  : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100 hover:text-stone-900'
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
+        <button
+          onClick={() => setFeedView('applied')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
+            feedView === 'applied'
+              ? 'bg-emerald-800 text-white shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/70'
+          }`}
+        >
+          <CheckCircle2 className="h-4 w-4 text-emerald-300 shrink-0" />
+          <span>Applied</span>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+              feedView === 'applied' ? 'bg-emerald-900 text-emerald-100' : 'bg-stone-200 text-stone-700'
+            }`}
+          >
+            {appliedIds.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setFeedView('archived')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
+            feedView === 'archived'
+              ? 'bg-amber-900 text-white shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/70'
+          }`}
+        >
+          <Archive className="h-4 w-4 text-amber-300 shrink-0" />
+          <span>Archived / Hidden</span>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+              feedView === 'archived' ? 'bg-amber-950 text-amber-200' : 'bg-stone-200 text-stone-700'
+            }`}
+          >
+            {archivedIds.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setFeedView('closed')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
+            feedView === 'closed'
+              ? 'bg-rose-900 text-white shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/70'
+          }`}
+        >
+          <Clock className="h-4 w-4 text-rose-300 shrink-0" />
+          <span>Closed (&lt;30d)</span>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+              feedView === 'closed' ? 'bg-rose-950 text-rose-200' : 'bg-stone-200 text-stone-700'
+            }`}
+          >
+            {closedListings.length}
+          </span>
+        </button>
       </div>
 
-      {/* Secondary Controls: Search, Discipline Category, and Batch Filters */}
+      {/* Section Explainer Banners */}
+      {feedView === 'applied' && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between text-xs text-emerald-900">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span>
+              <strong>Applied Section ({appliedListings.length}):</strong> Openings you marked as applied are moved here so you don’t have to scroll past them again.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {feedView === 'archived' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between text-xs text-amber-950 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Archive className="h-4 w-4 text-amber-700 shrink-0" />
+            <span>
+              <strong>Archived / Dismissed Openings ({archivedListings.length}):</strong> Hidden from your active radar and removed from the active live counter. Restore any listing at any time.
+            </span>
+          </div>
+          {archivedListings.length > 0 && (
+            <button
+              onClick={handleRestoreAllArchived}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition cursor-pointer shadow-2xs"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>Restore All to Active Feed</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Role Type Tabs (Visible only in Active Radar mode) */}
+      {feedView === 'active' && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {roleTypeTabs.map((tab) => {
+            const isSelected = selectedRoleType === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedRoleType(tab.id)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
+                  isSelected
+                    ? 'bg-stone-900 text-white border-stone-900 shadow-2xs'
+                    : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Search, Discipline, and Batch Controls */}
       <div className="bg-white border border-stone-200/90 rounded-xl p-4 shadow-2xs space-y-3">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
           <input
             type="text"
-            placeholder="Filter by company (Google, Microsoft, Rippling, Uber), role, or location (Bangalore, Pune)..."
+            placeholder={
+              feedView === 'applied'
+                ? 'Search applied applications by company, role, or city...'
+                : feedView === 'archived'
+                ? 'Search archived listings (Juspay, Philips)...'
+                : 'Filter by company (Google, Microsoft, Rippling, Uber), role, or location (Bangalore, Pune)...'
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 text-xs bg-stone-50 border border-stone-200 rounded-lg text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:bg-white"
@@ -332,31 +742,55 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           <div className="h-6 w-6 border-2 border-stone-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <span className="text-xs font-semibold text-stone-600">Connecting to official ATS pipelines...</span>
         </div>
-      ) : filteredListings.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-stone-200 p-8">
-          <Building2 className="h-8 w-8 text-stone-300 mx-auto mb-2" />
-          <h4 className="text-sm font-semibold text-stone-700">
-            {selectedRoleType === 'RECENTLY_CLOSED'
-              ? 'No recently closed postings recorded in the last 30 days.'
-              : 'No active open postings match your criteria.'}
-          </h4>
-          <p className="text-xs text-stone-400 mt-1">
-            {selectedRoleType === 'RECENTLY_CLOSED'
-              ? 'Closed listings older than 30 days are automatically purged to keep data fresh.'
-              : 'Try clearing your batch or discipline filters, or check the full live stream.'}
-          </p>
+      ) : currentFeedListings.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-stone-200 p-8 space-y-2">
+          {feedView === 'applied' ? (
+            <>
+              <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto mb-2" />
+              <h4 className="text-sm font-semibold text-stone-800">No applications recorded yet.</h4>
+              <p className="text-xs text-stone-500 max-w-md mx-auto">
+                When you apply on a company’s portal, click the <strong>&ldquo;Applied&rdquo;</strong> button on their card in the Active Radar. It will move here so you never have to scroll past it again!
+              </p>
+            </>
+          ) : feedView === 'archived' ? (
+            <>
+              <Archive className="h-10 w-10 text-amber-400 mx-auto mb-2" />
+              <h4 className="text-sm font-semibold text-stone-800">No archived or hidden listings.</h4>
+              <p className="text-xs text-stone-500 max-w-md mx-auto">
+                Seeing companies you aren’t interested in (like Juspay)? Click the <strong>Archive</strong> icon in the top right of any card to hide them and deduct them from your active count.
+              </p>
+            </>
+          ) : feedView === 'closed' ? (
+            <>
+              <Clock className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+              <h4 className="text-sm font-semibold text-stone-700">No recently closed postings recorded in the last 30 days.</h4>
+              <p className="text-xs text-stone-400">Closed listings are automatically tracked for retrospective reference.</p>
+            </>
+          ) : (
+            <>
+              <Building2 className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+              <h4 className="text-sm font-semibold text-stone-700">No active openings match your criteria.</h4>
+              <p className="text-xs text-stone-400">Try clearing your search query or selecting a different role or batch filter.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredListings.map((listing) => {
+          {currentFeedListings.map((listing) => {
             const isFresh = listing.isUrgentFresh;
-            const isClosed = listing.status === 'closed';
+            const isClosed = listing.status === 'closed' || feedView === 'closed';
+            const isApplied = appliedIdSet.has(listing.id);
+            const isArchived = archivedIdSet.has(listing.id);
 
             return (
               <div
                 key={listing.id}
                 className={`bg-white border rounded-xl p-5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group relative ${
-                  isClosed
+                  isArchived
+                    ? 'border-stone-200 bg-stone-50/50 opacity-90'
+                    : isApplied
+                    ? 'border-emerald-300/80 bg-emerald-50/20'
+                    : isClosed
                     ? 'border-stone-200 bg-stone-50/40 opacity-90'
                     : isFresh
                     ? 'border-amber-400/90 hover:border-amber-500'
@@ -394,29 +828,81 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                       </div>
                     </div>
 
-                    {/* Status Pill */}
-                    {isClosed ? (
-                      <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold tracking-tight whitespace-nowrap shrink-0 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                        Closed
-                      </span>
-                    ) : isFresh ? (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 text-[10px] font-bold tracking-tight whitespace-nowrap shrink-0 flex items-center gap-1 animate-pulse">
-                        <Flame className="w-3 h-3 text-amber-600 fill-amber-500" />
-                        Closes Fast
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold whitespace-nowrap shrink-0 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        Live
-                      </span>
-                    )}
+                    {/* Status Pill & Top Card Controls */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isArchived ? (
+                        <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-300 text-[10px] font-semibold flex items-center gap-1">
+                          <EyeOff className="w-3 h-3 text-stone-500" />
+                          Hidden
+                        </span>
+                      ) : isApplied ? (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          Applied
+                        </span>
+                      ) : isClosed ? (
+                        <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          Closed
+                        </span>
+                      ) : isFresh ? (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 text-[10px] font-bold flex items-center gap-1 animate-pulse">
+                          <Flame className="w-3 h-3 text-amber-600 fill-amber-500" />
+                          Closes Fast
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Live
+                        </span>
+                      )}
+
+                      {/* 1-Click Quick Archive / Dismiss Button (on Active feed cards) */}
+                      {!isArchived && feedView === 'active' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleArchiveListing(listing);
+                          }}
+                          title="Archive / Dismiss this listing (removes from feed)"
+                          className="p-1 rounded-lg text-stone-400 hover:text-amber-800 hover:bg-amber-50 transition cursor-pointer"
+                        >
+                          <Archive className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Urgency Alert Bar */}
-                  {isClosed ? (
+                  {isArchived ? (
+                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-stone-100 border border-stone-200 text-[11px] text-stone-700 flex items-center justify-between font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <Archive className="w-3 h-3 text-stone-500 shrink-0" />
+                        Dismissed from live radar
+                      </span>
+                      <button
+                        onClick={() => handleUnarchiveListing(listing.id)}
+                        className="text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
+                      >
+                        Restore
+                      </button>
+                    </div>
+                  ) : isApplied ? (
+                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 flex items-center justify-between font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        Applied via official ATS portal
+                      </span>
+                      <button
+                        onClick={() => handleUnmarkApplied(listing.id)}
+                        className="text-emerald-700 hover:text-emerald-950 font-bold underline cursor-pointer"
+                      >
+                        Unmark
+                      </button>
+                    </div>
+                  ) : isClosed ? (
                     <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200/80 text-[11px] text-rose-900 flex items-center gap-1.5 font-medium">
-                      <Archive className="w-3 h-3 text-rose-600 shrink-0" />
+                      <Clock className="w-3 h-3 text-rose-600 shrink-0" />
                       <span>{listing.closedAgoLabel || 'Application window closed'} • Requisition filled on ATS</span>
                     </div>
                   ) : isFresh ? (
@@ -463,8 +949,8 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     </span>
                   </div>
 
-                  {/* Real-World Action Buttons */}
-                  <div className="flex items-center justify-between pt-2.5 border-t border-stone-100 gap-2">
+                  {/* Real-World Action Buttons with Archive, Applied, & Portal Integration */}
+                  <div className="flex items-center justify-between pt-2.5 border-t border-stone-100 gap-1.5 flex-wrap">
                     <button
                       onClick={() => setActiveModalListing(listing)}
                       className="text-[11px] font-semibold text-stone-600 hover:text-stone-900 cursor-pointer flex items-center gap-0.5"
@@ -472,20 +958,59 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                       View Details <ChevronRight className="h-3 w-3" />
                     </button>
 
-                    {isClosed ? (
-                      <span className="text-[11px] text-stone-400 font-medium">
-                        Drive Ended
-                      </span>
-                    ) : (
-                      <a
-                        href={listing.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-[11px] font-bold transition shadow-2xs"
-                      >
-                        Apply on Portal <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {isArchived ? (
+                        <button
+                          onClick={() => handleUnarchiveListing(listing.id)}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold transition shadow-2xs cursor-pointer"
+                        >
+                          <RotateCcw className="h-3 w-3" /> Restore to Feed
+                        </button>
+                      ) : isApplied ? (
+                        <>
+                          <button
+                            onClick={() => onSelectCompanyForPitch(listing.company, listing.title)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-700 text-[11px] font-semibold transition cursor-pointer"
+                            title="Draft email pitch or referral bump"
+                          >
+                            <Send className="h-3 w-3 text-stone-400" /> Pitch AI
+                          </button>
+                          <a
+                            href={listing.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-[11px] font-bold transition shadow-2xs"
+                          >
+                            Portal <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </>
+                      ) : isClosed ? (
+                        <span className="text-[11px] text-stone-400 font-medium">
+                          Drive Ended
+                        </span>
+                      ) : (
+                        <>
+                          {/* 1-Click "Applied?" Button: Immediately moves listing to Applied section */}
+                          <button
+                            onClick={() => handleMarkApplied(listing)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold transition shadow-2xs cursor-pointer"
+                            title="Mark as Applied (moves out of active feed into Applied tab)"
+                          >
+                            <Check className="h-3 w-3 text-emerald-600" /> Applied?
+                          </button>
+
+                          {/* Direct Official ATS Portal Application Link */}
+                          <a
+                            href={listing.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-stone-900 hover:bg-black text-white text-[11px] font-bold transition shadow-2xs"
+                          >
+                            Apply <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -501,14 +1026,22 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-4 border-b border-stone-100 pb-4">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-bold uppercase tracking-wider text-stone-400">
                     {activeModalListing.company}
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[10px] font-semibold">
                     {activeModalListing.categoryLabel}
                   </span>
-                  {activeModalListing.status === 'closed' ? (
+                  {appliedIdSet.has(activeModalListing.id) ? (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-600" /> Applied by Candidate
+                    </span>
+                  ) : archivedIdSet.has(activeModalListing.id) ? (
+                    <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-300 text-[10px] font-semibold flex items-center gap-1">
+                      <Archive className="w-3 h-3 text-stone-500" /> Archived / Hidden
+                    </span>
+                  ) : activeModalListing.status === 'closed' ? (
                     <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
                       🔴 Closed on ATS
                     </span>
@@ -593,15 +1126,46 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               </div>
             </div>
 
-            {/* Real-World Guidance Note */}
-            <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 space-y-1">
-              <div className="font-bold flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-amber-700" />
-                <span>Real-World Application Guidance</span>
+            {/* Modal Quick Actions: Applied Toggle & Archive Toggle */}
+            <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between gap-3 flex-wrap">
+              <div className="text-xs text-stone-600">
+                <span className="font-bold text-stone-800 block">Candidate Tracking Status:</span>
+                <span>Manage this opening in your personal radar</span>
               </div>
-              <p className="leading-relaxed">
-                This opening is an official company portal requisition. Apply directly through the company’s official ATS careers page. Cold emailing an application without an explicit recruiter email is not recommended for portal postings. If you have an employee or alumni contact, use the referral option below.
-              </p>
+              <div className="flex items-center gap-2">
+                {appliedIdSet.has(activeModalListing.id) ? (
+                  <button
+                    onClick={() => handleUnmarkApplied(activeModalListing.id)}
+                    className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-100 text-emerald-900 font-bold text-xs hover:bg-emerald-200 transition cursor-pointer"
+                  >
+                    ✓ Applied (Click to Unmark)
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleMarkApplied(activeModalListing)}
+                    className="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold text-xs hover:bg-emerald-100 transition cursor-pointer"
+                  >
+                    + Mark as Applied
+                  </button>
+                )}
+
+                {archivedIdSet.has(activeModalListing.id) ? (
+                  <button
+                    onClick={() => handleUnarchiveListing(activeModalListing.id)}
+                    className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 font-bold text-xs hover:bg-amber-100 transition cursor-pointer"
+                  >
+                    Restore to Feed
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleArchiveListing(activeModalListing)}
+                    className="px-3 py-1.5 rounded-lg border border-stone-200 bg-white text-stone-700 font-semibold text-xs hover:bg-stone-100 transition cursor-pointer flex items-center gap-1"
+                  >
+                    <Archive className="h-3.5 w-3.5 text-stone-400" />
+                    <span>Archive / Hide</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Modal Bottom Actions */}

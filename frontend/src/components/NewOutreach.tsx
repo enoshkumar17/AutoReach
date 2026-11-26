@@ -763,18 +763,19 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
         </div>
 
         {/* Pitch Style MCQ Dropdown & AI Customizer Toggle */}
-        <div className="flex items-center gap-2 justify-end text-xs font-medium shrink-0">
+        <div className="flex items-center flex-nowrap gap-2 justify-end text-xs font-medium shrink-0">
           <div className="relative shrink-0" ref={styleDropdownRef}>
             <button
               type="button"
               onClick={() => setIsStyleDropdownOpen(!isStyleDropdownOpen)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-[#faf9f8] hover:bg-stone-100 text-stone-800 text-xs font-semibold transition cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+              className="inline-flex items-center flex-nowrap gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-[#faf9f8] hover:bg-stone-100 text-stone-800 text-xs font-semibold transition cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
+              style={{ whiteSpace: 'nowrap' }}
               title="Click to select pitch style formula (MCQ)"
             >
-              <span className="text-stone-400 font-normal hidden sm:inline">Formula:</span>
-              <span className="font-bold text-stone-900 flex items-center gap-1.5 whitespace-nowrap">
-                <span>{activeStyleOption.icon}</span>
-                <span className="whitespace-nowrap">{activeStyleOption.shortLabel}</span>
+              <span className="text-stone-400 font-normal hidden sm:inline" style={{ whiteSpace: 'nowrap' }}>Formula:</span>
+              <span className="font-bold text-stone-900 inline-flex items-center flex-nowrap gap-1.5 whitespace-nowrap shrink-0" style={{ whiteSpace: 'nowrap' }}>
+                <span className="shrink-0">{activeStyleOption.icon}</span>
+                <span className="whitespace-nowrap shrink-0" style={{ whiteSpace: 'nowrap' }}>{activeStyleOption.shortLabel}</span>
               </span>
               <ChevronDown
                 className={`h-3.5 w-3.5 text-stone-500 transition-transform duration-150 shrink-0 ${

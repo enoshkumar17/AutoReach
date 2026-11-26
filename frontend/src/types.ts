@@ -152,6 +152,21 @@ export interface LiveListingItem {
   closedAgoLabel?: string | null;
 }
 
+export interface AppliedListingRecord {
+  id: string;
+  company: string;
+  title: string;
+  url: string;
+  appliedAt: string;
+}
+
+export interface ArchivedListingRecord {
+  id: string;
+  company: string;
+  title: string;
+  archivedAt: string;
+}
+
 export interface NotificationItem {
   id: number;
   type: 'JOB_ALERT' | 'CLOSING_SOON' | 'HACKATHON' | 'SYSTEM';
