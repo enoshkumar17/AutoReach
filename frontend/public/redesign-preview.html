@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoReach — Reimagined Scannable Job Feed (5-Second View Prototype)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#faf9f6] text-stone-900 antialiased min-h-screen">
+
+  <!-- Top Sticky Navigation & Concept Switcher -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-2xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-xl bg-stone-950 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+            AR
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-base tracking-tight text-stone-900">AutoReach Design Lab</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                5-Second View Prototypes
+              </span>
+            </div>
+            <p class="text-xs text-stone-500">Curing visual fatigue & cognitive overload from 60-card feeds</p>
+          </div>
+        </div>
+
+        <!-- Concept Switcher Bar -->
+        <div class="flex items-center gap-1.5 bg-stone-100 p-1.5 rounded-xl border border-stone-200 overflow-x-auto">
+          <button onclick="switchConcept('table')" id="btn-table" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-stone-900 text-white cursor-pointer whitespace-nowrap">
+            ⚡ Option 1: High-Density Table (Levels.fyi Style)
+          </button>
+          <button onclick="switchConcept('split')" id="btn-split" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer whitespace-nowrap">
+            🎯 Option 2: Split-Pane Command (Superhuman Style)
+          </button>
+          <button onclick="switchConcept('curated')" id="btn-curated" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer whitespace-nowrap">
+            ⭐ Option 3: Top 5 Daily Drop + Tiers
+          </button>
+          <button onclick="switchConcept('old')" id="btn-old" class="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-200 transition cursor-pointer whitespace-nowrap">
+            Compare: Old 60-Card Grid
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Problem / Solution Callout Bar -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+    <div id="concept-banner" class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-4 sm:p-5 text-xs text-stone-800 shadow-2xs">
+      <div class="flex items-start justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span id="banner-title" class="font-bold text-amber-950 text-sm">Option 1: The High-Density Scannable Table</span>
+          </div>
+          <p id="banner-desc" class="text-stone-600 text-xs leading-relaxed max-w-4xl">
+            <strong>Why this solves your headache:</strong> Instead of 60 giant blocks requiring 15 full scrolls, 20 openings fit on a single screen. Your eyes scan vertically down columns in <strong>under 6 seconds</strong> to spot top salaries, fresh drops, and eligible batches.
+          </p>
+        </div>
+        <div class="text-right shrink-0 hidden sm:block">
+          <span class="text-[11px] font-bold text-amber-900 bg-amber-100/80 px-2.5 py-1 rounded-full border border-amber-300 block">
+            Scan Speed: ~5 Seconds
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Stage -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+    <!-- ========================================================================= -->
+    <!-- CONCEPT 1: HIGH-DENSITY SCANNABLE TABLE (Levels.fyi / Linear Style) -->
+    <!-- ========================================================================= -->
+    <div id="concept-table" class="space-y-6">
+
+      <!-- 5-Second Highlight Strip: Only 3 Hot Drops for Batch 2028 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="bg-white border-2 border-amber-400/90 rounded-xl p-3.5 shadow-xs flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-lg bg-amber-50 text-amber-950 font-bold flex items-center justify-center text-xs border border-amber-200">
+              MS
+            </div>
+            <div>
+              <div class="text-[10px] font-bold text-amber-800 uppercase">⭐ #1 Match for Batch 2028</div>
+              <div class="font-bold text-xs text-stone-900">Microsoft — Applied Sciences Intern</div>
+              <div class="text-[11px] text-emerald-700 font-bold">₹1,25,000/mo · India Multiple</div>
+            </div>
+          </div>
+          <a href="#" class="px-2.5 py-1 rounded-lg bg-stone-900 text-white font-bold text-xs hover:bg-black transition">Apply ↗</a>
+        </div>
+
+        <div class="bg-white border border-stone-200 rounded-xl p-3.5 shadow-xs flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-lg bg-orange-50 text-orange-950 font-bold flex items-center justify-center text-xs border border-orange-200">
+              CI
+            </div>
+            <div>
+              <div class="text-[10px] font-bold text-orange-800 uppercase flex items-center gap-1">
+                <span>🔥 Closes in &lt;18 Hours</span>
+              </div>
+              <div class="font-bold text-xs text-stone-900">Cisco — ASIC Engineer (Spring Intern)</div>
+              <div class="text-[11px] text-stone-600 font-semibold">Competitive CTC · Bangalore</div>
+            </div>
+          </div>
+          <a href="#" class="px-2.5 py-1 rounded-lg bg-stone-900 text-white font-bold text-xs hover:bg-black transition">Apply ↗</a>
+        </div>
+
+        <div class="bg-white border border-stone-200 rounded-xl p-3.5 shadow-xs flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-lg bg-indigo-50 text-indigo-950 font-bold flex items-center justify-center text-xs border border-indigo-200">
+              JU
+            </div>
+            <div>
+              <div class="text-[10px] font-bold text-indigo-800 uppercase">🚀 Direct PPO Pathway</div>
+              <div class="font-bold text-xs text-stone-900">Juspay — Quality Engineer Intern</div>
+              <div class="text-[11px] text-emerald-700 font-bold">₹40,000/mo + PPO · Bangalore</div>
+            </div>
+          </div>
+          <a href="#" class="px-2.5 py-1 rounded-lg bg-stone-900 text-white font-bold text-xs hover:bg-black transition">Apply ↗</a>
+        </div>
+      </div>
+
+      <!-- Quick Triage Toolbar (Filters that actually matter) -->
+      <div class="bg-white border border-stone-200 rounded-xl p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-bold text-stone-400 uppercase text-[11px] mr-1">Quick Filter:</span>
+          <button class="px-3 py-1 rounded-lg bg-stone-900 text-white font-bold">All Open (55)</button>
+          <button class="px-3 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium">⭐ My Batch 2028 (38)</button>
+          <button class="px-3 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold">🔥 Closes in &lt;24h (12)</button>
+          <button class="px-3 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium">☀️ Summer 2026 (18)</button>
+          <button class="px-3 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium">💼 6-Month Semester (14)</button>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <input type="text" placeholder="Quick search company or city..." class="px-3 py-1 bg-stone-50 border border-stone-200 rounded-lg text-xs w-56 focus:outline-none focus:ring-1 focus:ring-stone-400">
+          <span class="text-stone-400 font-mono text-[11px]">55 Live Requisitions</span>
+        </div>
+      </div>
+
+      <!-- High-Density Scannable Table -->
+      <div class="bg-white border border-stone-200 rounded-2xl shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-stone-50/80 border-b border-stone-200 text-[11px] uppercase font-bold text-stone-500 tracking-wider">
+                <th class="py-3 px-4">Company</th>
+                <th class="py-3 px-4">Role Title</th>
+                <th class="py-3 px-4">Type & Category</th>
+                <th class="py-3 px-4">Location</th>
+                <th class="py-3 px-4">Stipend</th>
+                <th class="py-3 px-4">Eligible Batches</th>
+                <th class="py-3 px-4">Urgency</th>
+                <th class="py-3 px-4 text-right">Quick Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-stone-100 text-stone-800">
+
+              <!-- Row 1: Microsoft -->
+              <tr class="hover:bg-amber-50/40 transition group cursor-pointer">
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <div class="h-7 w-7 rounded-lg bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center border border-stone-200">MS</div>
+                    <span class="font-bold text-stone-900">Microsoft</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-bold text-stone-900 group-hover:text-amber-900 transition">Applied Sciences INTERN</div>
+                  <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Verified ATS</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded bg-stone-100 font-medium">Summer Intern</span>
+                  <span class="text-stone-400 text-[11px] block mt-0.5">AI / ML & Data</span>
+                </td>
+                <td class="py-3 px-4 text-stone-600">India Multiple</td>
+                <td class="py-3 px-4 font-bold text-emerald-800">₹1,25,000/mo</td>
+                <td class="py-3 px-4">
+                  <span class="font-bold text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">2026, 2027, 2028</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="text-amber-800 font-bold flex items-center gap-1 text-[11px]">
+                    🔥 Closes in 2d
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button class="px-2 py-1 rounded-md border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition">✓ I Applied</button>
+                    <a href="#" class="px-3 py-1 rounded-md bg-stone-900 hover:bg-black text-white font-bold text-[11px] transition">Apply ↗</a>
+                    <button title="Archive" class="p-1 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded">✕</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 2: Cisco -->
+              <tr class="hover:bg-amber-50/40 transition group cursor-pointer bg-[#fffdfa]">
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <div class="h-7 w-7 rounded-lg bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center border border-stone-200">CI</div>
+                    <span class="font-bold text-stone-900">Cisco</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-bold text-stone-900 group-hover:text-amber-900 transition">ASIC Engineer - Spring Intern</div>
+                  <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Verified ATS</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded bg-stone-100 font-medium">Internship</span>
+                  <span class="text-stone-400 text-[11px] block mt-0.5">Hardware & Systems</span>
+                </td>
+                <td class="py-3 px-4 text-stone-600">Bangalore, India</td>
+                <td class="py-3 px-4 font-bold text-stone-700">Competitive CTC</td>
+                <td class="py-3 px-4"><span class="font-semibold text-stone-700">Batch 2027</span></td>
+                <td class="py-3 px-4">
+                  <span class="text-orange-700 font-bold flex items-center gap-1 text-[11px]">
+                    🔥 Closes Today
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button class="px-2 py-1 rounded-md border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition">✓ I Applied</button>
+                    <a href="#" class="px-3 py-1 rounded-md bg-stone-900 hover:bg-black text-white font-bold text-[11px] transition">Apply ↗</a>
+                    <button title="Archive" class="p-1 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded">✕</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 3: Sarvam AI -->
+              <tr class="hover:bg-amber-50/40 transition group cursor-pointer">
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <div class="h-7 w-7 rounded-lg bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center border border-stone-200">SA</div>
+                    <span class="font-bold text-stone-900">Sarvam AI</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-bold text-stone-900 group-hover:text-amber-900 transition">Product User Research & Engineering</div>
+                  <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Verified ATS</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-900 font-medium border border-indigo-200">6-Month Intern</span>
+                  <span class="text-stone-400 text-[11px] block mt-0.5">AI Product</span>
+                </td>
+                <td class="py-3 px-4 text-stone-600">Bengaluru</td>
+                <td class="py-3 px-4 font-bold text-emerald-800">₹60,000/mo</td>
+                <td class="py-3 px-4"><span class="font-semibold text-stone-700">Batch 2026, 2027</span></td>
+                <td class="py-3 px-4"><span class="text-stone-500 font-mono text-[11px]">Rolling (7d)</span></td>
+                <td class="py-3 px-4 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button class="px-2 py-1 rounded-md border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition">✓ I Applied</button>
+                    <a href="#" class="px-3 py-1 rounded-md bg-stone-900 hover:bg-black text-white font-bold text-[11px] transition">Apply ↗</a>
+                    <button title="Archive" class="p-1 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded">✕</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 4: Micron -->
+              <tr class="hover:bg-amber-50/40 transition group cursor-pointer">
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <div class="h-7 w-7 rounded-lg bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center border border-stone-200">MI</div>
+                    <span class="font-bold text-stone-900">Micron</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-bold text-stone-900 group-hover:text-amber-900 transition">Graduate Software Engineer Intern</div>
+                  <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Verified ATS</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded bg-stone-100 font-medium">Summer Intern</span>
+                  <span class="text-stone-400 text-[11px] block mt-0.5">Software Eng</span>
+                </td>
+                <td class="py-3 px-4 text-stone-600">Hyderabad</td>
+                <td class="py-3 px-4 font-bold text-emerald-800">₹50,000/mo</td>
+                <td class="py-3 px-4"><span class="font-semibold text-stone-700">Batch 2026, 2027</span></td>
+                <td class="py-3 px-4"><span class="text-stone-500 font-mono text-[11px]">Rolling (14d)</span></td>
+                <td class="py-3 px-4 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button class="px-2 py-1 rounded-md border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition">✓ I Applied</button>
+                    <a href="#" class="px-3 py-1 rounded-md bg-stone-900 hover:bg-black text-white font-bold text-[11px] transition">Apply ↗</a>
+                    <button title="Archive" class="p-1 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded">✕</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 5: Juspay -->
+              <tr class="hover:bg-amber-50/40 transition group cursor-pointer">
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <div class="h-7 w-7 rounded-lg bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center border border-stone-200">JU</div>
+                    <span class="font-bold text-stone-900">Juspay</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-bold text-stone-900 group-hover:text-amber-900 transition">Quality Engineer Intern</div>
+                  <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Verified ATS</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-900 font-medium border border-purple-200">PPO / Full-Time</span>
+                  <span class="text-stone-400 text-[11px] block mt-0.5">QA & Dev</span>
+                </td>
+                <td class="py-3 px-4 text-stone-600">Bangalore</td>
+                <td class="py-3 px-4 font-bold text-emerald-800">₹40,000/mo + PPO</td>
+                <td class="py-3 px-4"><span class="font-semibold text-stone-700">Batch 2025, 2026, 2027</span></td>
+                <td class="py-3 px-4"><span class="text-amber-800 font-bold text-[11px]">🔥 Closes Fast</span></td>
+                <td class="py-3 px-4 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button class="px-2 py-1 rounded-md border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition">✓ I Applied</button>
+                    <a href="#" class="px-3 py-1 rounded-md bg-stone-900 hover:bg-black text-white font-bold text-[11px] transition">Apply ↗</a>
+                    <button title="Archive" class="p-1 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded">✕</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 6: S&P Global -->
+              <tr class="hover:bg-amber-50/40 transition group cursor-pointer">
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <div class="h-7 w-7 rounded-lg bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center border border-stone-200">S&</div>
+                    <span class="font-bold text-stone-900">S&P Global</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-bold text-stone-900 group-hover:text-amber-900 transition">Apprentice, Insurance Technology</div>
+                  <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Verified ATS</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded bg-stone-100 font-medium">Internship</span>
+                  <span class="text-stone-400 text-[11px] block mt-0.5">Fintech & Eng</span>
+                </td>
+                <td class="py-3 px-4 text-stone-600">Ahmedabad, Gujarat</td>
+                <td class="py-3 px-4 font-bold text-stone-700">Competitive CTC</td>
+                <td class="py-3 px-4"><span class="font-semibold text-stone-700">Batch 2026, 2027</span></td>
+                <td class="py-3 px-4"><span class="text-stone-500 font-mono text-[11px]">Rolling (10d)</span></td>
+                <td class="py-3 px-4 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button class="px-2 py-1 rounded-md border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition">✓ I Applied</button>
+                    <a href="#" class="px-3 py-1 rounded-md bg-stone-900 hover:bg-black text-white font-bold text-[11px] transition">Apply ↗</a>
+                    <button title="Archive" class="p-1 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded">✕</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="text-center text-xs text-stone-400 pt-2">Showing 6 of 55 live opportunities. 1 scroll covers the entire job market.</p>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CONCEPT 2: SPLIT-PANE COMMAND CENTER (Superhuman / Linear Style) -->
+    <!-- ========================================================================= -->
+    <div id="concept-split" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[680px]">
+        
+        <!-- Left Pane: 40% Width Fast Scroller List -->
+        <div class="lg:col-span-5 bg-white border border-stone-200 rounded-2xl p-4 shadow-xs flex flex-col space-y-3">
+          <div class="flex items-center justify-between pb-3 border-b border-stone-100 text-xs">
+            <span class="font-bold text-stone-900">Active Live Feed (55)</span>
+            <span class="text-stone-400">Click to preview right</span>
+          </div>
+
+          <div class="space-y-2 overflow-y-auto max-h-[600px] pr-1">
+            <!-- Item 1 (Selected) -->
+            <div onclick="selectSplitItem('msft')" id="split-item-msft" class="p-3.5 rounded-xl border-2 border-stone-900 bg-stone-50/80 cursor-pointer transition">
+              <div class="flex items-start justify-between gap-2">
+                <span class="text-xs font-bold text-stone-900">Microsoft</span>
+                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">₹1.25L/mo</span>
+              </div>
+              <div class="font-bold text-xs text-stone-900 mt-1">Applied Sciences INTERN</div>
+              <div class="flex items-center gap-2 text-[11px] text-stone-500 mt-1.5">
+                <span>Summer Intern</span>
+                <span>•</span>
+                <span>Batch 2026/27/28</span>
+                <span>•</span>
+                <span class="text-amber-800 font-bold">🔥 2d left</span>
+              </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div onclick="selectSplitItem('cisco')" id="split-item-cisco" class="p-3.5 rounded-xl border border-stone-200 hover:border-stone-400 bg-white cursor-pointer transition">
+              <div class="flex items-start justify-between gap-2">
+                <span class="text-xs font-bold text-stone-900">Cisco</span>
+                <span class="text-[10px] font-bold text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full">Closes &lt;18h</span>
+              </div>
+              <div class="font-bold text-xs text-stone-800 mt-1">ASIC Engineer - Spring Intern</div>
+              <div class="flex items-center gap-2 text-[11px] text-stone-500 mt-1.5">
+                <span>Hardware</span>
+                <span>•</span>
+                <span>Bangalore</span>
+                <span>•</span>
+                <span>Batch 2027</span>
+              </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div onclick="selectSplitItem('sarvam')" id="split-item-sarvam" class="p-3.5 rounded-xl border border-stone-200 hover:border-stone-400 bg-white cursor-pointer transition">
+              <div class="flex items-start justify-between gap-2">
+                <span class="text-xs font-bold text-stone-900">Sarvam AI</span>
+                <span class="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full">₹60k/mo</span>
+              </div>
+              <div class="font-bold text-xs text-stone-800 mt-1">Product User Research & Engineering</div>
+              <div class="flex items-center gap-2 text-[11px] text-stone-500 mt-1.5">
+                <span>6-Month Intern</span>
+                <span>•</span>
+                <span>Bengaluru</span>
+              </div>
+            </div>
+
+            <!-- Item 4 -->
+            <div onclick="selectSplitItem('juspay')" id="split-item-juspay" class="p-3.5 rounded-xl border border-stone-200 hover:border-stone-400 bg-white cursor-pointer transition">
+              <div class="flex items-start justify-between gap-2">
+                <span class="text-xs font-bold text-stone-900">Juspay</span>
+                <span class="text-[10px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-full">PPO Offer</span>
+              </div>
+              <div class="font-bold text-xs text-stone-800 mt-1">Quality Engineer Intern</div>
+              <div class="flex items-center gap-2 text-[11px] text-stone-500 mt-1.5">
+                <span>Bangalore</span>
+                <span>•</span>
+                <span>₹40k/mo + PPO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Pane: 60% Width Instant Dossier & Actions -->
+        <div class="lg:col-span-7 bg-white border border-stone-200 rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col justify-between">
+          <div class="space-y-6">
+            <!-- Header -->
+            <div class="flex items-start justify-between gap-4 border-b border-stone-100 pb-4">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span id="detail-company" class="text-xs font-bold text-stone-500 uppercase">Microsoft</span>
+                  <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">Verified ATS • HTTP 200 Live</span>
+                </div>
+                <h3 id="detail-title" class="text-xl font-bold text-stone-900">Applied Sciences INTERN</h3>
+              </div>
+              <div class="text-right">
+                <span id="detail-stipend" class="text-lg font-bold text-emerald-800 block">₹1,25,000/mo</span>
+                <span class="text-xs text-stone-400">Summer Internship</span>
+              </div>
+            </div>
+
+            <!-- 3 Key Specs at a Glance -->
+            <div class="grid grid-cols-3 gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
+                <span class="text-stone-400 block text-[10px] font-bold uppercase">Locations</span>
+                <span id="detail-location" class="font-bold text-stone-900">India Multiple (Hyd / Blr)</span>
+              </div>
+              <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
+                <span class="text-stone-400 block text-[10px] font-bold uppercase">Eligibility</span>
+                <span id="detail-batch" class="font-bold text-stone-900">Batch 2026, 2027, 2028</span>
+              </div>
+              <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                <span class="text-amber-800 block text-[10px] font-bold uppercase">Closing Window</span>
+                <span id="detail-window" class="font-bold text-amber-950">🔥 Within 48 Hours</span>
+              </div>
+            </div>
+
+            <!-- Role Summary Brief -->
+            <div class="space-y-2 text-xs text-stone-600 bg-[#faf9f6] p-4 rounded-xl border border-stone-200">
+              <div class="font-bold text-stone-900 uppercase text-[11px]">Requisition Context & Core Fit:</div>
+              <p class="leading-relaxed">
+                Applied Sciences Interns work directly on machine learning models, natural language processing pipelines, and core intelligence stacks across Office, Bing, and Azure AI. Students in 2nd, 3rd, or 4th year eligible.
+              </p>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons: Clear & Big -->
+          <div class="pt-6 border-t border-stone-100 flex items-center justify-between gap-3">
+            <button class="px-4 py-2.5 rounded-xl border border-stone-300 text-stone-700 font-semibold text-xs hover:bg-stone-100 transition">
+              Archive Listing ✕
+            </button>
+
+            <div class="flex items-center gap-3">
+              <button class="px-5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-bold text-xs hover:bg-emerald-100 transition shadow-xs cursor-pointer">
+                ✓ I Applied
+              </button>
+              <a href="#" class="px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition shadow-xs">
+                Apply on Official ATS ↗
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CONCEPT 3: TOP 5 DAILY DROP + COLLAPSIBLE TIERS (Zero Overwhelm) -->
+    <!-- ========================================================================= -->
+    <div id="concept-curated" class="hidden space-y-6">
+
+      <!-- Today's Top 5 Hand-Picked Drops for you -->
+      <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-xs space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-stone-900">Today’s Top 5 Urgent Opportunities</h3>
+            <p class="text-xs text-stone-500">Filtered strictly for your batch (2028). Only high-intent, fast-closing roles.</p>
+          </div>
+          <span class="text-xs font-bold text-amber-900 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
+            5-Minute Daily Goal
+          </span>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Item 1 -->
+          <div class="p-4 rounded-xl border border-stone-200 hover:border-stone-400 transition bg-white flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-xl bg-stone-100 font-bold text-stone-900 text-sm flex items-center justify-center border border-stone-200">MS</div>
+              <div>
+                <div class="font-bold text-sm text-stone-900">Microsoft — Applied Sciences Intern</div>
+                <div class="text-xs text-stone-500">Summer 2026 · ₹1.25L/mo · Closes in 48h</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-bold">✓ I Applied</button>
+              <a href="#" class="px-4 py-1.5 rounded-lg bg-stone-900 text-white text-xs font-bold">Apply ↗</a>
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="p-4 rounded-xl border border-stone-200 hover:border-stone-400 transition bg-white flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-xl bg-stone-100 font-bold text-stone-900 text-sm flex items-center justify-center border border-stone-200">CI</div>
+              <div>
+                <div class="font-bold text-sm text-stone-900">Cisco — ASIC Engineer (Spring Intern)</div>
+                <div class="text-xs text-stone-500">Hardware & Systems · Bangalore · Closes Today</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-bold">✓ I Applied</button>
+              <a href="#" class="px-4 py-1.5 rounded-lg bg-stone-900 text-white text-xs font-bold">Apply ↗</a>
+            </div>
+          </div>
+
+          <!-- Item 3 -->
+          <div class="p-4 rounded-xl border border-stone-200 hover:border-stone-400 transition bg-white flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-xl bg-stone-100 font-bold text-stone-900 text-sm flex items-center justify-center border border-stone-200">SA</div>
+              <div>
+                <div class="font-bold text-sm text-stone-900">Sarvam AI — Product User Research</div>
+                <div class="text-xs text-stone-500">AI Product · ₹60,000/mo · Bengaluru</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-bold">✓ I Applied</button>
+              <a href="#" class="px-4 py-1.5 rounded-lg bg-stone-900 text-white text-xs font-bold">Apply ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsible Tier Drawers: You only open what you care about -->
+      <div class="space-y-3">
+        <div class="border border-stone-200 rounded-xl p-4 bg-white flex items-center justify-between cursor-pointer hover:bg-stone-50">
+          <div class="flex items-center gap-3">
+            <span class="text-base">🏢</span>
+            <div>
+              <span class="font-bold text-xs text-stone-900">Tier-1 Tech Giants (Google, Microsoft, Amazon, Atlassian)</span>
+              <span class="text-stone-400 text-xs block">6 Active Openings</span>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-stone-500">Click to expand ↓</span>
+        </div>
+
+        <div class="border border-stone-200 rounded-xl p-4 bg-white flex items-center justify-between cursor-pointer hover:bg-stone-50">
+          <div class="flex items-center gap-3">
+            <span class="text-base">🚀</span>
+            <div>
+              <span class="font-bold text-xs text-stone-900">Top Indian Unicorns & Startups (Sarvam AI, Juspay, Swiggy)</span>
+              <span class="text-stone-400 text-xs block">14 Active Openings</span>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-stone-500">Click to expand ↓</span>
+        </div>
+
+        <div class="border border-stone-200 rounded-xl p-4 bg-white flex items-center justify-between cursor-pointer hover:bg-stone-50">
+          <div class="flex items-center gap-3">
+            <span class="text-base">📈</span>
+            <div>
+              <span class="font-bold text-xs text-stone-900">Fintech, Quant & Investment Banking (BNY Mellon, S&P Global, LSEG)</span>
+              <span class="text-stone-400 text-xs block">8 Active Openings</span>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-stone-500">Click to expand ↓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- COMPARISON: OLD 60-CARD GRID -->
+    <!-- ========================================================================= -->
+    <div id="concept-old" class="hidden space-y-4">
+      <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-950 text-xs font-semibold">
+        ⚠️ This is the old layout: 50–60 identical cards in a 3-column grid. Notice how it requires endless scrolling and causes immediate cognitive fatigue.
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-75">
+        <!-- 6 dummy cards repeating -->
+        <div class="bg-white border rounded-2xl p-5 shadow-2xs space-y-3">
+          <div class="font-bold text-xs text-stone-500">CISCO · Verified ATS</div>
+          <div class="font-bold text-sm text-stone-900">ASIC Engineer - Spring Intern</div>
+          <div class="text-xs text-stone-500">Internship · Hardware · Bangalore</div>
+          <div class="text-xs text-emerald-800 font-bold">Competitive CTC</div>
+          <div class="flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+            <span>Details ></span>
+            <button class="px-2 py-1 rounded bg-stone-900 text-white">Apply</button>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-2xl p-5 shadow-2xs space-y-3">
+          <div class="font-bold text-xs text-stone-500">MICROSOFT · Verified ATS</div>
+          <div class="font-bold text-sm text-stone-900">Applied Sciences INTERN</div>
+          <div class="text-xs text-stone-500">Summer Intern · AI/ML · India</div>
+          <div class="text-xs text-emerald-800 font-bold">Competitive CTC</div>
+          <div class="flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+            <span>Details ></span>
+            <button class="px-2 py-1 rounded bg-stone-900 text-white">Apply</button>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-2xl p-5 shadow-2xs space-y-3">
+          <div class="font-bold text-xs text-stone-500">MICRON · Verified ATS</div>
+          <div class="font-bold text-sm text-stone-900">Intern, Software Engineering</div>
+          <div class="text-xs text-stone-500">Internship · Tech · Hyderabad</div>
+          <div class="text-xs text-emerald-800 font-bold">Competitive CTC</div>
+          <div class="flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+            <span>Details ></span>
+            <button class="px-2 py-1 rounded bg-stone-900 text-white">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    function switchConcept(concept) {
+      document.getElementById('concept-table').classList.add('hidden');
+      document.getElementById('concept-split').classList.add('hidden');
+      document.getElementById('concept-curated').classList.add('hidden');
+      document.getElementById('concept-old').classList.add('hidden');
+
+      // Reset button styles
+      ['table', 'split', 'curated', 'old'].forEach(c => {
+        const btn = document.getElementById('btn-' + c);
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer whitespace-nowrap';
+      });
+
+      const activeBtn = document.getElementById('btn-' + concept);
+      activeBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition shadow-xs bg-stone-900 text-white cursor-pointer whitespace-nowrap';
+
+      document.getElementById('concept-' + concept).classList.remove('hidden');
+
+      const bannerTitle = document.getElementById('banner-title');
+      const bannerDesc = document.getElementById('banner-desc');
+
+      if (concept === 'table') {
+        bannerTitle.innerText = 'Option 1: The High-Density Scannable Table (Levels.fyi / Linear Style)';
+        bannerDesc.innerHTML = '<strong>Why this solves your headache:</strong> Instead of 60 giant blocks requiring 15 full scrolls, 20 openings fit on a single screen. Your eyes scan vertically down columns in <strong>under 6 seconds</strong> to spot top salaries, fresh drops, and eligible batches.';
+      } else if (concept === 'split') {
+        bannerTitle.innerText = 'Option 2: Split-Pane Command Center (Superhuman / Linear Style)';
+        bannerDesc.innerHTML = '<strong>Why this solves your headache:</strong> Left pane is a compact list of companies; clicking any item instantly loads full details, ATS portal links, and apply buttons on the right. <strong>Zero back-and-forth modals, zero scrolling past 50 blocks.</strong>';
+      } else if (concept === 'curated') {
+        bannerTitle.innerText = 'Option 3: Top 5 Daily Drop + Collapsible Tiers (Zero-Overwhelm Mode)';
+        bannerDesc.innerHTML = '<strong>Why this solves your headache:</strong> Nobody needs to apply to 60 jobs in one sitting. You only see <strong>Today’s Top 5 Hand-Picked Drops</strong> for your batch. Everything else stays cleanly tucked away into collapsible drawers by company tier.';
+      } else if (concept === 'old') {
+        bannerTitle.innerText = 'Comparison: The Old 60-Card Grid (Cognitive Overload)';
+        bannerDesc.innerHTML = 'Notice how 60 repeating cards force you to read left-to-right and scroll continuously. There is no clear visual hierarchy, making it impossible to evaluate in 5–8 seconds.';
+      }
+    }
+
+    function selectSplitItem(key) {
+      const data = {
+        msft: {
+          company: 'Microsoft',
+          title: 'Applied Sciences INTERN',
+          stipend: '₹1,25,000/mo',
+          location: 'India Multiple (Hyd / Blr)',
+          batch: 'Batch 2026, 2027, 2028',
+          window: '🔥 Within 48 Hours'
+        },
+        cisco: {
+          company: 'Cisco',
+          title: 'ASIC Engineer - Spring Intern',
+          stipend: 'Competitive CTC',
+          location: 'Bangalore, India',
+          batch: 'Batch 2027',
+          window: '🔥 Closes in <18 Hours'
+        },
+        sarvam: {
+          company: 'Sarvam AI',
+          title: 'Product User Research & Engineering',
+          stipend: '₹60,000/mo',
+          location: 'Bengaluru',
+          batch: 'Batch 2026, 2027',
+          window: 'Rolling (7d)'
+        },
+        juspay: {
+          company: 'Juspay',
+          title: 'Quality Engineer Intern',
+          stipend: '₹40,000/mo + PPO',
+          location: 'Bangalore',
+          batch: 'Batch 2025, 2026, 2027',
+          window: '🔥 Closes Fast'
+        }
+      };
+
+      const item = data[key];
+      if (!item) return;
+
+      document.getElementById('detail-company').innerText = item.company;
+      document.getElementById('detail-title').innerText = item.title;
+      document.getElementById('detail-stipend').innerText = item.stipend;
+      document.getElementById('detail-location').innerText = item.location;
+      document.getElementById('detail-batch').innerText = item.batch;
+      document.getElementById('detail-window').innerText = item.window;
+
+      ['msft', 'cisco', 'sarvam', 'juspay'].forEach(k => {
+        const el = document.getElementById('split-item-' + k);
+        el.className = 'p-3.5 rounded-xl border border-stone-200 hover:border-stone-400 bg-white cursor-pointer transition';
+      });
+
+      document.getElementById('split-item-' + key).className = 'p-3.5 rounded-xl border-2 border-stone-900 bg-stone-50/80 cursor-pointer transition';
+    }
+  </script>
+</body>
+</html>

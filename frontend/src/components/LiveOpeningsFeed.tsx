@@ -20,6 +20,8 @@ import {
   Radar,
   EyeOff,
   Sparkles,
+  LayoutList,
+  LayoutGrid,
 } from 'lucide-react';
 
 interface LiveOpeningsFeedProps {
@@ -57,6 +59,26 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
   const ARCHIVE_KEY = `${userPrefix}_archived_jobs`;
   const APPLIED_KEY = `${userPrefix}_applied_jobs`;
   const APPLIED_META_KEY = `${userPrefix}_applied_meta`;
+  const LAYOUT_PREF_KEY = `${userPrefix}_layout_mode`;
+
+  // Layout mode: Option 2 Split-Pane Command Center as default
+  const [layoutMode, setLayoutMode] = useState<'split' | 'grid'>(() => {
+    try {
+      const saved = localStorage.getItem(LAYOUT_PREF_KEY);
+      return saved === 'grid' || saved === 'split' ? saved : 'split';
+    } catch {
+      return 'split';
+    }
+  });
+
+  const handleLayoutModeChange = (mode: 'split' | 'grid') => {
+    setLayoutMode(mode);
+    try {
+      localStorage.setItem(LAYOUT_PREF_KEY, mode);
+    } catch {}
+  };
+
+  const [selectedSplitId, setSelectedSplitId] = useState<string | null>(null);
 
   // Archived & Applied state initialized from localStorage
   const [archivedIds, setArchivedIds] = useState<string[]>(() => {
@@ -229,6 +251,11 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
     if (activeModalListing?.id === listing.id) {
       setActiveModalListing(null);
     }
+
+    if (selectedSplitId === listing.id) {
+      const remaining = currentFeedListings.filter((l) => l.id !== listing.id);
+      setSelectedSplitId(remaining[0]?.id || null);
+    }
   };
 
   // Action: Unarchive / Restore a listing
@@ -298,6 +325,11 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
 
     if (activeModalListing?.id === listing.id) {
       setActiveModalListing(null);
+    }
+
+    if (selectedSplitId === listing.id) {
+      const remaining = currentFeedListings.filter((l) => l.id !== listing.id);
+      setSelectedSplitId(remaining[0]?.id || null);
     }
   };
 
@@ -410,6 +442,16 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
     candidateTargetBatch,
     appliedMetadata,
   ]);
+
+  // Selected Listing for Option 2 Split-Pane Command Center
+  const selectedSplitListing = useMemo(() => {
+    if (!currentFeedListings.length) return null;
+    if (selectedSplitId) {
+      const found = currentFeedListings.find((l) => l.id === selectedSplitId);
+      if (found) return found;
+    }
+    return currentFeedListings[0];
+  }, [currentFeedListings, selectedSplitId]);
 
   const formattedLastChecked = useMemo(() => {
     if (!lastFetched) return 'Just now';
@@ -736,6 +778,56 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
         </div>
       </div>
 
+      {/* Quick Summary & Layout Mode Toggle */}
+      <div className="flex items-center justify-between gap-3 text-xs flex-wrap px-0.5">
+        <div className="flex items-center gap-2 text-stone-500 font-medium">
+          <span className="font-bold text-stone-900">{currentFeedListings.length}</span>
+          <span>
+            {feedView === 'active'
+              ? 'active ATS requisitions'
+              : feedView === 'applied'
+              ? 'applied applications'
+              : feedView === 'archived'
+              ? 'archived / hidden listings'
+              : 'closed postings'}
+          </span>
+          {searchQuery && (
+            <span className="text-stone-400 font-mono text-[11px] truncate max-w-xs">
+              (matching &ldquo;{searchQuery}&rdquo;)
+            </span>
+          )}
+        </div>
+
+        {/* Layout Switcher: Split Command vs Cards */}
+        <div className="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 shadow-2xs">
+          <button
+            onClick={() => handleLayoutModeChange('split')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              layoutMode === 'split'
+                ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
+            }`}
+            title="Split Command Center: Scannable Directory (Left) + Instant Requisition Dossier (Right)"
+          >
+            <LayoutList className="h-3.5 w-3.5 text-stone-800" />
+            <span>Split Command</span>
+            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">Default</span>
+          </button>
+          <button
+            onClick={() => handleLayoutModeChange('grid')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              layoutMode === 'grid'
+                ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
+            }`}
+            title="Classic 3-Column Card Grid"
+          >
+            <LayoutGrid className="h-3.5 w-3.5 text-stone-600" />
+            <span>Card Grid</span>
+          </button>
+        </div>
+      </div>
+
       {/* Listings Stream */}
       {loading ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-stone-200">
@@ -773,6 +865,317 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               <p className="text-xs text-stone-400">Try clearing your search query or selecting a different role or batch filter.</p>
             </>
           )}
+        </div>
+      ) : layoutMode === 'split' ? (
+        /* ========================================================================= */
+        /* CONCEPT 2: SPLIT-PANE COMMAND CENTER (Superhuman / Linear Style)          */
+        /* Left: Scannable Directory (5 cols) | Right: Sticky Live Dossier (7 cols)  */
+        /* ========================================================================= */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[700px] items-start">
+          {/* Left Column: 5 Cols Scannable Directory List */}
+          <div className="lg:col-span-5 bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs flex flex-col space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 text-xs">
+              <div className="flex items-center gap-1.5 font-bold text-stone-900">
+                <span>Directory</span>
+                <span className="text-[11px] font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+                  {currentFeedListings.length}
+                </span>
+              </div>
+              <span className="text-stone-400 text-[11px] font-medium hidden sm:inline">
+                Click any opening to view details
+              </span>
+            </div>
+
+            <div className="space-y-2 overflow-y-auto max-h-[720px] pr-1.5 scrollbar-thin">
+              {currentFeedListings.map((listing) => {
+                const isSelected = selectedSplitListing?.id === listing.id;
+                const isItemApplied = appliedIdSet.has(listing.id);
+                const isItemArchived = archivedIdSet.has(listing.id);
+                const isItemClosed = listing.status === 'closed' || feedView === 'closed';
+                const isItemFresh = listing.isUrgentFresh;
+
+                return (
+                  <div
+                    key={listing.id}
+                    onClick={() => setSelectedSplitId(listing.id)}
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer text-left relative group ${
+                      isSelected
+                        ? 'border-2 border-stone-900 bg-amber-50/25 shadow-xs ring-1 ring-stone-900/10'
+                        : 'border-stone-200/90 hover:border-stone-400 bg-white hover:bg-stone-50/50'
+                    }`}
+                  >
+                    {/* Top Row: Company + Status Badge */}
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={`h-6 w-6 rounded-md font-bold text-[10px] flex items-center justify-center shrink-0 border transition ${
+                            isSelected
+                              ? 'bg-stone-900 text-white border-stone-900'
+                              : 'bg-stone-100 text-stone-800 border-stone-200 group-hover:border-stone-400'
+                          }`}
+                        >
+                          {listing.company.slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="text-xs font-bold text-stone-800 uppercase tracking-wide truncate">
+                          {listing.company}
+                        </span>
+                        {!isItemClosed && (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded shrink-0">
+                            <ShieldCheck className="h-2.5 w-2.5 text-emerald-600 shrink-0" />
+                            <span>ATS</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="shrink-0">
+                        {isItemArchived ? (
+                          <span className="text-[10px] font-semibold text-stone-700 bg-stone-100 border border-stone-300 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                            <EyeOff className="w-2.5 h-2.5" /> Hidden
+                          </span>
+                        ) : isItemApplied ? (
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                            <Check className="w-2.5 h-2.5 text-emerald-700" /> Applied
+                          </span>
+                        ) : isItemClosed ? (
+                          <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">
+                            Closed
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            {listing.stipend}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Role Title */}
+                    <h4 className="font-bold text-xs sm:text-[13px] text-stone-900 line-clamp-1 group-hover:text-amber-950 transition">
+                      {listing.title}
+                    </h4>
+
+                    {/* Quick Specs Row */}
+                    <div className="flex items-center gap-2 text-[11px] text-stone-500 mt-1.5 flex-wrap">
+                      <span className="font-medium text-stone-700">{listing.roleType}</span>
+                      <span>•</span>
+                      <span className="truncate max-w-[120px]">{listing.locations[0] || 'India'}</span>
+                      <span>•</span>
+                      <span>{listing.eligibleBatchesLabel}</span>
+                      {isItemFresh && !isItemApplied && !isItemArchived && !isItemClosed && (
+                        <>
+                          <span>•</span>
+                          <span className="text-amber-800 font-bold flex items-center gap-0.5">
+                            <Flame className="w-3 h-3 text-orange-500 fill-orange-500" /> &lt;48h
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Column: 7 Cols Sticky Requisition Dossier */}
+          <div className="lg:col-span-7">
+            {selectedSplitListing ? (
+              <div className="sticky top-20 bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-7 shadow-xs flex flex-col justify-between max-h-[750px] overflow-y-auto space-y-6">
+                {/* Header */}
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-4 border-b border-stone-100 pb-4">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="h-8 w-8 rounded-lg bg-stone-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          {selectedSplitListing.company.slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="text-xs font-bold text-stone-600 uppercase tracking-wide">
+                          {selectedSplitListing.company}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <ShieldCheck className="h-3 w-3 text-emerald-600" /> Verified ATS • HTTP 200 Live
+                        </span>
+                        {appliedIdSet.has(selectedSplitListing.id) && (
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Check className="h-3 w-3 text-emerald-700" /> Applied by Candidate
+                          </span>
+                        )}
+                        {archivedIdSet.has(selectedSplitListing.id) && (
+                          <span className="text-[10px] font-semibold text-stone-800 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <EyeOff className="h-3 w-3 text-stone-600" /> Archived / Hidden
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight mt-1">
+                        {selectedSplitListing.title}
+                      </h3>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-lg sm:text-xl font-bold text-emerald-800 block">
+                        {selectedSplitListing.stipend}
+                      </span>
+                      <span className="text-xs text-stone-500 font-medium">
+                        {selectedSplitListing.roleType}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 3 Key Specs at a Glance */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="p-3.5 rounded-xl bg-stone-50/80 border border-stone-200/90">
+                      <span className="text-stone-400 block text-[10px] font-bold uppercase tracking-wider mb-1">
+                        Locations
+                      </span>
+                      <span className="font-bold text-stone-900 block truncate" title={selectedSplitListing.locations.join(', ')}>
+                        {selectedSplitListing.locations.join(', ') || 'India Multiple'}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-stone-50/80 border border-stone-200/90">
+                      <span className="text-stone-400 block text-[10px] font-bold uppercase tracking-wider mb-1">
+                        Eligibility
+                      </span>
+                      <span className="font-bold text-stone-900 block truncate">
+                        {selectedSplitListing.eligibleBatchesLabel}
+                      </span>
+                    </div>
+
+                    <div
+                      className={`p-3.5 rounded-xl border ${
+                        selectedSplitListing.isUrgentFresh
+                          ? 'bg-amber-50/80 border-amber-200'
+                          : selectedSplitListing.status === 'closed'
+                          ? 'bg-rose-50 border-rose-200'
+                          : 'bg-emerald-50/70 border-emerald-200'
+                      }`}
+                    >
+                      <span
+                        className={`block text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                          selectedSplitListing.isUrgentFresh
+                            ? 'text-amber-800'
+                            : selectedSplitListing.status === 'closed'
+                            ? 'text-rose-800'
+                            : 'text-emerald-800'
+                        }`}
+                      >
+                        Closing Window
+                      </span>
+                      <span
+                        className={`font-bold block truncate ${
+                          selectedSplitListing.isUrgentFresh
+                            ? 'text-amber-950 flex items-center gap-1'
+                            : selectedSplitListing.status === 'closed'
+                            ? 'text-rose-900'
+                            : 'text-emerald-900'
+                        }`}
+                      >
+                        {selectedSplitListing.isUrgentFresh ? (
+                          <>
+                            <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                            <span>Closes within 24–48h</span>
+                          </>
+                        ) : selectedSplitListing.status === 'closed' ? (
+                          <span>Closed (Filled on ATS)</span>
+                        ) : (
+                          <span>Rolling Application</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Requisition Context & Education Fit */}
+                  <div className="space-y-3 text-xs text-stone-700 bg-[#faf9f6] p-4 sm:p-5 rounded-xl border border-stone-200/90">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-stone-900 uppercase text-[11px] tracking-wider">
+                        Requisition Context & Core Fit:
+                      </h4>
+                      <span className="text-[11px] font-mono text-stone-400">
+                        Posted: {selectedSplitListing.postedAgoLabel}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-stone-600">
+                      <div>
+                        <span className="text-stone-400 font-medium block text-[11px]">Category:</span>
+                        <span className="font-semibold text-stone-800">{selectedSplitListing.categoryLabel}</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 font-medium block text-[11px]">Degree Requirement:</span>
+                        <span className="font-semibold text-stone-800">{selectedSplitListing.degreeRequired}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sticky Bottom Actions */}
+                <div className="pt-5 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  {/* Archive / Restore Button */}
+                  {archivedIdSet.has(selectedSplitListing.id) ? (
+                    <button
+                      onClick={() => handleUnarchiveListing(selectedSplitListing.id)}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 text-amber-300" />
+                      <span>Restore to Feed</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleArchiveListing(selectedSplitListing)}
+                      className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-stone-300 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      title="Hide this listing and deduct from active count"
+                    >
+                      <Archive className="h-3.5 w-3.5 text-stone-800" />
+                      <span>Archive Listing</span>
+                    </button>
+                  )}
+
+                  {/* Right Actions: Pitch AI, I Applied, Apply on ATS */}
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
+                    {selectedSplitListing.status === 'open' && (
+                      <button
+                        onClick={() => onSelectCompanyForPitch(selectedSplitListing.company, selectedSplitListing.title)}
+                        className="px-3.5 py-2.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                        title="Generate a high-converting cold email pitch or referral ask"
+                      >
+                        <Send className="h-3.5 w-3.5 text-stone-400" />
+                        <span>Pitch AI</span>
+                      </button>
+                    )}
+
+                    {appliedIdSet.has(selectedSplitListing.id) ? (
+                      <button
+                        onClick={() => handleUnmarkApplied(selectedSplitListing.id)}
+                        className="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-100 text-emerald-900 font-bold text-xs hover:bg-emerald-200 transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Check className="h-3.5 w-3.5 text-emerald-700" />
+                        <span>✓ Applied (Unmark)</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleMarkApplied(selectedSplitListing)}
+                        className="px-4 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-bold text-xs hover:bg-emerald-100 transition shadow-2xs cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                        <span>✓ I Applied</span>
+                      </button>
+                    )}
+
+                    <a
+                      href={selectedSplitListing.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                    >
+                      <span>Apply on Official Portal</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center text-stone-400 text-xs">
+                Select an opening on the left to inspect requisition details.
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

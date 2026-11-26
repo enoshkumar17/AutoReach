@@ -1,27 +1,51 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ALL_FLAGSHIP_HACKATHONS, type HackathonItem } from '../data/hiringData';
 import {
   Search,
   Trophy,
   ExternalLink,
-  Send,
   X,
   ChevronRight,
   Clock,
   Sparkles,
+  Check,
 } from 'lucide-react';
 
 interface HackathonsDirectoryProps {
-  onSelectCompanyForPitch: (companyName: string, role: string) => void;
+  onSelectCompanyForPitch?: (companyName: string, role: string) => void;
+  userId?: string;
 }
 
 export const HackathonsDirectory: React.FC<HackathonsDirectoryProps> = ({
-  onSelectCompanyForPitch,
+  userId,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [activeModalHackathon, setActiveModalHackathon] = useState<HackathonItem | null>(null);
+
+  // Registration tracking persisted in localStorage
+  const REG_KEY = userId ? `autoreach_${userId}_registered_hackathons` : 'autoreach_guest_registered_hackathons';
+  const [registeredIds, setRegisteredIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(REG_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(REG_KEY, JSON.stringify(registeredIds));
+    } catch {}
+  }, [registeredIds, REG_KEY]);
+
+  const toggleRegisterHackathon = (hackathonId: string) => {
+    setRegisteredIds((prev) =>
+      prev.includes(hackathonId) ? prev.filter((id) => id !== hackathonId) : [...prev, hackathonId]
+    );
+  };
 
   const categories = [
     { id: 'ALL', label: 'All Hackathons', count: ALL_FLAGSHIP_HACKATHONS.length },
@@ -208,20 +232,28 @@ export const HackathonsDirectory: React.FC<HackathonsDirectoryProps> = ({
                     </div>
                   </div>
 
-                  {isOpen ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Open Now
-                    </span>
-                  ) : hack.status === 'UPCOMING_SOON' ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
-                      Upcoming
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-stone-100 text-stone-600 shrink-0">
-                      Annual Cycle
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                    {registeredIds.includes(hack.id) && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                        <Check className="w-3 h-3 text-emerald-700" /> Registered
+                      </span>
+                    )}
+
+                    {isOpen ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Open Now
+                      </span>
+                    ) : hack.status === 'UPCOMING_SOON' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        Upcoming
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-stone-100 text-stone-600">
+                        Annual Cycle
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Hackathon Name */}
@@ -380,24 +412,37 @@ export const HackathonsDirectory: React.FC<HackathonsDirectoryProps> = ({
 
             {/* Modal Actions */}
             <div className="pt-5 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Registration Tracking Action */}
+              {registeredIds.includes(activeModalHackathon.id) ? (
+                <button
+                  onClick={() => toggleRegisterHackathon(activeModalHackathon.id)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-100 hover:bg-emerald-200 text-xs font-bold text-emerald-900 transition cursor-pointer"
+                  title="Click to unmark registration"
+                >
+                  <Check className="h-4 w-4 text-emerald-700" />
+                  <span>✓ Registered (Click to unmark)</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => toggleRegisterHackathon(activeModalHackathon.id)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold text-emerald-900 transition cursor-pointer shadow-2xs"
+                  title="Mark that you registered on the official portal"
+                >
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  <span>✓ I Registered for this Challenge</span>
+                </button>
+              )}
+
+              {/* Direct Challenge Portal Registration Link */}
               <a
                 href={activeModalHackathon.officialUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-xs font-semibold text-stone-700 transition"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs shadow-xs hover:shadow transition cursor-pointer"
               >
-                Official Challenge Portal <ExternalLink className="h-3.5 w-3.5" />
+                <span>Official Challenge Portal</span>
+                <ExternalLink className="h-3.5 w-3.5" />
               </a>
-
-              <button
-                onClick={() => {
-                  onSelectCompanyForPitch(activeModalHackathon.company, activeModalHackathon.name);
-                  setActiveModalHackathon(null);
-                }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs shadow-xs hover:shadow transition cursor-pointer"
-              >
-                <Send className="h-3.5 w-3.5" /> Pitch Recruiter for this Hackathon
-              </button>
             </div>
           </div>
         </div>

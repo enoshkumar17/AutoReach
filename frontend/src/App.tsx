@@ -614,6 +614,7 @@ export default function App() {
         {activeTab === 'hackathons' && (
           <HackathonsDirectory
             onSelectCompanyForPitch={handleSelectCompanyForPitch}
+            userId={user?.id}
           />
         )}
 
@@ -621,6 +622,7 @@ export default function App() {
         {activeTab === 'programs' && (
           <StudentPrograms
             onSelectCompanyForPitch={handleSelectCompanyForPitch}
+            userId={user?.id}
           />
         )}
 
