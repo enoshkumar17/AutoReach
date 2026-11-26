@@ -601,7 +601,7 @@ EXTRACTION INSTRUCTIONS:
 2. Projects (Extract ALL technical / software engineering projects):
    For each project:
    - title: Name of project.
-   - description: 1-2 punchy sentences describing what it does, architecture, and quantified impact (e.g. "Real-time collaborative code editor built with WebSockets and CRDTs, handling 100+ concurrent clients").
+   - description: 2-3 concise bullet points separated by newlines, each starting with '• ', highlighting architecture, technical challenges, and quantified results (e.g. "• Architected real-time editor using WebSockets & CRDTs\n• Engineered Redis state persistence handling 100+ concurrent rooms\n• Optimized render cycle reducing latency by 40%"). NEVER write as a single continuous paragraph.
    - tags: Tech stack tags comma-separated (e.g. "React, Node.js, WebSockets, Redis").
    - githubUrl: GitHub link if provided on the resume, or null.
    - liveUrl: Live demo link if provided on the resume, or null.

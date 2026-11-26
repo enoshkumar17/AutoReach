@@ -160,25 +160,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="h-5 w-px bg-stone-200 mx-1 shrink-0" />
 
             {user ? (
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200/80 rounded-lg text-xs font-semibold text-stone-800 transition-colors cursor-pointer"
-                  title={`Logged in as ${user.email}`}
+                  className="flex items-center gap-2 pl-1 pr-3 py-1 bg-stone-100 hover:bg-stone-200/90 rounded-full border border-stone-200 text-xs font-semibold text-stone-900 transition-all cursor-pointer shadow-2xs shrink-0"
+                  title={`Logged in as ${user.name} (${user.email})`}
                 >
-                  <div className="h-5 w-5 rounded-full bg-stone-900 text-white flex items-center justify-center text-[10px] font-bold uppercase">
+                  <div className="h-6 w-6 rounded-full bg-stone-900 text-amber-300 flex items-center justify-center text-[11px] font-bold uppercase shrink-0">
                     {user.name.charAt(0) || 'U'}
                   </div>
-                  <span className="max-w-[100px] truncate">{user.name}</span>
+                  <span className="font-semibold text-xs text-stone-900 whitespace-nowrap">
+                    {user.name.trim().split(' ')[0]}
+                  </span>
                 </button>
 
                 <button
                   onClick={onLogout}
-                  className="p-1.5 rounded-lg text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer shrink-0"
                   title="Sign out of AutoReach"
                   aria-label="Sign out"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (

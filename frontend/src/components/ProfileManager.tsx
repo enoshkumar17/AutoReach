@@ -37,14 +37,45 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   const [isSendingTestAlert, setIsSendingTestAlert] = useState(false);
   const [testAlertNotice, setTestAlertNotice] = useState<string | null>(null);
 
-  // New project state
+  // New project state (point-by-point)
   const [projectTitle, setProjectTitle] = useState('');
   const [projectTags, setProjectTags] = useState('');
-  const [projectDesc, setProjectDesc] = useState('');
+  const [projectPoints, setProjectPoints] = useState<string[]>(['']);
   const [projectGithub, setProjectGithub] = useState('');
   const [projectLive, setProjectLive] = useState('');
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [projectMsg, setProjectMsg] = useState<string | null>(null);
+
+  const handlePointChange = (index: number, value: string) => {
+    // If user pasted multi-line text or bullets, auto-split into individual points
+    if (value.includes('\n') || value.includes('•') || value.includes('\u2022')) {
+      const splitLines = value
+        .split(/\r?\n|•|\u2022/)
+        .map((s) => s.trim().replace(/^[-*]\s*/, ''))
+        .filter(Boolean);
+      if (splitLines.length > 1) {
+        const next = [...projectPoints];
+        next.splice(index, 1, ...splitLines);
+        setProjectPoints(next);
+        return;
+      }
+    }
+    const next = [...projectPoints];
+    next[index] = value;
+    setProjectPoints(next);
+  };
+
+  const handleAddPointField = () => {
+    setProjectPoints([...projectPoints, '']);
+  };
+
+  const handleRemovePointField = (index: number) => {
+    if (projectPoints.length <= 1) {
+      setProjectPoints(['']);
+      return;
+    }
+    setProjectPoints(projectPoints.filter((_, i) => i !== index));
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,13 +208,19 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
 
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectTitle || !projectDesc) {
-      setProjectMsg('Project title and description are required.');
+    const cleanPoints = projectPoints
+      .map((p) => p.trim().replace(/^[-*•]\s*/, ''))
+      .filter(Boolean);
+
+    if (!projectTitle || cleanPoints.length === 0) {
+      setProjectMsg('Project name and at least one bullet point are required.');
       return;
     }
 
     setIsAddingProject(true);
     setProjectMsg(null);
+
+    const formattedDesc = cleanPoints.map((p) => `• ${p}`).join('\n');
 
     try {
       const res = await fetch('/api/profile/projects', {
@@ -192,7 +229,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
         body: JSON.stringify({
           title: projectTitle,
           tags: projectTags || 'General',
-          description: projectDesc,
+          description: formattedDesc,
           githubUrl: projectGithub || null,
           liveUrl: projectLive || null,
         }),
@@ -204,7 +241,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       onProjectAdded(data);
       setProjectTitle('');
       setProjectTags('');
-      setProjectDesc('');
+      setProjectPoints(['']);
       setProjectGithub('');
       setProjectLive('');
     } catch (err: any) {
@@ -526,18 +563,57 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-stone-600 mb-1.5">
-              Description & Key Accomplishment <span className="text-rose-500">*</span>
-            </label>
-            <textarea
-              rows={2}
-              required
-              value={projectDesc}
-              onChange={(e) => setProjectDesc(e.target.value)}
-              placeholder="e.g. Built a high-throughput job queue handling 10k tasks/min with Redis backoff retries and rate limiting."
-              className="w-full bg-white border border-stone-200 p-3 text-sm text-stone-900 focus:outline-none focus:border-stone-400 rounded-lg"
-            />
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs sm:text-sm font-semibold text-stone-700">
+                Key Accomplishments & Bullet Points <span className="text-rose-500">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleAddPointField}
+                className="text-xs text-amber-700 hover:text-amber-800 font-bold flex items-center gap-1 cursor-pointer transition"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Bullet Point</span>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {projectPoints.map((point, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="w-6 h-8.5 flex items-center justify-center text-xs font-bold text-amber-700 bg-amber-50 rounded-lg border border-amber-200/80 shrink-0">
+                    {idx + 1}
+                  </span>
+                  <input
+                    type="text"
+                    required={idx === 0}
+                    value={point}
+                    onChange={(e) => handlePointChange(idx, e.target.value)}
+                    placeholder={
+                      idx === 0
+                        ? "e.g. Built high-throughput Redis job queue handling 10k tasks/min"
+                        : idx === 1
+                        ? "e.g. Engineered automatic exponential backoff retry mechanism"
+                        : "e.g. Reduced database query latency by 45% using indexed queries"
+                    }
+                    className="flex-1 bg-white border border-stone-200 px-3.5 py-2 text-sm text-stone-900 focus:outline-none focus:border-stone-400 rounded-lg"
+                  />
+                  {projectPoints.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePointField(idx)}
+                      className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer shrink-0"
+                      title="Remove bullet point"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-stone-400">
+              Tip: You can paste multi-line bullet points directly from your resume; AutoReach will auto-split them into individual points!
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
@@ -581,24 +657,38 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
             projects.map((proj) => (
               <div
                 key={proj.id}
-                className="bg-[#faf9f6]/60 border border-stone-200/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="bg-[#faf9f6]/60 border border-stone-200/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-4"
               >
-                <div className="space-y-1.5">
+                <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <span className="font-semibold text-sm sm:text-base text-stone-900">{proj.title}</span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-md bg-stone-100 text-stone-600 font-medium border border-stone-200/80">
+                    <span className="font-bold text-sm sm:text-base text-stone-900">{proj.title}</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 font-semibold border border-stone-200/80">
                       {proj.tags}
                     </span>
                   </div>
-                  <p className="text-sm text-stone-600 max-w-xl">{proj.description}</p>
+
+                  {/* Bullet points display */}
+                  <div className="space-y-1.5 pt-1">
+                    {proj.description
+                      .split(/\r?\n|•|\u2022/)
+                      .map((line) => line.trim().replace(/^[-*]\s*/, ''))
+                      .filter((line) => line.length > 0)
+                      .map((point, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-stone-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                          <span className="leading-relaxed">{point}</span>
+                        </div>
+                      ))}
+                  </div>
+
                   {(proj.githubUrl || proj.liveUrl) && (
-                    <div className="flex items-center gap-4 text-xs sm:text-sm pt-1">
+                    <div className="flex items-center gap-4 text-xs sm:text-sm pt-2">
                       {proj.githubUrl && (
                         <a
                           href={proj.githubUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-stone-500 hover:text-stone-800 flex items-center gap-1"
+                          className="text-stone-600 hover:text-stone-900 font-medium flex items-center gap-1.5 underline"
                         >
                           <ExternalLink className="h-3 w-3" /> GitHub
                         </a>
@@ -608,7 +698,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                           href={proj.liveUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-stone-500 hover:text-stone-800 flex items-center gap-1"
+                          className="text-stone-600 hover:text-stone-900 font-medium flex items-center gap-1.5 underline"
                         >
                           <ExternalLink className="h-3 w-3" /> Live Demo
                         </a>
@@ -620,7 +710,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                 <button
                   onClick={() => onProjectDeleted(proj.id)}
                   title="Remove Project"
-                  className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition self-end sm:self-center cursor-pointer"
+                  className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition self-end sm:self-start cursor-pointer shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

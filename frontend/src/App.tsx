@@ -394,187 +394,189 @@ export default function App() {
           </div>
         )}
 
-        {/* Executive Header & Intelligence Radar */}
-        <div className="space-y-4 mb-8">
-          {/* Top Row: Date, Greeting & Command Search */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-stone-400 block mb-0.5">
-                {todayFormatted}
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
-                {greeting}, {candidateFirstName}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-stone-200/90 text-xs text-stone-400 shadow-2xs">
-                <Search className="h-3.5 w-3.5 text-stone-400" />
-                <span className="text-stone-500 font-medium hidden sm:inline">Ask AutoReach anything...</span>
-                <span className="text-[10px] font-mono bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded border border-stone-200">
-                  ⌘K
+        {/* Executive Header & Intelligence Radar (Home / Outreach Tab Only) */}
+        {activeTab === 'outreach' && (
+          <div className="space-y-4 mb-8">
+            {/* Top Row: Date, Greeting & Command Search */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-stone-400 block mb-0.5">
+                  {todayFormatted}
                 </span>
+                <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+                  {greeting}, {candidateFirstName}
+                </h1>
               </div>
-              <button
-                onClick={() => {
-                  if (!user) {
-                    setAuthModalMode('login');
-                    setIsAuthModalOpen(true);
-                  } else {
-                    setIsNotificationOpen(true);
-                  }
-                }}
-                className="w-9 h-9 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/90 flex items-center justify-center text-stone-700 shadow-2xs relative transition cursor-pointer"
-                title="Immediate Career Alerts & Notifications"
-              >
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                    {unreadCount}
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-stone-200/90 text-xs text-stone-400 shadow-2xs">
+                  <Search className="h-3.5 w-3.5 text-stone-400" />
+                  <span className="text-stone-500 font-medium hidden sm:inline">Ask AutoReach anything...</span>
+                  <span className="text-[10px] font-mono bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded border border-stone-200">
+                    ⌘K
                   </span>
-                )}
-              </button>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      setAuthModalMode('login');
+                      setIsAuthModalOpen(true);
+                    } else {
+                      setIsNotificationOpen(true);
+                    }
+                  }}
+                  className="w-9 h-9 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/90 flex items-center justify-center text-stone-700 shadow-2xs relative transition cursor-pointer"
+                  title="Immediate Career Alerts & Notifications"
+                >
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Atlas-Style Morning Career Brief Card */}
-          <div className="bg-white border border-stone-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-amber-200/30 via-yellow-100/15 to-transparent rounded-bl-full pointer-events-none" />
+            {/* Atlas-Style Morning Career Brief Card */}
+            <div className="bg-white border border-stone-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-amber-200/30 via-yellow-100/15 to-transparent rounded-bl-full pointer-events-none" />
 
-            <div className="relative z-10 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-amber-400 text-stone-950 flex items-center justify-center font-bold text-xs shadow-2xs">
-                    <Sparkles className="h-3 w-3" />
+              <div className="relative z-10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-amber-400 text-stone-950 flex items-center justify-center font-bold text-xs shadow-2xs">
+                      <Sparkles className="h-3 w-3" />
+                    </div>
+                    <span className="text-xs font-bold text-stone-900">AutoReach Intelligence</span>
+                    <span className="text-[11px] text-stone-400">• Morning Career Brief</span>
                   </div>
-                  <span className="text-xs font-bold text-stone-900">AutoReach Intelligence</span>
-                  <span className="text-[11px] text-stone-400">• Morning Career Brief</span>
-                </div>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Live Radar Active
-                </span>
-              </div>
-
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-bold text-stone-900">
-                  {liveStats.freshCount} urgent high-intent tech openings posted in the last 48 hours.
-                </h3>
-                <p className="text-xs sm:text-sm text-stone-500 leading-relaxed max-w-3xl">
-                  Verified recruiting pipelines for Top Startups & Tech Giants. Direct application portals available with instant 1-click tailored email pitch generation.
-                </p>
-              </div>
-
-              <div className="pt-2 flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => setActiveTab('live')}
-                  className="px-3 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-semibold hover:bg-stone-800 transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                >
-                  Inspect Live Radar ({liveStats.openCount} Open) <ArrowRight className="h-3 w-3" />
-                </button>
-                <button
-                  onClick={() => setActiveTab('cycles')}
-                  className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium transition cursor-pointer"
-                >
-                  View Season Calendar
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Atlas-Style Status Widgets */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Widget 1: Emerald Live ATS Radar */}
-            <div
-              onClick={() => setActiveTab('live')}
-              className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white rounded-2xl p-5 shadow-2xs hover:shadow-md transition cursor-pointer flex flex-col justify-between relative overflow-hidden group"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
-                  Live ATS Openings
-                </span>
-                <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-white group-hover:scale-110 transition">
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </div>
-              </div>
-
-              <div className="my-2">
-                <span className="text-4xl sm:text-5xl font-extrabold tracking-tight">{liveStats.openCount}</span>
-                <span className="text-xs text-emerald-100 font-medium block mt-1">
-                  Positions scraped directly from official ATS boards
-                </span>
-              </div>
-
-              <div className="pt-3 border-t border-emerald-500/50 flex items-center justify-between text-[11px] text-emerald-100">
-                <span className="inline-flex items-center gap-1.5 bg-emerald-800/60 px-2 py-0.5 rounded-md font-semibold">
-                  <ShieldCheck className="h-3 w-3 text-emerald-300" /> Workday & Greenhouse Verified
-                </span>
-                <span className="font-mono">Updated today</span>
-              </div>
-            </div>
-
-            {/* Widget 2: Amber Fast Closing Widget */}
-            <div
-              onClick={() => setActiveTab('live')}
-              className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-5 shadow-2xs hover:shadow-md transition cursor-pointer flex flex-col justify-between relative overflow-hidden group"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-100">
-                  Closes Fast (&lt;48h)
-                </span>
-                <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-white group-hover:scale-110 transition">
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </div>
-              </div>
-
-              <div className="my-2">
-                <span className="text-4xl sm:text-5xl font-extrabold tracking-tight">{liveStats.freshCount}</span>
-                <span className="text-xs text-amber-100 font-medium block mt-1">
-                  High applicant churn · Window closes within 1–2 days
-                </span>
-              </div>
-
-              <div className="pt-3 border-t border-orange-500/50 flex items-center justify-between text-[11px] text-amber-100">
-                <span className="inline-flex items-center gap-1.5 bg-orange-800/60 px-2 py-0.5 rounded-md font-semibold">
-                  <Flame className="h-3 w-3 text-amber-300" /> Priority Attention
-                </span>
-                <span>Apply early</span>
-              </div>
-            </div>
-
-            {/* Widget 3: Hiring Season Calendar */}
-            <div
-              onClick={() => setActiveTab('cycles')}
-              className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-2xs hover:border-stone-300 transition cursor-pointer flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-stone-500" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-600">
-                    Tier-1 Timelines
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Live Radar Active
                   </span>
                 </div>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
-                  Active
-                </span>
+
+                <div className="space-y-1">
+                  <h3 className="text-base sm:text-lg font-bold text-stone-900">
+                    {liveStats.freshCount} urgent high-intent tech openings posted in the last 48 hours.
+                  </h3>
+                  <p className="text-xs sm:text-sm text-stone-500 leading-relaxed max-w-3xl">
+                    Verified recruiting pipelines for Top Startups & Tech Giants. Direct application portals available with instant 1-click tailored email pitch generation.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab('live')}
+                    className="px-3 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-semibold hover:bg-stone-800 transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  >
+                    Inspect Live Radar ({liveStats.openCount} Open) <ArrowRight className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('cycles')}
+                    className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium transition cursor-pointer"
+                  >
+                    View Season Calendar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Atlas-Style Status Widgets */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Widget 1: Emerald Live ATS Radar */}
+              <div
+                onClick={() => setActiveTab('live')}
+                className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white rounded-2xl p-5 shadow-2xs hover:shadow-md transition cursor-pointer flex flex-col justify-between relative overflow-hidden group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
+                    Live ATS Openings
+                  </span>
+                  <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-white group-hover:scale-110 transition">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                <div className="my-2">
+                  <span className="text-4xl sm:text-5xl font-extrabold tracking-tight">{liveStats.openCount}</span>
+                  <span className="text-xs text-emerald-100 font-medium block mt-1">
+                    Positions scraped directly from official ATS boards
+                  </span>
+                </div>
+
+                <div className="pt-3 border-t border-emerald-500/50 flex items-center justify-between text-[11px] text-emerald-100">
+                  <span className="inline-flex items-center gap-1.5 bg-emerald-800/60 px-2 py-0.5 rounded-md font-semibold">
+                    <ShieldCheck className="h-3 w-3 text-emerald-300" /> Workday & Greenhouse Verified
+                  </span>
+                  <span className="font-mono">Updated today</span>
+                </div>
               </div>
 
-              <div className="space-y-1.5 my-2">
-                <div className="text-xs font-semibold text-stone-800">Summer & Off-Campus Cycles</div>
-                <p className="text-xs text-stone-500 leading-normal">
-                  Google, Microsoft, Amazon, Atlassian, and Uber intern portals accepting direct candidate applications.
-                </p>
+              {/* Widget 2: Amber Fast Closing Widget */}
+              <div
+                onClick={() => setActiveTab('live')}
+                className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-5 shadow-2xs hover:shadow-md transition cursor-pointer flex flex-col justify-between relative overflow-hidden group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-100">
+                    Closes Fast (&lt;48h)
+                  </span>
+                  <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-white group-hover:scale-110 transition">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                <div className="my-2">
+                  <span className="text-4xl sm:text-5xl font-extrabold tracking-tight">{liveStats.freshCount}</span>
+                  <span className="text-xs text-amber-100 font-medium block mt-1">
+                    High applicant churn · Window closes within 1–2 days
+                  </span>
+                </div>
+
+                <div className="pt-3 border-t border-orange-500/50 flex items-center justify-between text-[11px] text-amber-100">
+                  <span className="inline-flex items-center gap-1.5 bg-orange-800/60 px-2 py-0.5 rounded-md font-semibold">
+                    <Flame className="h-3 w-3 text-amber-300" /> Priority Attention
+                  </span>
+                  <span>Apply early</span>
+                </div>
               </div>
 
-              <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px]">
-                <span className="text-stone-500 flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Season peak
-                </span>
-                <span className="text-emerald-700 font-bold">5 Open Now</span>
+              {/* Widget 3: Hiring Season Calendar */}
+              <div
+                onClick={() => setActiveTab('cycles')}
+                className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-2xs hover:border-stone-300 transition cursor-pointer flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-stone-500" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-stone-600">
+                      Tier-1 Timelines
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
+                    Active
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 my-2">
+                  <div className="text-xs font-semibold text-stone-800">Summer & Off-Campus Cycles</div>
+                  <p className="text-xs text-stone-500 leading-normal">
+                    Google, Microsoft, Amazon, Atlassian, and Uber intern portals accepting direct candidate applications.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                  <span className="text-stone-500 flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Season peak
+                  </span>
+                  <span className="text-emerald-700 font-bold">5 Open Now</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 1. Cold Outreach Tab */}
         {activeTab === 'outreach' && (

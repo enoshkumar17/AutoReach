@@ -734,11 +734,11 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
       </div>
 
       {/* Mode Switcher: Single vs Batch Scanner (80% Clean SaaS Design) */}
-      <div className="bg-white border border-stone-200/90 rounded-2xl p-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-3 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => setOutreachMode('single')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
               outreachMode === 'single'
                 ? 'bg-stone-900 text-white shadow-xs'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -750,33 +750,34 @@ export const NewOutreach: React.FC<NewOutreachProps> = ({
 
           <button
             onClick={() => setOutreachMode('batch')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
               outreachMode === 'batch'
                 ? 'bg-stone-900 text-white shadow-xs'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
             }`}
           >
             <Layers className="h-4 w-4" />
-            <span>Batch List Scanner (LinkedIn / Multi-Company)</span>
+            <span>Batch Scanner</span>
+            <span className="hidden lg:inline text-stone-400 font-normal text-xs">(LinkedIn / Lists)</span>
           </button>
         </div>
 
         {/* Pitch Style MCQ Dropdown & AI Customizer Toggle */}
-        <div className="flex items-center gap-2 self-end sm:self-auto text-xs font-medium">
-          <div className="relative" ref={styleDropdownRef}>
+        <div className="flex items-center gap-2 justify-end text-xs font-medium shrink-0">
+          <div className="relative shrink-0" ref={styleDropdownRef}>
             <button
               type="button"
               onClick={() => setIsStyleDropdownOpen(!isStyleDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-[#faf9f8] hover:bg-stone-100 text-stone-800 text-xs font-semibold transition cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-[#faf9f8] hover:bg-stone-100 text-stone-800 text-xs font-semibold transition cursor-pointer shadow-2xs whitespace-nowrap shrink-0"
               title="Click to select pitch style formula (MCQ)"
             >
               <span className="text-stone-400 font-normal hidden sm:inline">Formula:</span>
-              <span className="font-bold text-stone-900 flex items-center gap-1.5">
+              <span className="font-bold text-stone-900 flex items-center gap-1.5 whitespace-nowrap">
                 <span>{activeStyleOption.icon}</span>
-                <span>{activeStyleOption.shortLabel}</span>
+                <span className="whitespace-nowrap">{activeStyleOption.shortLabel}</span>
               </span>
               <ChevronDown
-                className={`h-3.5 w-3.5 text-stone-500 transition-transform duration-150 ${
+                className={`h-3.5 w-3.5 text-stone-500 transition-transform duration-150 shrink-0 ${
                   isStyleDropdownOpen ? 'rotate-180' : ''
                 }`}
               />
