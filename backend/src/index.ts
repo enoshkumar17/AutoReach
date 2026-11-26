@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 // Load environment variables
 dotenv.config();
 
+import authRoutes from './routes/auth.routes.js';
 import profileRoutes from './routes/profile.routes.js';
 import extractRoutes from './routes/extract.routes.js';
 import applicationsRoutes from './routes/applications.routes.js';
@@ -31,6 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Mount API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/extract', extractRoutes);
 app.use('/api/applications', applicationsRoutes);

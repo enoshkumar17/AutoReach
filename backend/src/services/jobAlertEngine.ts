@@ -244,15 +244,17 @@ export function generateJobAlertHtml(
 }
 
 /**
- * Process a batch of live listings and dispatch alerts to the candidate
+ * Process a batch of live listings and dispatch alerts to all active candidate profiles
  */
 export async function processAndNotifyListings(listings: LiveListingItem[]): Promise<{
   matchedCount: number;
   emailsSent: number;
 }> {
   try {
-    const profile = await prisma.candidateProfile.findFirst();
-    if (!profile) return { matchedCount: 0, emailsSent: 0 };
+    const profiles = await prisma.candidateProfile.findMany({
+      where: { emailAlertsEnabled: true },
+    });
+    if (!profiles || profiles.length === 0) return { matchedCount: 0, emailsSent: 0 };
 
     let matchedCount = 0;
     let emailsSent = 0;
@@ -261,80 +263,79 @@ export async function processAndNotifyListings(listings: LiveListingItem[]): Pro
       // Must be open
       if (listing.status !== 'open') continue;
 
-      const listingKey = listing.url || `${listing.company}:${listing.title}`;
-      if (notifiedUrls.has(listingKey)) continue;
-
-      // Persisted SQLite Check: Never notify a job that already exists in the database
-      const existing = await prisma.notification.findFirst({
-        where: {
-          OR: [
-            ...(listing.url ? [{ url: listing.url }] : []),
-            {
-              AND: [
-                { company: listing.company },
-                { role: listing.title },
-              ],
-            },
-          ],
-        },
-      });
-
-      if (existing) {
-        notifiedUrls.add(listingKey);
-        continue;
-      }
-
-      const match = matchJobWithProfile(listing, {
-        targetBatch: profile.targetBatch,
-        targetRoles: profile.targetRoles,
-        degree: profile.degree,
-      });
-
-      if (match.isMatch) {
-        matchedCount++;
-        notifiedUrls.add(listingKey);
-
-        // Save in-app notification
-        const notification = await prisma.notification.create({
-          data: {
-            type: listing.isUrgentFresh ? 'CLOSING_SOON' : 'JOB_ALERT',
-            title: `New Opening: ${listing.company} - ${listing.title}`,
-            message: match.reason,
-            company: listing.company,
-            role: listing.title,
-            url: listing.url,
-            batch: profile.targetBatch || 2028,
-            matchScore: match.score,
-            isRead: false,
-            emailSent: false,
+      for (const profile of profiles) {
+        // Persisted Check: Never notify a job that this specific user already received
+        const existing = await prisma.notification.findFirst({
+          where: {
+            userId: profile.userId,
+            OR: [
+              ...(listing.url ? [{ url: listing.url }] : []),
+              {
+                AND: [
+                  { company: listing.company },
+                  { role: listing.title },
+                ],
+              },
+            ],
           },
         });
 
-        // Send email alert if enabled and credentials configured
-        if (profile.emailAlertsEnabled && profile.email) {
-          try {
-            const html = generateJobAlertHtml(
-              listing,
-              profile.fullName.split(' ')[0] || 'Candidate',
-              match.reason,
-              match.score
-            );
+        if (existing) continue;
 
-            await sendHtmlEmail({
-              to: profile.email,
-              subject: `⚡ [Job Alert] ${listing.company} is hiring for ${listing.title} (${listing.eligibleBatchesLabel})`,
-              html,
-            });
+        const match = matchJobWithProfile(listing, {
+          targetBatch: profile.targetBatch,
+          targetRoles: profile.targetRoles,
+          degree: profile.degree,
+        });
 
-            await prisma.notification.update({
-              where: { id: notification.id },
-              data: { emailSent: true },
-            });
+        if (match.isMatch) {
+          matchedCount++;
 
-            emailsSent++;
-            console.log(`[JobAlertEngine] Dispatched instant job alert email for ${listing.company} (${listing.title}) to ${profile.email}`);
-          } catch (emailErr: any) {
-            console.warn(`[JobAlertEngine] Email dispatch notice for ${listing.company}: ${emailErr.message}`);
+          // Save in-app notification scoped to user
+          const notification = await prisma.notification.create({
+            data: {
+              userId: profile.userId,
+              type: listing.isUrgentFresh ? 'CLOSING_SOON' : 'JOB_ALERT',
+              title: `New Opening: ${listing.company} - ${listing.title}`,
+              message: match.reason,
+              company: listing.company,
+              role: listing.title,
+              url: listing.url,
+              batch: profile.targetBatch || 2028,
+              matchScore: match.score,
+              isRead: false,
+              emailSent: false,
+            },
+          });
+
+          // Send email alert if email is available
+          if (profile.email) {
+            try {
+              const html = generateJobAlertHtml(
+                listing,
+                profile.fullName.split(' ')[0] || 'Candidate',
+                match.reason,
+                match.score
+              );
+
+              await sendHtmlEmail({
+                to: profile.email,
+                subject: `⚡ [Job Alert] ${listing.company} is hiring for ${listing.title} (${listing.eligibleBatchesLabel})`,
+                html,
+                gmailUser: profile.gmailUser || undefined,
+                gmailAppPassword: profile.gmailAppPassword || undefined,
+              });
+
+              await prisma.notification.update({
+                where: { id: notification.id },
+                data: { emailSent: true },
+              });
+
+              emailsSent++;
+              console.log(`[JobAlertEngine] Dispatched instant job alert email for ${listing.company} (${listing.title}) to ${profile.email}`);
+            } catch (emailErr: any) {
+              console.warn(`[JobAlertEngine] Email dispatch notice for ${listing.company}: ${emailErr.message}`);
+            }
           }
         }
       }
@@ -350,9 +351,12 @@ export async function processAndNotifyListings(listings: LiveListingItem[]): Pro
 /**
  * Send a sample/test alert email immediately to candidate's email
  */
-export async function sendTestJobAlert(customEmail?: string): Promise<{ success: boolean; message: string }> {
+export async function sendTestJobAlert(customEmail?: string, userId?: string): Promise<{ success: boolean; message: string }> {
   try {
-    const profile = await prisma.candidateProfile.findFirst();
+    const profile = userId
+      ? await prisma.candidateProfile.findUnique({ where: { userId } })
+      : await prisma.candidateProfile.findFirst();
+
     const recipient = customEmail || profile?.email || 'enoshkumar2006@gmail.com';
     const candidateName = profile?.fullName ? profile.fullName.split(' ')[0] : 'Enosh';
 
@@ -388,11 +392,14 @@ export async function sendTestJobAlert(customEmail?: string): Promise<{ success:
       to: recipient,
       subject: `⚡ [Test Alert] Juspay is hiring for Software Development Engineer Intern (Batch 2026–2028)`,
       html,
+      gmailUser: profile?.gmailUser || undefined,
+      gmailAppPassword: profile?.gmailAppPassword || undefined,
     });
 
-    // Also record test in-app notification
+    // Also record test in-app notification scoped to user
     await prisma.notification.create({
       data: {
+        userId: profile?.userId || null,
         type: 'JOB_ALERT',
         title: 'Test Alert: Juspay - Software Development Engineer Intern',
         message: matchReason,
@@ -422,10 +429,14 @@ export async function sendTestJobAlert(customEmail?: string): Promise<{ success:
  * Send Daily Morning Digest Email to Candidate
  */
 export async function sendDailyDigestAlert(
-  customEmail?: string
+  customEmail?: string,
+  userId?: string
 ): Promise<{ success: boolean; message: string; count?: number }> {
   try {
-    const profile = await prisma.candidateProfile.findFirst();
+    const profile = userId
+      ? await prisma.candidateProfile.findUnique({ where: { userId } })
+      : await prisma.candidateProfile.findFirst();
+
     const recipient = customEmail || profile?.email || 'enoshkumar2006@gmail.com';
     const candidateName = profile?.fullName ? profile.fullName.split(' ')[0] : 'Enosh';
     const targetBatch = profile?.targetBatch || 2028;
@@ -552,6 +563,8 @@ export async function sendDailyDigestAlert(
       to: recipient,
       subject: `☀️ [Morning Digest] ${matched.length} Verified Tech Roles for Batch ${targetBatch} (${todayDate})`,
       html: digestHtml,
+      gmailUser: profile?.gmailUser || undefined,
+      gmailAppPassword: profile?.gmailAppPassword || undefined,
     });
 
     return {

@@ -1,3 +1,10 @@
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
 export interface CandidateProfile {
   id: number;
   fullName: string;
@@ -114,6 +121,7 @@ export interface BatchExtractionResult {
 export interface EnvConfig {
   hasGeminiKey: boolean;
   hasGmailConfig: boolean;
+  isPersonalGmailConfigured?: boolean;
   gmailUser: string;
 }
 

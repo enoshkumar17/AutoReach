@@ -9,7 +9,9 @@ import { CompanyHiringCycles } from './components/CompanyHiringCycles';
 import { HackathonsDirectory } from './components/HackathonsDirectory';
 import { StudentPrograms } from './components/StudentPrograms';
 import { NotificationDrawer } from './components/NotificationDrawer';
-import type { CandidateProfile, Project, Application, EnvConfig, NotificationItem } from './types';
+import { AuthModal } from './components/AuthModal';
+import { apiGetCurrentUser, apiLogout } from './api';
+import type { CandidateProfile, Project, Application, EnvConfig, NotificationItem, AuthUser } from './types';
 import {
   Sparkles,
   Flame,
@@ -20,12 +22,15 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
-  Trophy,
-  GraduationCap,
+  Loader2,
 } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('outreach');
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -99,7 +104,7 @@ export default function App() {
       const res = await fetch('/api/notifications/test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: profile?.email || 'enoshkumar2006@gmail.com' }),
+        body: JSON.stringify({ email: profile?.email || user?.email }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -117,7 +122,7 @@ export default function App() {
       const res = await fetch('/api/notifications/daily-digest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: profile?.email || 'enoshkumar2006@gmail.com' }),
+        body: JSON.stringify({ email: profile?.email || user?.email }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -138,7 +143,7 @@ export default function App() {
     } catch (_) {}
   };
 
-  // Initial data loading
+  // Initial user session & data loading
   async function loadInitialData() {
     try {
       const [profileRes, appsRes, liveRes, notifRes] = await Promise.all([
@@ -179,17 +184,58 @@ export default function App() {
     }
   }
 
+  // App initialization on mount
   useEffect(() => {
-    loadInitialData();
+    async function init() {
+      try {
+        const currentUser = await apiGetCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          await loadInitialData();
+        } else {
+          // Load public live listings feed even for guests
+          const liveRes = await fetch('/api/live-listings');
+          if (liveRes.ok) {
+            const liveData = await liveRes.json();
+            if (liveData.openCount) {
+              setLiveStats({ openCount: liveData.openCount, freshCount: liveData.freshCount || 6 });
+            }
+          }
+          setIsLoading(false);
+        }
+      } catch (_) {
+        setIsLoading(false);
+      }
+    }
 
-    // Periodic notification poll every 30 seconds
+    init();
+
+    const handleUnauthorized = () => {
+      setUser(null);
+      setProfile(null);
+      setProjects([]);
+      setApplications([]);
+      setNotifications([]);
+      setUnreadCount(0);
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+    };
+
+    window.addEventListener('autoreach:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('autoreach:unauthorized', handleUnauthorized);
+  }, []);
+
+  // Poll notifications when logged in
+  useEffect(() => {
+    if (!user) return;
+    fetchNotifications();
     const interval = setInterval(fetchNotifications, 30 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   // Silently check for new replies whenever switching to Applications tab
   useEffect(() => {
-    if (activeTab === 'tracker') {
+    if (activeTab === 'tracker' && user) {
       fetch('/api/applications/check-replies', { method: 'POST' })
         .then((res) => res.json())
         .then((data) => {
@@ -199,7 +245,26 @@ export default function App() {
         })
         .catch(() => {});
     }
-  }, [activeTab]);
+  }, [activeTab, user]);
+
+  const handleAuthSuccess = async (authUser: AuthUser) => {
+    setUser(authUser);
+    setIsAuthModalOpen(false);
+    setIsLoading(true);
+    await loadInitialData();
+  };
+
+  const handleLogout = () => {
+    apiLogout();
+    setUser(null);
+    setProfile(null);
+    setProjects([]);
+    setApplications([]);
+    setNotifications([]);
+    setUnreadCount(0);
+    setAuthModalMode('login');
+    setIsAuthModalOpen(true);
+  };
 
   const handleApplicationSent = (newApp: Application) => {
     setApplications((prev) => [newApp, ...prev]);
@@ -218,7 +283,7 @@ export default function App() {
         );
       }
     } catch (err) {
-      console.error('Failed to update application status:', err);
+      console.error('Failed to update status:', err);
     }
   };
 
@@ -233,8 +298,8 @@ export default function App() {
     }
   };
 
-  const handleProjectAdded = (newProj: Project) => {
-    setProjects((prev) => [newProj, ...prev]);
+  const handleProjectAdded = (newProject: Project) => {
+    setProjects((prev) => [newProject, ...prev]);
   };
 
   const handleProjectDeleted = async (id: number) => {
@@ -248,21 +313,26 @@ export default function App() {
     }
   };
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const candidateFirstName = user?.name ? user.name.trim().split(' ')[0] : profile?.fullName ? profile.fullName.trim().split(' ')[0] : 'Engineer';
+  const todayFormatted = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f6f7f9] text-stone-900 flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="h-4 w-4 border-2 border-stone-900 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-medium text-stone-600">Loading AutoReach...</span>
+      <div className="min-h-screen bg-[#f6f7f9] flex flex-col items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-stone-900 text-amber-400 flex items-center justify-center font-bold text-sm shadow-md animate-pulse">
+            AR
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-stone-500">
+            <Loader2 className="h-4 w-4 animate-spin text-stone-700" />
+            <span>Loading AutoReach Workspace...</span>
+          </div>
         </div>
       </div>
     );
   }
-
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  const candidateFirstName = profile?.fullName ? profile.fullName.trim().split(' ')[0] : 'Enosh';
-  const todayFormatted = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
     <div className="min-h-screen bg-[#f6f7f9] text-stone-900 flex flex-col font-sans">
@@ -271,10 +341,60 @@ export default function App() {
         setActiveTab={setActiveTab}
         sentCount={applications.length}
         hasResume={!!profile?.hasResume}
+        user={user}
+        onOpenAuth={() => {
+          setAuthModalMode('login');
+          setIsAuthModalOpen(true);
+        }}
+        onLogout={handleLogout}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
-        {/* Executive Header & Intelligence Radar (Inspired by Atlas Dashboard Standard) */}
+        
+        {/* Guest Multi-Tenant Banner */}
+        {!user && (
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-stone-800 shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center font-bold text-base shrink-0">
+                AR
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                  Multi-User Ready
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                    Data Isolation Enforced
+                  </span>
+                </h3>
+                <p className="text-xs text-stone-300">
+                  Sharing with a sister, friend, or classmate? Each person gets their own private workspace, resume parser, and custom outreach queue. Platform AI key is built-in!
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setIsAuthModalOpen(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-xs font-semibold text-white transition-colors cursor-pointer"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  setAuthModalMode('register');
+                  setIsAuthModalOpen(true);
+                }}
+                className="px-4 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-xs font-bold text-stone-950 transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <span>Create Private Account</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Executive Header & Intelligence Radar */}
         <div className="space-y-4 mb-8">
           {/* Top Row: Date, Greeting & Command Search */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -296,7 +416,14 @@ export default function App() {
                 </span>
               </div>
               <button
-                onClick={() => setIsNotificationOpen(true)}
+                onClick={() => {
+                  if (!user) {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  } else {
+                    setIsNotificationOpen(true);
+                  }
+                }}
                 className="w-9 h-9 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/90 flex items-center justify-center text-stone-700 shadow-2xs relative transition cursor-pointer"
                 title="Immediate Career Alerts & Notifications"
               >
@@ -329,51 +456,33 @@ export default function App() {
                 </span>
               </div>
 
-              <p className="text-sm sm:text-base text-stone-800 leading-relaxed font-normal max-w-4xl">
-                {liveStats.freshCount} high-priority tech openings require immediate application before they hit maximum applicant volume in 24–48 hours. 5 top companies have active hiring cycles this month, and applications for <strong>Google STEP</strong> and the <strong>Juspay Hiring Challenge</strong> are currently open.
-              </p>
+              <div className="space-y-1">
+                <h3 className="text-base sm:text-lg font-bold text-stone-900">
+                  {liveStats.freshCount} urgent high-intent tech openings posted in the last 48 hours.
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-500 leading-relaxed max-w-3xl">
+                  Verified recruiting pipelines for Top Startups & Tech Giants. Direct application portals available with instant 1-click tailored email pitch generation.
+                </p>
+              </div>
 
-              {/* Quick Navigation Action Chips */}
-              <div className="pt-2 flex items-center gap-2 flex-wrap">
+              <div className="pt-2 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setActiveTab('live')}
-                  className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-semibold hover:bg-stone-800 transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
                 >
-                  <Flame className="h-3.5 w-3.5 text-orange-500" />
-                  <span>Fast Closing (&lt;48h)</span>
+                  Inspect Live Radar ({liveStats.openCount} Open) <ArrowRight className="h-3 w-3" />
                 </button>
                 <button
                   onClick={() => setActiveTab('cycles')}
-                  className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium transition cursor-pointer"
                 >
-                  <Calendar className="h-3.5 w-3.5 text-stone-600" />
-                  <span>Active Nov Drives</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('hackathons')}
-                  className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                >
-                  <Trophy className="h-3.5 w-3.5 text-amber-600" />
-                  <span>27 Flagship Hackathons</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('programs')}
-                  className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                >
-                  <GraduationCap className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>28 Student Programs</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('live')}
-                  className="ml-auto text-xs font-bold text-stone-900 hover:text-amber-800 flex items-center gap-1 transition cursor-pointer"
-                >
-                  Read full live feed <ArrowRight className="h-3.5 w-3.5" />
+                  View Season Calendar
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Atlas-Style Status Widgets (Green 82 / Orange 14 / Schedule) */}
+          {/* Atlas-Style Status Widgets */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Widget 1: Emerald Live ATS Radar */}
             <div
@@ -404,7 +513,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Widget 2: Amber/Orange Fast Closing Widget */}
+            {/* Widget 2: Amber Fast Closing Widget */}
             <div
               onClick={() => setActiveTab('live')}
               className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-5 shadow-2xs hover:shadow-md transition cursor-pointer flex flex-col justify-between relative overflow-hidden group"
@@ -429,44 +538,37 @@ export default function App() {
                 <span className="inline-flex items-center gap-1.5 bg-orange-800/60 px-2 py-0.5 rounded-md font-semibold">
                   <Flame className="h-3 w-3 text-amber-300" /> Priority Attention
                 </span>
-                <span className="font-mono">Apply now</span>
+                <span>Apply early</span>
               </div>
             </div>
 
-            {/* Widget 3: Schedule / Hiring Cycles Timeline */}
+            {/* Widget 3: Hiring Season Calendar */}
             <div
               onClick={() => setActiveTab('cycles')}
-              className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-md hover:border-amber-300 transition cursor-pointer flex flex-col justify-between sm:col-span-2 lg:col-span-1 group"
+              className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-2xs hover:border-stone-300 transition cursor-pointer flex flex-col justify-between"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-stone-400" /> Hiring Waves Schedule
-                </span>
-                <span className="text-[11px] font-bold text-amber-800 flex items-center gap-0.5">
-                  Open calendar <ArrowRight className="h-3 w-3" />
-                </span>
-              </div>
-
-              <div className="my-1 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-stone-900">Current Intake:</span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
-                    November Peak (5 Active)
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-stone-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-stone-600">
+                    Tier-1 Timelines
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-stone-600">
-                  <span>Next Spring Wave:</span>
-                  <span className="font-medium text-stone-800">Jan – Feb (8 Companies)</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-stone-600">
-                  <span>Summer SWE Primary:</span>
-                  <span className="font-medium text-stone-800">June – August</span>
-                </div>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
+                  Active
+                </span>
               </div>
 
-              <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-                <span className="inline-flex items-center gap-1 text-stone-700 font-medium">
-                  <Clock className="h-3 w-3 text-stone-400" /> 18 Verified Indian Portals
+              <div className="space-y-1.5 my-2">
+                <div className="text-xs font-semibold text-stone-800">Summer & Off-Campus Cycles</div>
+                <p className="text-xs text-stone-500 leading-normal">
+                  Google, Microsoft, Amazon, Atlassian, and Uber intern portals accepting direct candidate applications.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                <span className="text-stone-500 flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> Season peak
                 </span>
                 <span className="text-emerald-700 font-bold">5 Open Now</span>
               </div>
@@ -558,6 +660,14 @@ export default function App() {
           onSendTestEmail={handleSendTestEmail}
           onSendDailyDigest={handleSendDailyDigest}
           onCheckPortalsNow={handleCheckPortalsNow}
+        />
+
+        {/* Auth Modal (Sign In / Register) */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={handleAuthSuccess}
+          initialMode={authModalMode}
         />
       </main>
 

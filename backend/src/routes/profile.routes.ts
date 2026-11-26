@@ -6,11 +6,15 @@ import { fileURLToPath } from 'url';
 import { prisma } from '../prisma.js';
 import { verifyEmailCredentials } from '../services/mailer.js';
 import { parseResumeWithGemini } from '../services/gemini.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = Router();
+
+// Enforce authentication for all profile operations
+router.use(authMiddleware);
 
 // Multer storage for Resume PDF
 const uploadDir = path.join(__dirname, '../../uploads');
@@ -22,9 +26,10 @@ const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, uploadDir);
   },
-  filename: (_req, file, cb) => {
+  filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `resume_${Date.now()}${ext}`);
+    const userIdPrefix = req.userId ? `${req.userId}_` : '';
+    cb(null, `resume_${userIdPrefix}${Date.now()}${ext}`);
   },
 });
 
@@ -40,32 +45,44 @@ const upload = multer({
   },
 });
 
+// Helper: Get or initialize CandidateProfile for authenticated user
+async function getUserProfile(userId: string) {
+  let profile = await prisma.candidateProfile.findUnique({
+    where: { userId },
+  });
+
+  if (!profile) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    profile = await prisma.candidateProfile.create({
+      data: {
+        userId,
+        fullName: user?.name || 'Candidate',
+        email: user?.email || 'email@example.com',
+        degree: 'B.Tech / B.S. in Computer Science',
+        targetBatch: 2028,
+        targetRoles: 'SWE, SDE, Backend, Fullstack, Systems',
+      },
+    });
+  }
+
+  return profile;
+}
+
 // GET /api/profile
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    let profile = await prisma.candidateProfile.findFirst();
+    const userId = req.userId!;
+    const profile = await getUserProfile(userId);
     const projects = await prisma.project.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!profile) {
-      // Default empty profile
-      profile = await prisma.candidateProfile.create({
-        data: {
-          fullName: 'Your Name',
-          email: 'your.email@gmail.com',
-          phone: '',
-          college: '',
-          degree: 'B.Tech / B.S. in Computer Science',
-          linkedin: '',
-          github: '',
-          portfolio: '',
-        },
-      });
-    }
-
     const hasResume = !!(profile.resumePath && fs.existsSync(profile.resumePath));
     const resumeFileName = profile.resumePath ? path.basename(profile.resumePath) : null;
+
+    const userHasGmail = !!(profile.gmailUser && profile.gmailAppPassword);
+    const platformHasGmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
 
     res.json({
       profile: {
@@ -76,8 +93,9 @@ router.get('/', async (_req: Request, res: Response) => {
       projects,
       envConfig: {
         hasGeminiKey: !!process.env.GEMINI_API_KEY,
-        hasGmailConfig: !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD),
-        gmailUser: process.env.GMAIL_USER || '',
+        hasGmailConfig: userHasGmail || platformHasGmail,
+        isPersonalGmailConfigured: userHasGmail,
+        gmailUser: profile.gmailUser || process.env.GMAIL_USER || '',
       },
     });
   } catch (error: any) {
@@ -88,6 +106,9 @@ router.get('/', async (_req: Request, res: Response) => {
 // POST /api/profile - update details & upload resume
 router.post('/', upload.single('resume'), async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
+    const profile = await getUserProfile(userId);
+
     const {
       fullName,
       email,
@@ -101,20 +122,23 @@ router.post('/', upload.single('resume'), async (req: Request, res: Response) =>
       targetRoles,
       emailAlertsEnabled,
       alertFrequency,
+      gmailUser,
+      gmailAppPassword,
     } = req.body;
 
-    let profile = await prisma.candidateProfile.findFirst();
-
     const dataToUpdate: any = {
-      fullName: fullName || profile?.fullName || 'Candidate',
-      email: email || profile?.email || 'email@example.com',
-      phone: phone ?? profile?.phone ?? '',
-      college: college ?? profile?.college ?? '',
-      degree: degree ?? profile?.degree ?? '',
-      linkedin: linkedin ?? profile?.linkedin ?? '',
-      github: github ?? profile?.github ?? '',
-      portfolio: portfolio ?? profile?.portfolio ?? '',
+      fullName: fullName || profile.fullName || 'Candidate',
+      email: email || profile.email || 'email@example.com',
+      phone: phone ?? profile.phone ?? '',
+      college: college ?? profile.college ?? '',
+      degree: degree ?? profile.degree ?? '',
+      linkedin: linkedin ?? profile.linkedin ?? '',
+      github: github ?? profile.github ?? '',
+      portfolio: portfolio ?? profile.portfolio ?? '',
     };
+
+    if (gmailUser !== undefined) dataToUpdate.gmailUser = gmailUser;
+    if (gmailAppPassword !== undefined) dataToUpdate.gmailAppPassword = gmailAppPassword;
 
     if (targetBatch !== undefined) {
       dataToUpdate.targetBatch = parseInt(targetBatch, 10) || 2028;
@@ -130,8 +154,8 @@ router.post('/', upload.single('resume'), async (req: Request, res: Response) =>
     }
 
     if (req.file) {
-      // If previous resume existed, delete it cleanly
-      if (profile?.resumePath && fs.existsSync(profile.resumePath)) {
+      // Clean up previous resume file if present
+      if (profile.resumePath && fs.existsSync(profile.resumePath)) {
         try {
           fs.unlinkSync(profile.resumePath);
         } catch (_) {}
@@ -139,21 +163,17 @@ router.post('/', upload.single('resume'), async (req: Request, res: Response) =>
       dataToUpdate.resumePath = req.file.path;
     }
 
-    if (!profile) {
-      profile = await prisma.candidateProfile.create({ data: dataToUpdate });
-    } else {
-      profile = await prisma.candidateProfile.update({
-        where: { id: profile.id },
-        data: dataToUpdate,
-      });
-    }
+    const updatedProfile = await prisma.candidateProfile.update({
+      where: { id: profile.id },
+      data: dataToUpdate,
+    });
 
     res.json({
       success: true,
       profile: {
-        ...profile,
-        hasResume: !!(profile.resumePath && fs.existsSync(profile.resumePath)),
-        resumeFileName: profile.resumePath ? path.basename(profile.resumePath) : null,
+        ...updatedProfile,
+        hasResume: !!(updatedProfile.resumePath && fs.existsSync(updatedProfile.resumePath)),
+        resumeFileName: updatedProfile.resumePath ? path.basename(updatedProfile.resumePath) : null,
       },
     });
   } catch (error: any) {
@@ -164,15 +184,17 @@ router.post('/', upload.single('resume'), async (req: Request, res: Response) =>
 // POST /api/profile/parse-resume - 1-click AI Resume PDF extraction
 router.post('/parse-resume', upload.single('resume'), async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
+    const profile = await getUserProfile(userId);
+
     let pdfBuffer: Buffer | null = null;
+    let newResumePath: string | null = null;
 
     if (req.file) {
       pdfBuffer = fs.readFileSync(req.file.path);
-    } else {
-      const profile = await prisma.candidateProfile.findFirst();
-      if (profile?.resumePath && fs.existsSync(profile.resumePath)) {
-        pdfBuffer = fs.readFileSync(profile.resumePath);
-      }
+      newResumePath = req.file.path;
+    } else if (profile.resumePath && fs.existsSync(profile.resumePath)) {
+      pdfBuffer = fs.readFileSync(profile.resumePath);
     }
 
     if (!pdfBuffer) {
@@ -182,7 +204,6 @@ router.post('/parse-resume', upload.single('resume'), async (req: Request, res: 
     const extracted = await parseResumeWithGemini({ pdfBuffer });
 
     // Update profile with extracted non-empty fields
-    let profile = await prisma.candidateProfile.findFirst();
     const updateData: any = {};
     if (extracted.fullName) updateData.fullName = extracted.fullName;
     if (extracted.email) updateData.email = extracted.email;
@@ -193,22 +214,15 @@ router.post('/parse-resume', upload.single('resume'), async (req: Request, res: 
     if (extracted.linkedin) updateData.linkedin = extracted.linkedin;
     if (extracted.github) updateData.github = extracted.github;
     if (extracted.portfolio) updateData.portfolio = extracted.portfolio;
+    if (newResumePath) updateData.resumePath = newResumePath;
 
-    if (req.file) {
-      updateData.resumePath = req.file.path;
-    }
+    const updatedProfile = await prisma.candidateProfile.update({
+      where: { id: profile.id },
+      data: updateData,
+    });
 
-    if (!profile) {
-      profile = await prisma.candidateProfile.create({ data: updateData });
-    } else {
-      profile = await prisma.candidateProfile.update({
-        where: { id: profile.id },
-        data: updateData,
-      });
-    }
-
-    // Add extracted projects to database if not duplicate
-    const existingProjects = await prisma.project.findMany();
+    // Add extracted projects to database for this user if not duplicate
+    const existingProjects = await prisma.project.findMany({ where: { userId } });
     const existingTitles = new Set(existingProjects.map((p) => p.title.toLowerCase().trim()));
 
     const newlyAddedProjects = [];
@@ -216,6 +230,7 @@ router.post('/parse-resume', upload.single('resume'), async (req: Request, res: 
       if (!existingTitles.has(proj.title.toLowerCase().trim())) {
         const created = await prisma.project.create({
           data: {
+            userId,
             title: proj.title,
             description: proj.description,
             tags: proj.tags || 'Engineering',
@@ -228,16 +243,19 @@ router.post('/parse-resume', upload.single('resume'), async (req: Request, res: 
       }
     }
 
-    const allProjects = await prisma.project.findMany({ orderBy: { id: 'desc' } });
+    const allProjects = await prisma.project.findMany({
+      where: { userId },
+      orderBy: { id: 'desc' },
+    });
 
     res.json({
       success: true,
       message: `Parsed resume successfully: updated profile & extracted ${newlyAddedProjects.length} projects.`,
       extracted,
       profile: {
-        ...profile,
-        hasResume: !!(profile.resumePath && fs.existsSync(profile.resumePath)),
-        resumeFileName: profile.resumePath ? path.basename(profile.resumePath) : null,
+        ...updatedProfile,
+        hasResume: !!(updatedProfile.resumePath && fs.existsSync(updatedProfile.resumePath)),
+        resumeFileName: updatedProfile.resumePath ? path.basename(updatedProfile.resumePath) : null,
       },
       projects: allProjects,
       newlyAddedCount: newlyAddedProjects.length,
@@ -251,6 +269,7 @@ router.post('/parse-resume', upload.single('resume'), async (req: Request, res: 
 // POST /api/profile/projects - add new project
 router.post('/projects', async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
     const { title, description, tags, githubUrl, liveUrl } = req.body;
     if (!title || !description) {
       return res.status(400).json({ error: 'Title and description are required.' });
@@ -258,6 +277,7 @@ router.post('/projects', async (req: Request, res: Response) => {
 
     const project = await prisma.project.create({
       data: {
+        userId,
         title,
         description,
         tags: tags || 'General',
@@ -272,11 +292,21 @@ router.post('/projects', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/profile/projects/:id - delete a project
+// DELETE /api/profile/projects/:id - delete a project (scoped to user)
 router.delete('/projects/:id', async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
     const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const id = parseInt(rawId as string, 10);
+
+    const project = await prisma.project.findFirst({
+      where: { id, userId },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found or unauthorized.' });
+    }
+
     await prisma.project.delete({ where: { id } });
     res.json({ success: true });
   } catch (error: any) {
@@ -284,34 +314,41 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/profile/settings - update API credentials
+// POST /api/profile/settings - update personal SMTP credentials & check verification
 router.post('/settings', async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
     const { geminiApiKey, gmailUser, gmailAppPassword } = req.body;
 
-    if (geminiApiKey) process.env.GEMINI_API_KEY = geminiApiKey;
-    if (gmailUser) process.env.GMAIL_USER = gmailUser;
-    if (gmailAppPassword) process.env.GMAIL_APP_PASSWORD = gmailAppPassword;
+    const profile = await getUserProfile(userId);
+    const updateData: any = {};
 
-    // Persist to .env file if feasible
-    const envPath = path.join(__dirname, '../../.env');
-    const envContent = `PORT=${process.env.PORT || 5000}
-DATABASE_URL="file:./dev.db"
-GEMINI_API_KEY=${process.env.GEMINI_API_KEY || ''}
-GMAIL_USER=${process.env.GMAIL_USER || ''}
-GMAIL_APP_PASSWORD=${process.env.GMAIL_APP_PASSWORD || ''}
-`;
-    fs.writeFileSync(envPath, envContent, 'utf-8');
+    if (gmailUser !== undefined) updateData.gmailUser = gmailUser;
+    if (gmailAppPassword !== undefined) updateData.gmailAppPassword = gmailAppPassword;
 
-    let smtpTest = { success: false, message: 'Gmail credentials not provided.' };
-    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-      smtpTest = await verifyEmailCredentials(process.env.GMAIL_USER, process.env.GMAIL_APP_PASSWORD);
+    await prisma.candidateProfile.update({
+      where: { id: profile.id },
+      data: updateData,
+    });
+
+    // Optional admin override of global server key if provided
+    if (geminiApiKey && typeof geminiApiKey === 'string' && geminiApiKey.trim()) {
+      process.env.GEMINI_API_KEY = geminiApiKey.trim();
+    }
+
+    const testUser = gmailUser || profile.gmailUser || process.env.GMAIL_USER;
+    const testPass = gmailAppPassword || profile.gmailAppPassword || process.env.GMAIL_APP_PASSWORD;
+
+    let smtpTest = { success: false, message: 'Gmail credentials not configured.' };
+    if (testUser && testPass) {
+      smtpTest = await verifyEmailCredentials(testUser, testPass);
     }
 
     res.json({
       success: true,
       hasGeminiKey: !!process.env.GEMINI_API_KEY,
-      hasGmailConfig: !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD),
+      hasGmailConfig: !!(testUser && testPass),
+      isPersonalGmailConfigured: !!(gmailUser || profile.gmailUser),
       smtpVerification: smtpTest,
     });
   } catch (error: any) {

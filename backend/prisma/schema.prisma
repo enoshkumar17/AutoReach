@@ -7,8 +7,24 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+model User {
+  id            String             @id @default(uuid())
+  email         String             @unique
+  passwordHash  String
+  name          String
+  role          String             @default("USER") // USER, ADMIN
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  profile       CandidateProfile?
+  projects      Project[]
+  applications  Application[]
+  notifications Notification[]
+}
+
 model CandidateProfile {
   id                  Int      @id @default(autoincrement())
+  userId              String?  @unique
+  user                User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   fullName            String
   email               String
   phone               String?
@@ -22,12 +38,16 @@ model CandidateProfile {
   github              String?
   portfolio           String?
   resumePath          String?
+  gmailUser           String?
+  gmailAppPassword    String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
 
 model Project {
   id          Int      @id @default(autoincrement())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
   description String
   tags        String   // Comma-separated, e.g. "React, TypeScript, Node.js"
@@ -38,6 +58,8 @@ model Project {
 
 model Notification {
   id              Int       @id @default(autoincrement())
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type            String    @default("JOB_ALERT") // JOB_ALERT, CLOSING_SOON, HACKATHON, SYSTEM
   title           String
   message         String
@@ -53,6 +75,8 @@ model Notification {
 
 model Application {
   id              Int       @id @default(autoincrement())
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName     String
   recipientName   String?
   recipientEmail  String

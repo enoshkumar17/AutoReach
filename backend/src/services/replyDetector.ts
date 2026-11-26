@@ -34,9 +34,15 @@ Output ONLY the category name.`;
   }
 }
 
-export async function checkInboxForReplies() {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
+export interface CheckRepliesOptions {
+  user?: string;
+  pass?: string;
+  userId?: string;
+}
+
+export async function checkInboxForReplies(options?: CheckRepliesOptions) {
+  const user = options?.user || process.env.GMAIL_USER;
+  const pass = options?.pass || process.env.GMAIL_APP_PASSWORD;
 
   if (!user || !pass) {
     return { success: false, message: 'Gmail credentials not configured.' };
@@ -44,24 +50,34 @@ export async function checkInboxForReplies() {
 
   // 1. Mark applications sent > 4 days ago as FOLLOW_UP_DUE if still awaiting reply
   const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
+  const whereDue: any = {
+    status: 'SENT',
+    sentAt: { lte: fourDaysAgo },
+    followUpCount: 0,
+  };
+  if (options?.userId) {
+    whereDue.userId = options.userId;
+  }
+
   await prisma.application.updateMany({
-    where: {
-      status: 'SENT',
-      sentAt: { lte: fourDaysAgo },
-      followUpCount: 0,
-    },
+    where: whereDue,
     data: {
       status: 'FOLLOW_UP_DUE',
     },
   });
 
   // 2. Find all applications that are awaiting reply or follow-up due
-  const pendingApps = await prisma.application.findMany({
-    where: {
-      status: {
-        in: ['SENT', 'FOLLOW_UP_DUE'],
-      },
+  const pendingWhere: any = {
+    status: {
+      in: ['SENT', 'FOLLOW_UP_DUE'],
     },
+  };
+  if (options?.userId) {
+    pendingWhere.userId = options.userId;
+  }
+
+  const pendingApps = await prisma.application.findMany({
+    where: pendingWhere,
   });
 
   if (pendingApps.length === 0) {

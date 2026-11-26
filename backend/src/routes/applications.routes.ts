@@ -3,14 +3,25 @@ import { prisma } from '../prisma.js';
 import { sendApplicationEmail } from '../services/mailer.js';
 import { checkInboxForReplies } from '../services/replyDetector.js';
 import { analyzeEmailDeliverability } from '../services/spamChecker.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = Router();
 
+// Protect all application routes with auth
+router.use(authMiddleware);
+
 // POST /api/applications/check-replies - automatically scans Gmail inbox for recruiter replies
-router.post('/check-replies', async (_req: Request, res: Response) => {
+router.post('/check-replies', async (req: Request, res: Response) => {
   try {
-    const result = await checkInboxForReplies();
+    const userId = req.userId!;
+    const profile = await prisma.candidateProfile.findUnique({ where: { userId } });
+
+    const user = profile?.gmailUser || process.env.GMAIL_USER;
+    const pass = profile?.gmailAppPassword || process.env.GMAIL_APP_PASSWORD;
+
+    const result = await checkInboxForReplies({ user, pass, userId });
     const applications = await prisma.application.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
     });
     res.json({
@@ -33,10 +44,12 @@ router.post('/analyze-spam', (req: Request, res: Response) => {
   }
 });
 
-// GET /api/applications - list & statistics
-router.get('/', async (_req: Request, res: Response) => {
+// GET /api/applications - list & statistics scoped to authenticated user
+router.get('/', async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
     const applications = await prisma.application.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -69,9 +82,10 @@ router.get('/', async (_req: Request, res: Response) => {
   }
 });
 
-// POST /api/applications/send - approve & dispatch email with resume
+// POST /api/applications/send - approve & dispatch email with candidate resume
 router.post('/send', async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
     const {
       companyName,
       recipientName,
@@ -97,10 +111,11 @@ router.post('/send', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid recipient email format.' });
     }
 
-    // Security & Deliverability Guard: Daily Quota Protection (50/day max)
+    // Security & Deliverability Guard: Daily Quota Protection (50/day max per user)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const sentToday = await prisma.application.count({
       where: {
+        userId,
         sentAt: { gte: oneDayAgo },
       },
     });
@@ -112,8 +127,12 @@ router.post('/send', async (req: Request, res: Response) => {
       });
     }
 
-    const profile = await prisma.candidateProfile.findFirst();
+    const profile = await prisma.candidateProfile.findUnique({ where: { userId } });
     const resumePath = attachResume ? profile?.resumePath : null;
+
+    // Use user's own Gmail credentials if saved, else fallback to platform
+    const gmailUser = profile?.gmailUser || process.env.GMAIL_USER;
+    const gmailAppPassword = profile?.gmailAppPassword || process.env.GMAIL_APP_PASSWORD;
 
     // Dispatch via nodemailer
     const sendResult = await sendApplicationEmail({
@@ -121,11 +140,14 @@ router.post('/send', async (req: Request, res: Response) => {
       subject: emailSubject,
       body: emailBody,
       resumePath: resumePath,
+      gmailUser,
+      gmailAppPassword,
     });
 
-    // Record in SQLite database
+    // Record in database isolated to this user
     const application = await prisma.application.create({
       data: {
+        userId,
         companyName: companyName || 'Company',
         recipientName: recipientName || null,
         recipientEmail: sanitizedEmail,
@@ -155,14 +177,17 @@ router.post('/send', async (req: Request, res: Response) => {
 // POST /api/applications/:id/follow-up - 1-click threaded follow-up bump
 router.post('/:id/follow-up', async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
     const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const id = parseInt(rawId as string, 10);
     const { customBody, attachResume = true } = req.body;
 
-    const app = await prisma.application.findUnique({ where: { id } });
-    if (!app) return res.status(404).json({ error: 'Application not found.' });
+    const app = await prisma.application.findFirst({
+      where: { id, userId },
+    });
+    if (!app) return res.status(404).json({ error: 'Application not found or unauthorized.' });
 
-    const profile = await prisma.candidateProfile.findFirst();
+    const profile = await prisma.candidateProfile.findUnique({ where: { userId } });
     const recipientSalutation = app.recipientName ? `Hi ${app.recipientName}` : `Hi ${app.companyName} Team`;
 
     const defaultFollowupBody = customBody || `${recipientSalutation},
@@ -178,11 +203,16 @@ ${profile?.linkedin ? `LinkedIn: ${profile.linkedin}` : ''}`;
 
     const subject = app.emailSubject.startsWith('Re:') ? app.emailSubject : `Re: ${app.emailSubject}`;
 
-    const sendResult = await sendApplicationEmail({
+    const gmailUser = profile?.gmailUser || process.env.GMAIL_USER;
+    const gmailAppPassword = profile?.gmailAppPassword || process.env.GMAIL_APP_PASSWORD;
+
+    await sendApplicationEmail({
       to: app.recipientEmail,
       subject,
       body: defaultFollowupBody,
       resumePath: attachResume ? profile?.resumePath : null,
+      gmailUser,
+      gmailAppPassword,
       inReplyTo: app.messageId || undefined,
       references: app.messageId || undefined,
     });
@@ -210,9 +240,15 @@ ${profile?.linkedin ? `LinkedIn: ${profile.linkedin}` : ''}`;
 // PATCH /api/applications/:id/status - update tracking status
 router.patch('/:id/status', async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
     const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const id = parseInt(rawId as string, 10);
     const { status, notes } = req.body;
+
+    const existing = await prisma.application.findFirst({
+      where: { id, userId },
+    });
+    if (!existing) return res.status(404).json({ error: 'Application not found or unauthorized.' });
 
     const updated = await prisma.application.update({
       where: { id },
@@ -231,8 +267,15 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
 // DELETE /api/applications/:id
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
+    const userId = req.userId!;
     const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const id = parseInt(rawId as string, 10);
+
+    const existing = await prisma.application.findFirst({
+      where: { id, userId },
+    });
+    if (!existing) return res.status(404).json({ error: 'Application not found or unauthorized.' });
+
     await prisma.application.delete({ where: { id } });
     res.json({ success: true });
   } catch (error: any) {
