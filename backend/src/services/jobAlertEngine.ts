@@ -85,6 +85,25 @@ export function matchJobWithProfile(
   };
 }
 
+function cleanStipend(raw?: string): string {
+  if (!raw) return 'Competitive CTC';
+  const lower = raw.toLowerCase();
+  if (
+    raw.includes('[') ||
+    raw.includes(']') ||
+    raw.includes('€') ||
+    lower.includes('min') ||
+    lower.includes('max') ||
+    lower.includes('pay zone') ||
+    lower.includes('guidelines') ||
+    lower.includes('standard industry') ||
+    raw.length > 30
+  ) {
+    return 'Competitive CTC';
+  }
+  return raw;
+}
+
 /**
  * Generate responsive HTML email for Job Alert
  */
@@ -96,7 +115,8 @@ export function generateJobAlertHtml(
 ): string {
   const companyInitials = listing.company.slice(0, 2).toUpperCase();
   const batchLabel = listing.eligibleBatchesLabel || `Batch ${listing.eligibleBatches.join(', ')}`;
-  const portalUrl = listing.url;
+  const portalUrl = listing.url || 'https://autoreach-crgv.onrender.com';
+  const stipendText = cleanStipend(listing.stipend);
 
   return `
   <!DOCTYPE html>
@@ -126,8 +146,8 @@ export function generateJobAlertHtml(
                       </h1>
                     </td>
                     <td align="right" style="vertical-align: top;">
-                      <span style="font-size: 13px; font-weight: 700; color: #10b981; background-color: rgba(16, 185, 129, 0.12); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
-                        ${matchScore}% Profile Match
+                      <span style="font-size: 13px; font-weight: 700; color: #10b981; background-color: rgba(16, 185, 129, 0.12); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); white-space: nowrap;">
+                        ${matchScore}% Match
                       </span>
                     </td>
                   </tr>
@@ -139,7 +159,7 @@ export function generateJobAlertHtml(
             <tr>
               <td style="padding: 24px 28px 12px 28px;">
                 <p style="margin: 0; font-size: 15px; color: #44403c; line-height: 1.5;">
-                  Hi <strong>${candidateName}</strong>, a new high-priority engineering role matching your target profile just dropped on official career portals.
+                  Hi <strong>${candidateName}</strong>, a new verified engineering opening matching your profile has been detected on official ATS portals.
                 </p>
               </td>
             </tr>
@@ -169,37 +189,38 @@ export function generateJobAlertHtml(
                         </tr>
                       </table>
 
-                      <!-- Job Details Pills -->
-                      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 16px;">
+                      <!-- Job Specs Table (Clean, balanced rows) -->
+                      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 16px; border-top: 1px solid #e7e5e4; padding-top: 12px;">
                         <tr>
-                          <td style="padding: 4px 0;">
-                            <span style="font-size: 12px; font-weight: 600; color: #047857; background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-right: 6px; margin-bottom: 6px;">
+                          <td style="padding: 4px 0; font-size: 13px; color: #44403c;">
+                            <span style="font-size: 11px; font-weight: 700; color: #047857; background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-right: 8px;">
                               🎯 ${batchLabel}
                             </span>
-                            <span style="font-size: 12px; font-weight: 600; color: #1e40af; background-color: #eff6ff; border: 1px solid #bfdbfe; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-right: 6px; margin-bottom: 6px;">
-                              📍 ${listing.locations.join(', ')}
-                            </span>
-                            <span style="font-size: 12px; font-weight: 600; color: #b45309; background-color: #fffbeb; border: 1px solid #fde68a; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-bottom: 6px;">
+                            <span style="font-size: 11px; font-weight: 600; color: #1e40af; background-color: #eff6ff; border: 1px solid #bfdbfe; padding: 3px 8px; border-radius: 6px; display: inline-block;">
                               💼 ${listing.roleType}
                             </span>
                           </td>
                         </tr>
+                        <tr>
+                          <td style="padding: 8px 0 4px 0; font-size: 13px; color: #57534e;">
+                            📍 <strong>Location:</strong> ${listing.locations.join(', ') || 'India'}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 0; font-size: 13px; color: #57534e;">
+                            💰 <strong>Compensation:</strong> <span style="font-weight: 700; color: #047857;">${stipendText}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 0; font-size: 13px; color: #57534e;">
+                            ⏱️ <strong>Application Window:</strong> ${listing.deadline || 'Rolling (Apply early)'}
+                          </td>
+                        </tr>
                       </table>
-
-                      <!-- Compensation & Deadline -->
-                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e7e5e4; font-size: 13px; color: #57534e;">
-                        <p style="margin: 0 0 4px 0;">
-                          <strong style="color: #1c1917;">Expected Stipend:</strong> ${listing.stipend || 'Competitive Industry Standard'}
-                        </p>
-                        <p style="margin: 0;">
-                          <strong style="color: #1c1917;">Deadline / Churn:</strong> ${listing.deadline}
-                        </p>
-                      </div>
 
                       <!-- Match Reason -->
                       <div style="margin-top: 14px; background-color: #ffffff; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #44403c;">
-                        <strong style="color: #0c0a09;">Why this matched your profile:</strong><br/>
-                        ${matchReason}
+                        <strong style="color: #0c0a09;">Profile Fit:</strong> ${matchReason}
                       </div>
 
                     </td>
@@ -213,8 +234,8 @@ export function generateJobAlertHtml(
               <td style="padding: 0 28px 28px 28px; text-align: center;">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
                   <tr>
-                    <td align="center">
-                      <a href="${portalUrl}" target="_blank" style="display: inline-block; width: 100%; box-sizing: border-box; background-color: #09090b; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 10px; text-align: center;">
+                    <td align="center" style="background-color: #09090b; border-radius: 10px;">
+                      <a href="${portalUrl}" target="_blank" style="display: block; box-sizing: border-box; background-color: #09090b; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 10px; text-align: center;">
                         Apply Directly on Official Portal &rarr;
                       </a>
                     </td>
@@ -230,7 +251,7 @@ export function generateJobAlertHtml(
             <tr>
               <td style="background-color: #f5f5f4; border-top: 1px solid #e7e5e4; padding: 16px 28px; text-align: center; font-size: 11px; color: #78716c;">
                 AutoReach Autonomous Placement Radar • Powered by verified direct ATS adapters.<br/>
-                You are receiving this because instant notifications are enabled for Batch ${listing.eligibleBatches.join('/')} SDE roles.
+                You are receiving this alert for Batch ${listing.eligibleBatches.join('/')} engineering roles.
               </td>
             </tr>
 
@@ -472,29 +493,45 @@ export async function sendDailyDigestAlert(
 
     const listingsCardsHtml = matched
       .map(({ listing, match }) => `
-        <div style="background-color: #fafaf9; border: 1px solid #e7e5e4; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
-          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <div style="background-color: #ffffff; border: 1px solid #e7e5e4; border-radius: 12px; padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <!-- Top Row: Company & Batch Pill -->
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 6px;">
             <tr>
-              <td>
+              <td align="left" style="vertical-align: middle;">
                 <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #78716c; letter-spacing: 0.5px;">
                   ${listing.company}
                 </span>
-                <h3 style="margin: 2px 0 6px 0; font-size: 16px; font-weight: 700; color: #0c0a09;">
-                  ${listing.title}
-                </h3>
-                <div style="font-size: 12px; color: #57534e; margin-bottom: 8px;">
-                  <span style="display: inline-block; background-color: #ecfdf5; color: #047857; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-right: 6px;">
-                    🎯 ${listing.eligibleBatchesLabel || `Batch ${targetBatch}`}
-                  </span>
-                  <span>📍 ${listing.locations.join(', ')}</span> • 
-                  <span>💰 ${listing.stipend || 'Competitive'}</span>
-                </div>
-                <div style="font-size: 11px; color: #78716c;">
-                  ${match.reason}
-                </div>
               </td>
-              <td width="120" align="right" style="vertical-align: middle;">
-                <a href="${listing.url}" target="_blank" style="display: inline-block; background-color: #09090b; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 8px; white-space: nowrap;">
+              <td align="right" style="vertical-align: middle;">
+                <span style="font-size: 11px; font-weight: 700; color: #047857; background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 6px; white-space: nowrap;">
+                  ${listing.eligibleBatchesLabel || `Batch ${targetBatch}`}
+                </span>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Job Title (Full Width) -->
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #0c0a09; line-height: 1.3;">
+            ${listing.title}
+          </h3>
+
+          <!-- Details & Clean Stipend -->
+          <div style="font-size: 12px; color: #57534e; margin-bottom: 12px; line-height: 1.5;">
+            <span>📍 ${listing.locations[0] || 'India'}</span>
+            <span style="color: #d6d3d1; margin: 0 6px;">•</span>
+            <span>💼 ${listing.roleType}</span>
+            <span style="color: #d6d3d1; margin: 0 6px;">•</span>
+            <span style="font-weight: 600; color: #047857;">💰 ${cleanStipend(listing.stipend)}</span>
+          </div>
+
+          <!-- Bottom Action Row: Match reason + Spacious Apply Button -->
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-top: 1px solid #f5f5f4; padding-top: 12px;">
+            <tr>
+              <td align="left" style="vertical-align: middle; padding-right: 12px; font-size: 11px; color: #78716c; line-height: 1.4;">
+                ${match.reason}
+              </td>
+              <td align="right" style="vertical-align: middle; width: 120px; white-space: nowrap;">
+                <a href="${listing.url || 'https://autoreach-crgv.onrender.com'}" target="_blank" style="display: inline-block; background-color: #09090b; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 8px; text-align: center; white-space: nowrap;">
                   Apply &rarr;
                 </a>
               </td>

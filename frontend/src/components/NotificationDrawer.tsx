@@ -343,8 +343,8 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                   )}
 
                   {/* Action Buttons */}
-                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
+                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       {n.url && (
                         <a
                           href={n.url}
