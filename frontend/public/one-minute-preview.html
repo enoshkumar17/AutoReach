@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoReach — 1-Minute Lazy-Mode & Zero-Scroll Architecture Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    /* Custom clean scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+  </style>
+</head>
+<body class="bg-[#faf9f6] text-stone-900 antialiased min-h-screen flex flex-col selection:bg-amber-200">
+
+  <!-- ========================================================================= -->
+  <!-- TOP STICKY APPLICATION BAR & PROTOTYPE CONTROLLER                         -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/90 shadow-2xs">
+    <div class="max-w-[1680px] mx-auto px-4 sm:px-6 py-2.5">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        
+        <!-- App Logo & Prototype Header -->
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-xl bg-stone-950 text-white flex items-center justify-center font-extrabold text-sm shadow-xs">
+            AR
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-base tracking-tight text-stone-900">AutoReach Design Lab</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                v6.0 Architecture
+              </span>
+            </div>
+            <p class="text-xs text-stone-500">Zero-Scroll Pinned Console • 1-Minute Lazy Mode • Ultra-Wide Canvas</p>
+          </div>
+        </div>
+
+        <!-- Prototype Feature Switchers -->
+        <div class="flex items-center gap-2 flex-wrap">
+          
+          <!-- Concept Switcher -->
+          <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 text-xs">
+            <button onclick="setConcept('console')" id="btn-concept-console" class="px-3 py-1.5 rounded-lg font-bold transition shadow-xs bg-stone-900 text-white cursor-pointer">
+              ⚡ Option A: 100vh Zero-Scroll Console
+            </button>
+            <button onclick="setConcept('sticky-snap')" id="btn-concept-snap" class="px-3 py-1.5 rounded-lg font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer">
+              🧲 Option B: Full-Page Takeover Snap
+            </button>
+            <button onclick="setConcept('unified')" id="btn-concept-unified" class="px-3 py-1.5 rounded-lg font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer">
+              🏆 Option C: Hackathons & Programs
+            </button>
+          </div>
+
+          <!-- Live Font Scale Adjuster -->
+          <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 text-xs">
+            <span class="text-stone-400 px-2 font-semibold">Font:</span>
+            <button onclick="setFontScale('normal')" id="btn-font-normal" class="px-2.5 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">14px</button>
+            <button onclick="setFontScale('large')" id="btn-font-large" class="px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs">16px (Comfort)</button>
+            <button onclick="setFontScale('xlarge')" id="btn-font-xlarge" class="px-2.5 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">18px (Relaxed)</button>
+          </div>
+
+          <!-- Canvas Width Toggle -->
+          <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 text-xs">
+            <span class="text-stone-400 px-2 font-semibold">Width:</span>
+            <button onclick="setCanvasWidth('standard')" id="btn-width-standard" class="px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">1280px</button>
+            <button onclick="setCanvasWidth('wide')" id="btn-width-wide" class="px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs">1600px Wide</button>
+            <button onclick="setCanvasWidth('full')" id="btn-width-full" class="px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">100% Full</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- CONCEPT BANNER & EXPLAINER                                                -->
+  <!-- ========================================================================= -->
+  <div class="max-w-[1680px] mx-auto px-4 sm:px-6 pt-4 w-full">
+    <div id="explainer-banner" class="bg-gradient-to-r from-amber-50/90 to-orange-50/70 border border-amber-200/90 rounded-2xl p-4 text-xs shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="banner-title" class="font-extrabold text-amber-950 text-sm">
+            Option A: Pinned 100vh Zero-Scroll Console (Superhuman / Linear Style)
+          </span>
+        </div>
+        <p id="banner-body" class="text-stone-600 text-xs leading-relaxed max-w-5xl">
+          <strong>How this cures your scroll fatigue:</strong> You NEVER scroll the browser window up and down! Search, Batch (2028/27/26), and Urgency filters are pinned in a single 40px top control strip. The Left Directory and Right Dossier fill 100% of your remaining screen height with balanced ultra-wide margins. You can evaluate 25 internships in <strong>under 60 seconds</strong>.
+        </p>
+      </div>
+
+      <div class="shrink-0 flex items-center gap-2">
+        <span class="px-3 py-1 rounded-full bg-white border border-amber-300 font-bold text-amber-900 text-xs shadow-2xs">
+          ⏱️ Speed: ~45 Seconds
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN STAGE WRAPPER                                                        -->
+  <!-- ========================================================================= -->
+  <main id="main-container" class="max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 flex-1 flex flex-col">
+
+    <!-- ======================================================================= -->
+    <!-- VIEW A: 100VH ZERO-SCROLL COMMAND CONSOLE                                -->
+    <!-- ======================================================================= -->
+    <div id="view-console" class="flex-1 flex flex-col space-y-3">
+
+      <!-- Pinned Slim Filter Toolbar (Zero Scrolling Up to Change Filters!) -->
+      <div class="bg-white border border-stone-200 rounded-2xl p-2.5 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+        
+        <!-- Left: Quick Search + Fast Batches -->
+        <div class="flex items-center gap-2 flex-wrap flex-1 min-w-[280px]">
+          <!-- Instant Search -->
+          <div class="relative w-64">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input 
+              type="text" 
+              id="search-input" 
+              oninput="filterJobs()" 
+              placeholder="Quick search company or role..." 
+              class="w-full pl-8 pr-3 py-1.5 text-xs bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-stone-900 font-medium"
+            >
+          </div>
+
+          <!-- Batch Quick Filters (Large, Clear & Instant) -->
+          <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl text-xs font-bold text-stone-600">
+            <span class="text-stone-400 text-[10px] uppercase font-bold px-1.5">Batch:</span>
+            <button onclick="setBatchFilter('all')" id="batch-all" class="px-2.5 py-1 rounded-lg bg-stone-900 text-white shadow-2xs transition">All</button>
+            <button onclick="setBatchFilter('2028')" id="batch-2028" class="px-2.5 py-1 rounded-lg hover:bg-stone-200 transition">2028 (Matches You ⭐)</button>
+            <button onclick="setBatchFilter('2027')" id="batch-2027" class="px-2.5 py-1 rounded-lg hover:bg-stone-200 transition">2027</button>
+            <button onclick="setBatchFilter('2026')" id="batch-2026" class="px-2.5 py-1 rounded-lg hover:bg-stone-200 transition">2026</button>
+          </div>
+
+          <!-- Urgency & Type Toggles -->
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleUrgentOnly()" id="btn-urgent-toggle" class="px-3 py-1.5 rounded-xl border border-stone-200 hover:border-amber-400 text-xs font-bold text-stone-700 bg-white hover:bg-amber-50/50 transition flex items-center gap-1.5">
+              <span>🔥 Closes &lt;48h (12)</span>
+            </button>
+            <button onclick="setTypeFilter('Summer Intern')" id="type-summer" class="px-3 py-1.5 rounded-xl border border-stone-200 hover:border-emerald-400 text-xs font-semibold text-stone-700 bg-white transition">
+              Summer 2026
+            </button>
+            <button onclick="setTypeFilter('6-Month Intern')" id="type-sixmonth" class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 bg-white transition">
+              6-Month Semester
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Status Tracker + Recheck -->
+        <div class="flex items-center gap-2">
+          <!-- Live Radar Counter -->
+          <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl text-xs font-semibold">
+            <button onclick="setFeedTab('active')" id="tab-active" class="px-3 py-1 rounded-lg bg-white text-stone-900 font-bold shadow-2xs">
+              Active Radar <span id="count-active" class="ml-1 text-[11px] bg-stone-200 px-1.5 py-0.2 rounded-full">57</span>
+            </button>
+            <button onclick="setFeedTab('applied')" id="tab-applied" class="px-3 py-1 rounded-lg text-stone-600 hover:text-stone-900">
+              ✓ Applied <span id="count-applied" class="ml-1 text-[11px] bg-emerald-100 text-emerald-900 px-1.5 py-0.2 rounded-full font-bold">2</span>
+            </button>
+            <button onclick="setFeedTab('archived')" id="tab-archived" class="px-3 py-1 rounded-lg text-stone-600 hover:text-stone-900">
+              Hidden <span id="count-archived" class="ml-1 text-[11px] bg-stone-200 text-stone-700 px-1.5 py-0.2 rounded-full">3</span>
+            </button>
+          </div>
+
+          <button onclick="recheckFeeds()" class="p-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-600" title="Recheck Portals">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Dual-Pane Console (Calculated Height: Covers Entire Viewport without Page Scrolling!) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[640px] max-h-[calc(100vh-180px)]">
+        
+        <!-- Left Directory (42% Width): Scannable, Comfortable Font Sizes, Internal Scroll -->
+        <div class="lg:col-span-5 bg-white border border-stone-200 rounded-2xl p-4 shadow-xs flex flex-col h-full overflow-hidden">
+          
+          <!-- Directory Header -->
+          <div class="flex items-center justify-between pb-3 border-b border-stone-100 shrink-0">
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-stone-900 text-sm sm:text-base">Scannable Directory</span>
+              <span id="directory-badge-count" class="text-xs font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200">
+                8 Openings
+              </span>
+            </div>
+            <span class="text-stone-400 text-xs font-medium">Use ↑ / ↓ arrow keys or click</span>
+          </div>
+
+          <!-- The List Scroller -->
+          <div id="job-list-scroller" class="space-y-2 overflow-y-auto pr-1.5 mt-3 flex-1 scrollbar-thin">
+            <!-- Job items dynamically populated or static -->
+          </div>
+
+          <!-- Bottom Speed-Scan Footnote -->
+          <div class="pt-3 border-t border-stone-100 text-[11px] text-stone-400 flex items-center justify-between shrink-0">
+            <span>⚡ 1-Minute Lazy Mode</span>
+            <span>Click any item to inspect full details right →</span>
+          </div>
+        </div>
+
+        <!-- Right Dossier (58% Width): Full Requisition Details Directly in View -->
+        <div class="lg:col-span-7 bg-white border border-stone-200 rounded-2xl p-6 sm:p-7 shadow-xs flex flex-col justify-between h-full overflow-y-auto">
+          
+          <div class="space-y-5">
+            <!-- Dossier Header -->
+            <div class="flex items-start justify-between gap-4 border-b border-stone-100 pb-4">
+              <div>
+                <div class="flex items-center gap-2 mb-1.5">
+                  <span id="dossier-company" class="text-sm font-extrabold text-stone-500 uppercase tracking-wider">
+                    Microsoft
+                  </span>
+                  <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
+                    Verified ATS • HTTP 200 Live
+                  </span>
+                  <span id="dossier-applied-badge" class="hidden text-xs font-bold text-emerald-900 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md">
+                    ✓ Applied
+                  </span>
+                </div>
+                <h3 id="dossier-title" class="text-xl sm:text-2xl font-extrabold text-stone-900 tracking-tight leading-snug">
+                  Applied Sciences INTERN
+                </h3>
+              </div>
+
+              <div class="text-right shrink-0">
+                <span id="dossier-stipend" class="text-xl font-extrabold text-emerald-800 block">
+                  ₹1,25,000/mo
+                </span>
+                <span id="dossier-type" class="text-xs text-stone-500 font-medium">
+                  Summer Internship
+                </span>
+              </div>
+            </div>
+
+            <!-- 3 Clean Neutral Spec Boxes (Legible & Uncluttered) -->
+            <div class="grid grid-cols-3 gap-3 text-xs">
+              <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-200/90">
+                <span class="text-stone-400 block text-[11px] font-bold uppercase mb-1">Locations</span>
+                <span id="dossier-location" class="font-extrabold text-stone-900 text-sm truncate block">
+                  India Multiple (Hyd / Blr)
+                </span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-200/90">
+                <span class="text-stone-400 block text-[11px] font-bold uppercase mb-1">Eligibility</span>
+                <span id="dossier-batch" class="font-extrabold text-stone-900 text-sm truncate block">
+                  Batch 2026, 2027, 2028
+                </span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-200/90">
+                <span class="text-stone-400 block text-[11px] font-bold uppercase mb-1">Closing Window</span>
+                <span id="dossier-window" class="font-extrabold text-amber-950 text-sm truncate block">
+                  🔥 Within 48 Hours
+                </span>
+              </div>
+            </div>
+
+            <!-- Requisition Brief & Context -->
+            <div class="space-y-2 text-stone-600 bg-[#faf9f6] p-4 sm:p-5 rounded-xl border border-stone-200">
+              <div class="font-bold text-stone-900 uppercase text-xs tracking-wider">
+                Requisition Context & Core Fit:
+              </div>
+              <p id="dossier-desc" class="text-xs sm:text-sm leading-relaxed text-stone-700">
+                Applied Sciences Interns work directly on state-of-the-art machine learning models, NLP pipelines, and generative AI features across Azure AI, Office 365, and Bing. Students pursuing B.Tech, M.Tech, or Dual Degree with expected graduation in 2026, 2027, or 2028 are eligible.
+              </p>
+              <div class="grid grid-cols-2 gap-3 pt-2 text-xs border-t border-stone-200/60 mt-3">
+                <div>
+                  <span class="text-stone-400 mr-2 font-medium">Discipline:</span>
+                  <span id="dossier-discipline" class="font-bold text-stone-900">Software & AI / ML</span>
+                </div>
+                <div>
+                  <span class="text-stone-400 mr-2 font-medium">Education:</span>
+                  <span id="dossier-degree" class="font-bold text-stone-900">B.Tech / M.Tech in CS or related</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons: Clear, High-Contrast & Instant -->
+          <div class="pt-5 border-t border-stone-100 flex items-center justify-between gap-3 mt-4 shrink-0">
+            <button onclick="archiveCurrentJob()" class="px-4 py-2.5 rounded-xl border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-100 hover:text-stone-900 transition cursor-pointer">
+              Dismiss / Archive ✕
+            </button>
+
+            <div class="flex items-center gap-3">
+              <button onclick="pitchAiCurrentJob()" class="px-4 py-2.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 font-bold text-xs transition cursor-pointer">
+                Draft AI Pitch
+              </button>
+
+              <button onclick="toggleApplyCurrentJob()" id="btn-dossier-apply" class="px-5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-950 font-extrabold text-xs hover:bg-emerald-100 transition shadow-xs cursor-pointer">
+                ✓ Applied
+              </button>
+
+              <a id="dossier-portal-link" href="https://careers.microsoft.com" target="_blank" class="px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-extrabold text-xs transition shadow-xs flex items-center gap-1.5">
+                <span>Apply on Official Portal</span>
+                <span>↗</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- VIEW B: FULL-PAGE TAKEOVER SNAP (Modern Slide-Section Style)            -->
+    <!-- ======================================================================= -->
+    <div id="view-snap" class="hidden space-y-8 py-2">
+      <div class="bg-white border border-stone-200 rounded-3xl p-8 shadow-xs max-w-4xl mx-auto text-center space-y-4">
+        <div class="h-12 w-12 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-extrabold text-xl mx-auto border border-amber-300">
+          🧲
+        </div>
+        <h2 class="text-2xl font-extrabold text-stone-900">Concept B: Full-Page Section Snap (Slide Takeover)</h2>
+        <p class="text-sm text-stone-600 leading-relaxed max-w-2xl mx-auto">
+          In this mode, as soon as you scroll down past the morning brief, the page uses CSS <code>scroll-snap-type: y mandatory</code>. The browser window smoothly snaps down to lock the Internship Command Center to <strong>cover 100% of your screen</strong> like a brand new page!
+        </p>
+        <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-xs text-stone-700 text-left max-w-xl mx-auto space-y-2">
+          <div class="font-bold text-stone-900 uppercase">Why this matches what you described:</div>
+          <div>✅ <strong>"Like we went to a new page"</strong>: Screen snaps cleanly without awkward half-scrolled gaps.</div>
+          <div>✅ <strong>"Covering entirely that internship left and right panel"</strong>: The dual panels expand to full viewport height.</div>
+          <div>✅ <strong>Sticky Mini-Navbar</strong>: A 40px floating pill with filters stays pinned at the very top so you never scroll back up.</div>
+        </div>
+        <button onclick="setConcept('console')" class="px-5 py-2.5 rounded-xl bg-stone-900 text-white font-bold text-xs shadow-xs hover:bg-stone-800 transition">
+          Preview Integrated Console (Recommended) →
+        </button>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- VIEW C: UNIFIED SPEED-FILTERING FOR HACKATHONS & PROGRAMS               -->
+    <!-- ======================================================================= -->
+    <div id="view-unified" class="hidden space-y-6">
+      
+      <!-- Hackathons & Student Programs Overview Bar -->
+      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">Hackathons & Programs</span>
+            <span class="text-xs text-stone-400">Flagship Opportunities for Batch 2028/27/26</span>
+          </div>
+          <h3 class="text-xl font-extrabold text-stone-900">One-Minute Scan: Competitions & Diversity Hiring Drives</h3>
+        </div>
+
+        <!-- Filter Pills for Hackathons -->
+        <div class="flex items-center gap-2">
+          <button class="px-3.5 py-1.5 rounded-xl bg-stone-900 text-white font-bold text-xs shadow-xs">All (14)</button>
+          <button class="px-3.5 py-1.5 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 font-semibold text-xs">Flagship Cash Prizes (₹5L+)</button>
+          <button class="px-3.5 py-1.5 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 font-semibold text-xs">Diversity Programs (Women in Tech)</button>
+        </div>
+      </div>
+
+      <!-- Scannable 2-Column Wide Grid (No Tiny Letters, Breatheable Width) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        <!-- Hackathon 1 -->
+        <div class="bg-white border border-stone-200 hover:border-stone-400 rounded-2xl p-5 shadow-xs transition space-y-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-extrabold text-stone-500 uppercase">Flipkart Grid 6.0</span>
+                <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">Direct PPI Pathway</span>
+              </div>
+              <h4 class="text-lg font-extrabold text-stone-900">National E-Commerce & Robotics Challenge</h4>
+            </div>
+            <span class="text-sm font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">₹5,00,000 Pool</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+              <span class="text-stone-400 block text-[10px] font-bold uppercase">Target Batches</span>
+              <span class="font-bold text-stone-900">2026, 2027, 2028</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+              <span class="text-stone-400 block text-[10px] font-bold uppercase">Format</span>
+              <span class="font-bold text-stone-900">Online + Finals</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+              <span class="text-stone-400 block text-[10px] font-bold uppercase">Timeline</span>
+              <span class="font-bold text-amber-950">🔥 Reg Closes in 4d</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-stone-100">
+            <button class="px-4 py-2 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-bold text-xs hover:bg-emerald-100 transition shadow-xs">
+              ✓ I Registered
+            </button>
+            <a href="https://unstop.com" target="_blank" class="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition shadow-xs">
+              Official Portal ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Program 1 (Amazon WoW) -->
+        <div class="bg-white border border-stone-200 hover:border-stone-400 rounded-2xl p-5 shadow-xs transition space-y-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-extrabold text-stone-500 uppercase">Amazon India</span>
+                <span class="text-[11px] font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">Diversity Flagship</span>
+              </div>
+              <h4 class="text-lg font-extrabold text-stone-900">Amazon WoW (Women in Tech)</h4>
+            </div>
+            <span class="text-sm font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">₹80k/mo Intern</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+              <span class="text-stone-400 block text-[10px] font-bold uppercase">Eligibility</span>
+              <span class="font-bold text-stone-900">Women (All Batches)</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+              <span class="text-stone-400 block text-[10px] font-bold uppercase">Interview Waves</span>
+              <span class="font-bold text-stone-900">Feb–Apr & Aug–Oct</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+              <span class="text-stone-400 block text-[10px] font-bold uppercase">Outcome</span>
+              <span class="font-bold text-emerald-950">Fast-Track Summer</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-stone-100">
+            <button class="px-4 py-2 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-bold text-xs hover:bg-emerald-100 transition shadow-xs">
+              ✓ I Registered
+            </button>
+            <a href="https://amazon.jobs" target="_blank" class="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition shadow-xs">
+              Official Program Portal ↗
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT STATE ENGINE & INTERACTIVITY                                  -->
+  <!-- ========================================================================= -->
+  <script>
+    // Live sample jobs with rich metadata
+    const jobs = [
+      {
+        id: 'msft',
+        company: 'Microsoft',
+        title: 'Applied Sciences INTERN',
+        roleType: 'Summer Intern',
+        location: 'India Multiple (Hyd / Blr)',
+        batch: 'Batch 2026, 2027, 2028',
+        stipend: '₹1,25,000/mo',
+        window: '🔥 Within 48 Hours',
+        isFresh: true,
+        discipline: 'Software & AI / ML',
+        degree: 'B.Tech / M.Tech in CS or related',
+        desc: 'Applied Sciences Interns work directly on machine learning models, natural language processing pipelines, and core intelligence stacks across Office, Bing, and Azure AI. Students in 2nd, 3rd, or 4th year eligible.',
+        url: 'https://careers.microsoft.com'
+      },
+      {
+        id: 'philips',
+        company: 'Philips',
+        title: 'Software Intern',
+        roleType: 'Internship',
+        location: 'Chennai (ex Madras)',
+        batch: 'Batch 2026, Batch 2027',
+        stipend: 'Competitive CTC',
+        window: '🔥 Closes in 24–48h',
+        isFresh: true,
+        discipline: 'Software Engineering',
+        degree: 'Bachelor’s / Master’s degree in CS or related',
+        desc: 'Work on medical equipment telemetry, digital health software platforms, and diagnostic firmware integration. Fast-track conversion for high-performing interns.',
+        url: 'https://careers.philips.com'
+      },
+      {
+        id: 'cisco',
+        company: 'Cisco',
+        title: 'ASIC Engineer - Spring Intern',
+        roleType: 'Internship',
+        location: 'Bangalore, India',
+        batch: 'Batch 2027',
+        stipend: 'Competitive CTC',
+        window: '🔥 Closes <18h',
+        isFresh: true,
+        discipline: 'Hardware & Systems',
+        degree: 'B.Tech in ECE / EE / CS',
+        desc: 'Verify ASIC chips, run silicon validation simulations, and architect next-generation network routing switches alongside principal hardware architects.',
+        url: 'https://jobs.cisco.com'
+      },
+      {
+        id: 'sarvam',
+        company: 'Sarvam AI',
+        title: 'Product User Research & Engineering',
+        roleType: '6-Month Intern',
+        location: 'Bengaluru',
+        batch: 'Batch 2026, 2027',
+        stipend: '₹60,000/mo',
+        window: 'Rolling (7d)',
+        isFresh: false,
+        discipline: 'AI / ML & Product',
+        degree: 'B.Tech / Dual Degree',
+        desc: 'Help build India-first foundational generative speech and language models. Conduct evaluations, fine-tune Indic speech datasets, and collaborate with core ML researchers.',
+        url: 'https://sarvam.ai/careers'
+      },
+      {
+        id: 'juspay-qe',
+        company: 'Juspay',
+        title: 'Quality Engineer Intern',
+        roleType: 'Summer Intern',
+        location: 'Bangalore',
+        batch: 'Batch 2025, 2026, 2027',
+        stipend: '₹40,000/mo + PPO',
+        window: '🔥 Within 48 Hours',
+        isFresh: true,
+        discipline: 'Software Engineering',
+        degree: 'B.Tech / BE / ME / MCA',
+        desc: 'Build high-scale testing automation engines, stress-test payment routers processing over 100M daily transactions, and develop functional test suites in Haskell & PureScript.',
+        url: 'https://juspay.in/careers'
+      },
+      {
+        id: 'airbus',
+        company: 'Airbus',
+        title: 'Internship - Digital Security',
+        roleType: '6-Month Intern',
+        location: 'Bangalore Area',
+        batch: 'Batch 2026, Batch 2027',
+        stipend: 'Competitive CTC',
+        window: '🔥 Closes in 2d',
+        isFresh: true,
+        discipline: 'Software & Cyber Security',
+        degree: 'Bachelor’s degree in CS or Cybersecurity',
+        desc: 'Analyze avionics software security, penetration test connected aircraft telemetry pipelines, and audit aerospace data encryption frameworks.',
+        url: 'https://airbus.com/careers'
+      },
+      {
+        id: 'micron',
+        company: 'Micron',
+        title: 'Graduate Software Engineer Intern',
+        roleType: 'Summer Intern',
+        location: 'Hyderabad',
+        batch: 'Batch 2026, Batch 2027',
+        stipend: '₹50,000/mo',
+        window: 'Rolling (14d)',
+        isFresh: false,
+        discipline: 'Software Engineering',
+        degree: 'B.Tech in CS / IT',
+        desc: 'Develop software for memory diagnostics, NAND flash testing software, and internal developer tooling at Micron’s premier India R&D center.',
+        url: 'https://micron.com/careers'
+      },
+      {
+        id: 'ge',
+        company: 'GE Vernova',
+        title: 'Digital Technology Intern',
+        roleType: 'Internship',
+        location: 'Hyderabad',
+        batch: 'Batch 2026, Batch 2027',
+        stipend: 'Competitive CTC',
+        window: '🔥 Closes <24h',
+        isFresh: true,
+        discipline: 'Software & Data',
+        degree: 'B.Tech / M.Tech in CS / Electrical',
+        desc: 'Digital energy software transformation, smart grid analysis, and industrial IoT data pipelines for renewable energy generation systems.',
+        url: 'https://gevernova.com/careers'
+      }
+    ];
+
+    let currentSelectedId = 'msft';
+    let currentBatchFilter = 'all';
+    let currentUrgentOnly = false;
+    let currentTypeFilter = null;
+    let currentFeedTab = 'active';
+    let appliedSet = new Set(['juspay-qe']);
+    let archivedSet = new Set();
+
+    // Render list
+    function renderList() {
+      const scroller = document.getElementById('job-list-scroller');
+      scroller.innerHTML = '';
+
+      const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+
+      const filtered = jobs.filter(j => {
+        if (currentFeedTab === 'applied' && !appliedSet.has(j.id)) return false;
+        if (currentFeedTab === 'archived' && !archivedSet.has(j.id)) return false;
+        if (currentFeedTab === 'active' && archivedSet.has(j.id)) return false;
+
+        if (currentBatchFilter !== 'all' && !j.batch.includes(currentBatchFilter)) return false;
+        if (currentUrgentOnly && !j.isFresh) return false;
+        if (currentTypeFilter && j.roleType !== currentTypeFilter) return false;
+
+        if (query) {
+          const matchCompany = j.company.toLowerCase().includes(query);
+          const matchTitle = j.title.toLowerCase().includes(query);
+          const matchLoc = j.location.toLowerCase().includes(query);
+          if (!matchCompany && !matchTitle && !matchLoc) return false;
+        }
+
+        return true;
+      });
+
+      document.getElementById('directory-badge-count').innerText = `${filtered.length} Openings`;
+
+      if (filtered.length === 0) {
+        scroller.innerHTML = `
+          <div class="p-8 text-center text-stone-400 text-xs">
+            No openings match your active filter criteria. Try clearing search or choosing "All Batches".
+          </div>
+        `;
+        return;
+      }
+
+      // If current selected item not in filtered, pick first
+      if (!filtered.some(f => f.id === currentSelectedId)) {
+        currentSelectedId = filtered[0].id;
+        loadDossier(filtered[0]);
+      }
+
+      filtered.forEach(job => {
+        const isSelected = job.id === currentSelectedId;
+        const isApplied = appliedSet.has(job.id);
+        const isArchived = archivedSet.has(job.id);
+
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-xl border transition-all cursor-pointer text-left ${
+          isSelected 
+            ? 'border-2 border-stone-900 bg-stone-50/90 shadow-2xs ring-1 ring-stone-900/10' 
+            : 'border-stone-200 hover:border-stone-400 bg-white'
+        }`;
+        card.onclick = () => selectJob(job.id);
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <span class="text-sm font-extrabold text-stone-900 tracking-tight">${job.company}</span>
+            <div class="shrink-0 flex items-center gap-1.5">
+              ${isArchived 
+                ? '<span class="text-[10px] font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">Hidden</span>' 
+                : isApplied 
+                ? '<span class="text-[10px] font-bold text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">✓ Applied</span>' 
+                : job.isFresh 
+                ? '<span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">Closes &lt;18h</span>'
+                : `<span class="text-[10px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full">${job.stipend}</span>`
+              }
+            </div>
+          </div>
+          <div class="font-bold text-sm text-stone-800 mt-0.5 line-clamp-1">${job.title}</div>
+          <div class="flex items-center gap-2 text-xs text-stone-500 mt-1.5 flex-wrap">
+            <span>${job.roleType}</span>
+            <span>•</span>
+            <span>${job.location.split(' ')[0]}</span>
+            <span>•</span>
+            <span class="font-semibold text-stone-700">${job.batch.split(',')[0]}</span>
+            ${job.isFresh ? '<span>•</span><span class="text-amber-800 font-bold">🔥 2d left</span>' : ''}
+          </div>
+        `;
+
+        scroller.appendChild(card);
+      });
+    }
+
+    function selectJob(id) {
+      currentSelectedId = id;
+      const job = jobs.find(j => j.id === id);
+      if (job) loadDossier(job);
+      renderList();
+    }
+
+    function loadDossier(job) {
+      document.getElementById('dossier-company').innerText = job.company;
+      document.getElementById('dossier-title').innerText = job.title;
+      document.getElementById('dossier-stipend').innerText = job.stipend;
+      document.getElementById('dossier-type').innerText = job.roleType;
+      document.getElementById('dossier-location').innerText = job.location;
+      document.getElementById('dossier-batch').innerText = job.batch;
+      document.getElementById('dossier-window').innerText = job.window;
+      document.getElementById('dossier-desc').innerText = job.desc;
+      document.getElementById('dossier-discipline').innerText = job.discipline;
+      document.getElementById('dossier-degree').innerText = job.degree;
+      document.getElementById('dossier-portal-link').href = job.url;
+
+      const appliedBadge = document.getElementById('dossier-applied-badge');
+      const applyBtn = document.getElementById('btn-dossier-apply');
+
+      if (appliedSet.has(job.id)) {
+        appliedBadge.classList.remove('hidden');
+        applyBtn.innerText = '✓ Applied (Click to Unmark)';
+        applyBtn.className = 'px-5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-100 text-emerald-950 font-extrabold text-xs hover:bg-emerald-200 transition shadow-xs cursor-pointer';
+      } else {
+        appliedBadge.classList.add('hidden');
+        applyBtn.innerText = '✓ Applied';
+        applyBtn.className = 'px-5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-950 font-extrabold text-xs hover:bg-emerald-100 transition shadow-xs cursor-pointer';
+      }
+    }
+
+    function toggleApplyCurrentJob() {
+      if (appliedSet.has(currentSelectedId)) {
+        appliedSet.delete(currentSelectedId);
+      } else {
+        appliedSet.add(currentSelectedId);
+      }
+      document.getElementById('count-applied').innerText = appliedSet.size;
+      const job = jobs.find(j => j.id === currentSelectedId);
+      if (job) loadDossier(job);
+      renderList();
+    }
+
+    function archiveCurrentJob() {
+      archivedSet.add(currentSelectedId);
+      document.getElementById('count-archived').innerText = archivedSet.size;
+      renderList();
+    }
+
+    function setBatchFilter(batch) {
+      currentBatchFilter = batch;
+      ['all', '2028', '2027', '2026'].forEach(b => {
+        const el = document.getElementById('batch-' + b);
+        el.className = b === batch 
+          ? 'px-2.5 py-1 rounded-lg bg-stone-900 text-white shadow-2xs transition' 
+          : 'px-2.5 py-1 rounded-lg hover:bg-stone-200 transition';
+      });
+      renderList();
+    }
+
+    function toggleUrgentOnly() {
+      currentUrgentOnly = !currentUrgentOnly;
+      const el = document.getElementById('btn-urgent-toggle');
+      if (currentUrgentOnly) {
+        el.className = 'px-3 py-1.5 rounded-xl border border-amber-400 bg-amber-100 text-amber-950 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs';
+      } else {
+        el.className = 'px-3 py-1.5 rounded-xl border border-stone-200 hover:border-amber-400 text-xs font-bold text-stone-700 bg-white hover:bg-amber-50/50 transition flex items-center gap-1.5';
+      }
+      renderList();
+    }
+
+    function setTypeFilter(type) {
+      if (currentTypeFilter === type) {
+        currentTypeFilter = null;
+        document.getElementById('type-summer').className = 'px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-700 bg-white transition';
+        document.getElementById('type-sixmonth').className = 'px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 bg-white transition';
+      } else {
+        currentTypeFilter = type;
+        if (type === 'Summer Intern') {
+          document.getElementById('type-summer').className = 'px-3 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-bold shadow-2xs transition';
+          document.getElementById('type-sixmonth').className = 'px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 bg-white transition';
+        } else {
+          document.getElementById('type-summer').className = 'px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-700 bg-white transition';
+          document.getElementById('type-sixmonth').className = 'px-3 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-bold shadow-2xs transition';
+        }
+      }
+      renderList();
+    }
+
+    function setFeedTab(tab) {
+      currentFeedTab = tab;
+      ['active', 'applied', 'archived'].forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        el.className = t === tab 
+          ? 'px-3 py-1 rounded-lg bg-white text-stone-900 font-bold shadow-2xs' 
+          : 'px-3 py-1 rounded-lg text-stone-600 hover:text-stone-900';
+      });
+      renderList();
+    }
+
+    function filterJobs() {
+      renderList();
+    }
+
+    // Concept Switcher
+    function setConcept(c) {
+      document.getElementById('view-console').classList.add('hidden');
+      document.getElementById('view-snap').classList.add('hidden');
+      document.getElementById('view-unified').classList.add('hidden');
+
+      ['console', 'snap', 'unified'].forEach(k => {
+        const el = document.getElementById('btn-concept-' + k);
+        el.className = 'px-3 py-1.5 rounded-lg font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer';
+      });
+
+      const activeBtn = document.getElementById('btn-concept-' + c);
+      activeBtn.className = 'px-3 py-1.5 rounded-lg font-bold transition shadow-xs bg-stone-900 text-white cursor-pointer';
+
+      if (c === 'console') {
+        document.getElementById('view-console').classList.remove('hidden');
+        document.getElementById('banner-title').innerText = 'Option A: Pinned 100vh Zero-Scroll Console (Superhuman / Linear Style)';
+        document.getElementById('banner-body').innerHTML = '<strong>How this cures your scroll fatigue:</strong> You NEVER scroll the browser window up and down! Search, Batch (2028/27/26), and Urgency filters are pinned in a single 40px top control strip. The Left Directory and Right Dossier fill 100% of your remaining screen height with balanced ultra-wide margins. You can evaluate 25 internships in <strong>under 60 seconds</strong>.';
+      } else if (c === 'snap') {
+        document.getElementById('view-snap').classList.remove('hidden');
+        document.getElementById('banner-title').innerText = 'Option B: Full-Page Takeover Snap (Section Slide Architecture)';
+        document.getElementById('banner-body').innerHTML = '<strong>How this cures your scroll fatigue:</strong> As you scroll down from the top brief, the viewport automatically snaps with <code>scroll-snap: mandatory</code> to cover the entire screen cleanly like a brand new page. A floating mini-filter pill follows you everywhere.';
+      } else if (c === 'unified') {
+        document.getElementById('view-unified').classList.remove('hidden');
+        document.getElementById('banner-title').innerText = 'Option C: Unified 1-Minute Scan for Hackathons & Student Programs';
+        document.getElementById('banner-body').innerHTML = '<strong>How this cures your visual fatigue:</strong> The exact same clean, large typography, instant registration tracking (✓ I Registered), and official portal links applied across Flagship Hackathons (Flipkart Grid, Smart India) and Diversity Programs (Amazon WoW, Google STEP).';
+      }
+    }
+
+    // Live Font Scale Adjuster
+    function setFontScale(scale) {
+      ['normal', 'large', 'xlarge'].forEach(s => {
+        const el = document.getElementById('btn-font-' + s);
+        el.className = s === scale 
+          ? 'px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs' 
+          : 'px-2.5 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200';
+      });
+
+      const scroller = document.getElementById('job-list-scroller');
+      if (scale === 'normal') {
+        document.body.style.fontSize = '14px';
+      } else if (scale === 'large') {
+        document.body.style.fontSize = '15.5px';
+      } else if (scale === 'xlarge') {
+        document.body.style.fontSize = '17px';
+      }
+      renderList();
+    }
+
+    // Canvas Width Adjuster
+    function setCanvasWidth(w) {
+      ['standard', 'wide', 'full'].forEach(k => {
+        const el = document.getElementById('btn-width-' + k);
+        el.className = k === w 
+          ? 'px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs' 
+          : 'px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200';
+      });
+
+      const container = document.getElementById('main-container');
+      if (w === 'standard') {
+        container.className = 'max-w-5xl w-full mx-auto px-4 sm:px-6 py-4 flex-1 flex flex-col';
+      } else if (w === 'wide') {
+        container.className = 'max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 flex-1 flex flex-col';
+      } else if (w === 'full') {
+        container.className = 'w-full px-4 sm:px-6 py-4 flex-1 flex flex-col';
+      }
+    }
+
+    // Arrow Key Navigation for Speed Scan
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowDown' || e.key === 'j') {
+        e.preventDefault();
+        const idx = jobs.findIndex(j => j.id === currentSelectedId);
+        if (idx < jobs.length - 1) selectJob(jobs[idx + 1].id);
+      } else if (e.key === 'ArrowUp' || e.key === 'k') {
+        e.preventDefault();
+        const idx = jobs.findIndex(j => j.id === currentSelectedId);
+        if (idx > 0) selectJob(jobs[idx - 1].id);
+      }
+    });
+
+    // Initial render
+    renderList();
+    loadDossier(jobs[0]);
+  </script>
+</body>
+</html>
