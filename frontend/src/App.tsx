@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navbar, type TabType } from './components/Navbar';
 import { NewOutreach } from './components/NewOutreach';
 import { ApplicationsTracker } from './components/ApplicationsTracker';
@@ -313,6 +313,15 @@ export default function App() {
     }
   };
 
+  const handleStatsUpdate = useCallback((stats: { openCount: number; freshCount: number }) => {
+    setLiveStats((prev) => {
+      if (prev.openCount === stats.openCount && prev.freshCount === stats.freshCount) {
+        return prev;
+      }
+      return stats;
+    });
+  }, []);
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const candidateFirstName = user?.name ? user.name.trim().split(' ')[0] : profile?.fullName ? profile.fullName.trim().split(' ')[0] : 'Engineer';
@@ -598,7 +607,7 @@ export default function App() {
             onSelectCompanyForPitch={handleSelectCompanyForPitch}
             candidateTargetBatch={profile?.targetBatch || 2028}
             userId={user?.id}
-            onStatsUpdate={(stats) => setLiveStats(stats)}
+            onStatsUpdate={handleStatsUpdate}
             onApplicationLogged={loadInitialData}
           />
         )}

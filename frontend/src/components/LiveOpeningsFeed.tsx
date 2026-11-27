@@ -246,10 +246,18 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
     ).length;
   }, [activeListings, candidateTargetBatch]);
 
-  // Keep parent header widgets updated with active, deduplicated counts
+  // Keep parent header widgets updated with active, deduplicated counts without infinite loops
+  const lastEmittedStatsRef = React.useRef<{ openCount: number; freshCount: number } | null>(null);
   useEffect(() => {
     if (onStatsUpdate && activeOpenCount > 0) {
-      onStatsUpdate({ openCount: activeOpenCount, freshCount: activeFreshCount });
+      if (
+        !lastEmittedStatsRef.current ||
+        lastEmittedStatsRef.current.openCount !== activeOpenCount ||
+        lastEmittedStatsRef.current.freshCount !== activeFreshCount
+      ) {
+        lastEmittedStatsRef.current = { openCount: activeOpenCount, freshCount: activeFreshCount };
+        onStatsUpdate({ openCount: activeOpenCount, freshCount: activeFreshCount });
+      }
     }
   }, [activeOpenCount, activeFreshCount, onStatsUpdate]);
 
