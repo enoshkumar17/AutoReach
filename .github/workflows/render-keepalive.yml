@@ -1,0 +1,16 @@
+name: Keep Render Service Awake
+
+on:
+  schedule:
+    # Trigger every 14 minutes to prevent Render's 15-minute inactivity spin-down
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping AutoReach Health Endpoint
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 https://autoreach-crgv.onrender.com/api/health)
+          echo "Health check HTTP status: $STATUS"
