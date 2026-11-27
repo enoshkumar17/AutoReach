@@ -21,6 +21,7 @@ import {
   EyeOff,
   Sparkles,
   LayoutGrid,
+  Rows,
   Columns2,
 } from 'lucide-react';
 
@@ -61,17 +62,17 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
   const APPLIED_META_KEY = `${userPrefix}_applied_meta`;
   const LAYOUT_PREF_KEY = `${userPrefix}_layout_mode`;
 
-  // Layout mode: 'split' (Side-by-Side Command Center - Default) or 'grid' (classic cards)
-  const [layoutMode, setLayoutMode] = useState<'split' | 'grid'>(() => {
+  // Layout mode: 'stacked' (Top & Bottom View - Default), 'split' (Side-by-Side), or 'grid' (classic cards)
+  const [layoutMode, setLayoutMode] = useState<'stacked' | 'split' | 'grid'>(() => {
     try {
       const saved = localStorage.getItem(LAYOUT_PREF_KEY);
-      return saved === 'grid' || saved === 'split' ? saved : 'split';
+      return saved === 'stacked' || saved === 'split' || saved === 'grid' ? saved : 'stacked';
     } catch {
-      return 'split';
+      return 'stacked';
     }
   });
 
-  const handleLayoutModeChange = (mode: 'split' | 'grid') => {
+  const handleLayoutModeChange = (mode: 'stacked' | 'split' | 'grid') => {
     setLayoutMode(mode);
     try {
       localStorage.setItem(LAYOUT_PREF_KEY, mode);
@@ -506,45 +507,45 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
         </div>
       )}
 
-      {/* 80% Clean SaaS Header + 20% Enhanced Warm Accent */}
-      <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+      {/* 80% Clean SaaS Header + 20% Enhanced Warm Accent (Compact) */}
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-4 sm:p-5 shadow-xs relative overflow-hidden">
         <div className="absolute top-0 right-0 w-44 h-44 bg-gradient-to-bl from-amber-200/35 via-yellow-100/15 to-transparent rounded-bl-full pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-950 text-xs font-semibold border border-amber-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-950 text-[11px] font-semibold border border-amber-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Real-Time ATS Career Portals Feed</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
               Live Tech Openings & Fast-Closing Applications
             </h2>
-            <p className="text-sm text-stone-600 leading-relaxed">
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
               Top tech internship portals close within 24–48 hours of posting. Archive listings you don’t need, mark applied openings to keep your radar clean, and pitch hiring managers with 1 click.
             </p>
           </div>
 
           {/* Quick Metrics: Deducted dynamically when jobs are archived or marked applied */}
-          <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto shrink-0">
+          <div className="flex items-center gap-2 flex-wrap self-start md:self-auto shrink-0">
             <div
               onClick={() => setFeedView('active')}
-              className={`p-3 rounded-xl border text-center min-w-[85px] cursor-pointer transition ${
+              className={`p-2.5 rounded-xl border text-center min-w-[75px] cursor-pointer transition ${
                 feedView === 'active' ? 'bg-amber-50/80 border-amber-300 ring-2 ring-amber-400/30' : 'bg-[#fbfbfa] border-stone-200 hover:border-stone-300'
               }`}
             >
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block mb-0.5">Total Live</span>
-              <span className="text-lg font-bold text-stone-900">{activeOpenCount}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">Total Live</span>
+              <span className="text-base sm:text-lg font-bold text-stone-900">{activeOpenCount}</span>
             </div>
             <div
               onClick={() => {
                 setFeedView('active');
                 setSelectedRoleType('FRESH_URGENT');
               }}
-              className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-center min-w-[85px] cursor-pointer hover:border-amber-300 transition"
+              className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 text-center min-w-[75px] cursor-pointer hover:border-amber-300 transition"
             >
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-0.5">Closes Fast</span>
-              <span className="text-lg font-bold text-amber-900 flex items-center justify-center gap-0.5">
-                <Flame className="h-4 w-4 text-orange-500 fill-orange-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">Closes Fast</span>
+              <span className="text-base sm:text-lg font-bold text-amber-900 flex items-center justify-center gap-0.5">
+                <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500" />
                 {activeFreshCount}
               </span>
             </div>
@@ -553,36 +554,36 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                 setFeedView('active');
                 setSelectedRoleType('Summer Intern');
               }}
-              className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px] cursor-pointer hover:border-stone-300 transition"
+              className="p-2.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[75px] cursor-pointer hover:border-stone-300 transition"
             >
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">Summer</span>
-              <span className="text-lg font-bold text-emerald-800">{activeSummerCount}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block">Summer</span>
+              <span className="text-base sm:text-lg font-bold text-emerald-800">{activeSummerCount}</span>
             </div>
             <div
               onClick={() => {
                 setFeedView('active');
                 setSelectedRoleType('6-Month Intern');
               }}
-              className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px] cursor-pointer hover:border-stone-300 transition"
+              className="p-2.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[75px] cursor-pointer hover:border-stone-300 transition"
             >
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">6-Month</span>
-              <span className="text-lg font-bold text-indigo-800">{activeSixMonthCount}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block">6-Month</span>
+              <span className="text-base sm:text-lg font-bold text-indigo-800">{activeSixMonthCount}</span>
             </div>
             <div
               onClick={() => {
                 setFeedView('active');
                 setSelectedRoleType('PPO / Full-Time');
               }}
-              className="p-3 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[85px] cursor-pointer hover:border-stone-300 transition"
+              className="p-2.5 rounded-xl bg-[#fbfbfa] border border-stone-200 text-center min-w-[75px] cursor-pointer hover:border-stone-300 transition"
             >
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-0.5">PPO / FTE</span>
-              <span className="text-lg font-bold text-purple-800">{activePpoCount}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block">PPO / FTE</span>
+              <span className="text-base sm:text-lg font-bold text-purple-800">{activePpoCount}</span>
             </div>
           </div>
         </div>
 
         {/* Live Sync Status Bar */}
-        <div className="mt-5 pt-4 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500 flex-wrap gap-2">
+        <div className="mt-3.5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span className="font-medium text-stone-700">Official ATS Whitelist Verified: Workday, Greenhouse, Lever, Ashby, Eightfold</span>
@@ -818,8 +819,21 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           )}
         </div>
 
-        {/* Layout Switcher: Split Command vs Cards */}
+        {/* Layout Switcher: 3 Modes (Top & Bottom, Side-by-Side, Card Grid) */}
         <div className="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 shadow-2xs">
+          <button
+            onClick={() => handleLayoutModeChange('stacked')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              layoutMode === 'stacked'
+                ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
+            }`}
+            title="Compact Full-Width List on top + Opening Dossier below (both visible on screen)"
+          >
+            <Rows className="h-3.5 w-3.5 text-stone-800" />
+            <span>Top & Bottom</span>
+            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">Default</span>
+          </button>
           <button
             onClick={() => handleLayoutModeChange('split')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
@@ -827,11 +841,10 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                 ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
             }`}
-            title="Split Command Center: Directory (Left) + Dossier (Right) simultaneously visible"
+            title="Split Command Center: Directory (Left) + Dossier (Right) side-by-side"
           >
             <Columns2 className="h-3.5 w-3.5 text-stone-800" />
-            <span>Split Command</span>
-            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">Default</span>
+            <span>Side-by-Side</span>
           </button>
           <button
             onClick={() => handleLayoutModeChange('grid')}
@@ -885,6 +898,241 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               <p className="text-xs text-stone-400">Try clearing your search query or selecting a different role or batch filter.</p>
             </>
           )}
+        </div>
+      ) : layoutMode === 'stacked' ? (
+        /* ========================================================================= */
+        /* MODE 1: COMPACT TOP & BOTTOM (Compact List on Top, Full Dossier below)    */
+        /* Both visible on screen at 100% normal zoom with zero page scrolling       */
+        /* ========================================================================= */
+        <div className="space-y-3.5">
+          {/* Top: Compact Scannable Directory List */}
+          <div className="bg-white border border-stone-200 rounded-2xl p-3 sm:p-4 shadow-xs">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-stone-900">Scannable Directory</span>
+                <span className="text-[11px] font-semibold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                  {currentFeedListings.length}
+                </span>
+              </div>
+              <span className="text-stone-400 text-[11px] hidden sm:inline">
+                Click any opening to view details directly below ↓
+              </span>
+            </div>
+
+            <div className="space-y-1.5 overflow-y-auto max-h-[185px] pr-1.5 scrollbar-thin">
+              {currentFeedListings.map((listing) => {
+                const isSelected = selectedSplitListing?.id === listing.id;
+                const isItemApplied = appliedIdSet.has(listing.id);
+                const isItemArchived = archivedIdSet.has(listing.id);
+                const isItemClosed = listing.status === 'closed' || feedView === 'closed';
+                const isItemFresh = listing.isUrgentFresh;
+                const stipendText = cleanStipend(listing.stipend);
+
+                return (
+                  <div
+                    key={listing.id}
+                    onClick={() => {
+                      setSelectedSplitId(listing.id);
+                      const dossierEl = document.getElementById('bottom-dossier-card');
+                      if (dossierEl) {
+                        dossierEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                      }
+                    }}
+                    className={`py-2 px-3.5 rounded-xl border transition-all cursor-pointer text-left flex items-center justify-between gap-3 ${
+                      isSelected
+                        ? 'border-2 border-stone-900 bg-stone-50/90 shadow-2xs'
+                        : 'border-stone-200 hover:border-stone-400 bg-white'
+                    }`}
+                  >
+                    {/* Left: Company & Role */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs sm:text-sm font-bold text-stone-900 shrink-0">
+                        {listing.company}
+                      </span>
+                      <span className="text-xs font-semibold text-stone-700 truncate">
+                        {listing.title}
+                      </span>
+                      <div className="hidden md:flex items-center gap-1.5 text-[11px] text-stone-500 shrink-0">
+                        <span>•</span>
+                        <span>{listing.roleType}</span>
+                        <span>•</span>
+                        <span>{listing.locations[0] || 'India'}</span>
+                        <span>•</span>
+                        <span>{listing.eligibleBatchesLabel}</span>
+                      </div>
+                    </div>
+
+                    {/* Right: Clean Status Pill */}
+                    <div className="shrink-0 flex items-center gap-2">
+                      {isItemFresh && (
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60 hidden sm:inline">
+                          🔥 2d left
+                        </span>
+                      )}
+                      {isItemArchived ? (
+                        <span className="text-[10px] font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                          Hidden
+                        </span>
+                      ) : isItemApplied ? (
+                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          ✓ Applied
+                        </span>
+                      ) : isItemClosed ? (
+                        <span className="text-[10px] font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
+                          Closed
+                        </span>
+                      ) : isItemFresh ? (
+                        <span className="text-[10px] font-semibold text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full">
+                          Closes &lt;18h
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          {stipendText}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom: Requisition Dossier (Directly in view, compact & clean) */}
+          <div id="bottom-dossier-card">
+            {selectedSplitListing ? (
+              <div className="bg-white border border-stone-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4 border-b border-stone-100 pb-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+                        {selectedSplitListing.company}
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                        Verified ATS • HTTP 200 Live
+                      </span>
+                      {appliedIdSet.has(selectedSplitListing.id) && (
+                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                          ✓ Applied
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
+                      {selectedSplitListing.title}
+                    </h3>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-base sm:text-lg font-bold text-emerald-800 block">
+                      {cleanStipend(selectedSplitListing.stipend)}
+                    </span>
+                    <span className="text-[11px] text-stone-400 font-medium">
+                      {selectedSplitListing.roleType}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3 Key Specs at a Glance: All neutral, calm stone-50 boxes */}
+                <div className="grid grid-cols-3 gap-2.5 text-xs">
+                  <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+                    <span className="text-stone-400 block text-[10px] font-bold uppercase mb-0.5">Locations</span>
+                    <span className="font-bold text-stone-900 text-xs sm:text-sm truncate block" title={selectedSplitListing.locations.join(', ')}>
+                      {selectedSplitListing.locations.join(', ') || 'India Multiple (Hyd / Blr)'}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+                    <span className="text-stone-400 block text-[10px] font-bold uppercase mb-0.5">Eligibility</span>
+                    <span className="font-bold text-stone-900 text-xs sm:text-sm truncate block">
+                      {selectedSplitListing.eligibleBatchesLabel}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+                    <span className="text-stone-400 block text-[10px] font-bold uppercase mb-0.5">Closing Window</span>
+                    <span className="font-bold text-amber-950 text-xs sm:text-sm truncate block">
+                      {selectedSplitListing.isUrgentFresh ? '🔥 Within 48 Hours' : selectedSplitListing.status === 'closed' ? 'Closed' : 'Rolling'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Role Summary Brief */}
+                <div className="space-y-1.5 text-xs text-stone-600 bg-[#faf9f6] p-3 rounded-xl border border-stone-200">
+                  <div className="font-bold text-stone-900 uppercase text-[10px]">
+                    Requisition Context & Core Fit:
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-stone-600">
+                    <div>
+                      <span className="text-stone-400 mr-1.5">Category:</span>
+                      <span className="font-semibold text-stone-800">{selectedSplitListing.categoryLabel}</span>
+                    </div>
+                    <div>
+                      <span className="text-stone-400 mr-1.5">Required:</span>
+                      <span className="font-semibold text-stone-800">{selectedSplitListing.degreeRequired}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Action Buttons: Clear, big & clean */}
+                <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-3">
+                  {archivedIdSet.has(selectedSplitListing.id) ? (
+                    <button
+                      onClick={() => handleUnarchiveListing(selectedSplitListing.id)}
+                      className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white font-semibold text-xs transition cursor-pointer"
+                    >
+                      Restore to Feed
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleArchiveListing(selectedSplitListing)}
+                      className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 font-semibold text-xs hover:bg-stone-100 transition cursor-pointer"
+                      title="Hide this listing and deduct from active count"
+                    >
+                      Dismiss / Archive ✕
+                    </button>
+                  )}
+
+                  <div className="flex items-center gap-2.5">
+                    {selectedSplitListing.status === 'open' && (
+                      <button
+                        onClick={() => onSelectCompanyForPitch(selectedSplitListing.company, selectedSplitListing.title)}
+                        className="px-3.5 py-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 font-semibold text-xs transition cursor-pointer"
+                      >
+                        Pitch AI
+                      </button>
+                    )}
+
+                    {appliedIdSet.has(selectedSplitListing.id) ? (
+                      <button
+                        onClick={() => handleUnmarkApplied(selectedSplitListing.id)}
+                        className="px-4 py-2 rounded-xl border border-emerald-400 bg-emerald-100 text-emerald-950 font-bold text-xs hover:bg-emerald-200 transition cursor-pointer"
+                      >
+                        ✓ Applied
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleMarkApplied(selectedSplitListing)}
+                        className="px-4 py-2 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-900 font-bold text-xs hover:bg-emerald-100 transition shadow-xs cursor-pointer"
+                      >
+                        ✓ Applied
+                      </button>
+                    )}
+
+                    <a
+                      href={selectedSplitListing.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs transition shadow-xs"
+                    >
+                      Apply on Portal ↗
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white border border-stone-200 rounded-2xl p-6 text-center text-stone-400 text-xs">
+                Select an opening above to inspect requisition details.
+              </div>
+            )}
+          </div>
         </div>
       ) : layoutMode === 'split' ? (
         /* ========================================================================= */
