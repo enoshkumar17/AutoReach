@@ -17,6 +17,18 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+
+    /* CSS Scroll Snap for Concept B */
+    .snap-container {
+      scroll-snap-type: y mandatory;
+      overflow-y: scroll;
+      height: calc(100vh - 65px);
+    }
+    .snap-section {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      height: calc(100vh - 65px);
+    }
   </style>
 </head>
 <body class="bg-[#faf9f6] text-stone-900 antialiased min-h-screen flex flex-col selection:bg-amber-200">
@@ -25,7 +37,7 @@
   <!-- TOP STICKY APPLICATION BAR & PROTOTYPE CONTROLLER                         -->
   <!-- ========================================================================= -->
   <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/90 shadow-2xs">
-    <div class="max-w-[1680px] mx-auto px-4 sm:px-6 py-2.5">
+    <div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-2.5">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         
         <!-- App Logo & Prototype Header -->
@@ -37,43 +49,43 @@
             <div class="flex items-center gap-2">
               <span class="font-extrabold text-base tracking-tight text-stone-900">AutoReach Design Lab</span>
               <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
-                v6.0 Architecture
+                Balanced 1400px
               </span>
             </div>
-            <p class="text-xs text-stone-500">Zero-Scroll Pinned Console • 1-Minute Lazy Mode • Ultra-Wide Canvas</p>
+            <p class="text-xs text-stone-500">1-Minute Lazy Mode • Zero-Scroll Pinned Console • Balanced Width</p>
           </div>
         </div>
 
-        <!-- Prototype Feature Switchers -->
+        <!-- Prototype Controls: Concept, Font Scale & Width -->
         <div class="flex items-center gap-2 flex-wrap">
           
           <!-- Concept Switcher -->
           <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 text-xs">
             <button onclick="setConcept('console')" id="btn-concept-console" class="px-3 py-1.5 rounded-lg font-bold transition shadow-xs bg-stone-900 text-white cursor-pointer">
-              ⚡ Option A: 100vh Zero-Scroll Console
+              ⚡ Option A: Pinned Zero-Scroll Console
             </button>
-            <button onclick="setConcept('sticky-snap')" id="btn-concept-snap" class="px-3 py-1.5 rounded-lg font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer">
-              🧲 Option B: Full-Page Takeover Snap
+            <button onclick="setConcept('snap')" id="btn-concept-snap" class="px-3 py-1.5 rounded-lg font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer">
+              🧲 Option B: Full-Page Section Snap
             </button>
             <button onclick="setConcept('unified')" id="btn-concept-unified" class="px-3 py-1.5 rounded-lg font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer">
               🏆 Option C: Hackathons & Programs
             </button>
           </div>
 
-          <!-- Live Font Scale Adjuster -->
+          <!-- Canvas Width Toggle (Balanced Sweet Spot Default) -->
           <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 text-xs">
-            <span class="text-stone-400 px-2 font-semibold">Font:</span>
-            <button onclick="setFontScale('normal')" id="btn-font-normal" class="px-2.5 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">14px</button>
-            <button onclick="setFontScale('large')" id="btn-font-large" class="px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs">16px (Comfort)</button>
-            <button onclick="setFontScale('xlarge')" id="btn-font-xlarge" class="px-2.5 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">18px (Relaxed)</button>
+            <span class="text-stone-400 px-1.5 font-semibold">Width:</span>
+            <button onclick="setCanvasWidth('standard')" id="btn-width-standard" class="px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">1280px (Old)</button>
+            <button onclick="setCanvasWidth('balanced')" id="btn-width-balanced" class="px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs">1400px (Balanced ⭐)</button>
+            <button onclick="setCanvasWidth('wide')" id="btn-width-wide" class="px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">1600px (Wide)</button>
           </div>
 
-          <!-- Canvas Width Toggle -->
+          <!-- Live Font Scale Adjuster -->
           <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 text-xs">
-            <span class="text-stone-400 px-2 font-semibold">Width:</span>
-            <button onclick="setCanvasWidth('standard')" id="btn-width-standard" class="px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">1280px</button>
-            <button onclick="setCanvasWidth('wide')" id="btn-width-wide" class="px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs">1600px Wide</button>
-            <button onclick="setCanvasWidth('full')" id="btn-width-full" class="px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">100% Full</button>
+            <span class="text-stone-400 px-1.5 font-semibold">Font:</span>
+            <button onclick="setFontScale('normal')" id="btn-font-normal" class="px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">14px</button>
+            <button onclick="setFontScale('large')" id="btn-font-large" class="px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs">15.5px (Comfort)</button>
+            <button onclick="setFontScale('xlarge')" id="btn-font-xlarge" class="px-2.5 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200">17px</button>
           </div>
         </div>
 
@@ -84,17 +96,17 @@
   <!-- ========================================================================= -->
   <!-- CONCEPT BANNER & EXPLAINER                                                -->
   <!-- ========================================================================= -->
-  <div class="max-w-[1680px] mx-auto px-4 sm:px-6 pt-4 w-full">
-    <div id="explainer-banner" class="bg-gradient-to-r from-amber-50/90 to-orange-50/70 border border-amber-200/90 rounded-2xl p-4 text-xs shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-      <div class="space-y-1">
+  <div id="top-explainer" class="max-w-[1400px] mx-auto px-4 sm:px-6 pt-3.5 w-full">
+    <div id="explainer-banner" class="bg-gradient-to-r from-amber-50/90 to-orange-50/70 border border-amber-200/90 rounded-2xl p-3.5 text-xs shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div class="space-y-0.5">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span id="banner-title" class="font-extrabold text-amber-950 text-sm">
-            Option A: Pinned 100vh Zero-Scroll Console (Superhuman / Linear Style)
+            Option A: Pinned 100vh Zero-Scroll Console (Balanced 1400px Canvas)
           </span>
         </div>
         <p id="banner-body" class="text-stone-600 text-xs leading-relaxed max-w-5xl">
-          <strong>How this cures your scroll fatigue:</strong> You NEVER scroll the browser window up and down! Search, Batch (2028/27/26), and Urgency filters are pinned in a single 40px top control strip. The Left Directory and Right Dossier fill 100% of your remaining screen height with balanced ultra-wide margins. You can evaluate 25 internships in <strong>under 60 seconds</strong>.
+          <strong>Why this is balanced & effortless:</strong> Canvas is widened to 1400px (+60px on each side compared to earlier), removing empty margins without looking stretched. Quick Search, Batch selector (2028/27/26), and Urgency filters are pinned in a single 40px top control strip. You evaluate 25 internships in <strong>under 45 seconds with zero window scroll</strong>.
         </p>
       </div>
 
@@ -109,7 +121,7 @@
   <!-- ========================================================================= -->
   <!-- MAIN STAGE WRAPPER                                                        -->
   <!-- ========================================================================= -->
-  <main id="main-container" class="max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 flex-1 flex flex-col">
+  <main id="main-container" class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-3.5 flex-1 flex flex-col">
 
     <!-- ======================================================================= -->
     <!-- VIEW A: 100VH ZERO-SCROLL COMMAND CONSOLE                                -->
@@ -122,7 +134,7 @@
         <!-- Left: Quick Search + Fast Batches -->
         <div class="flex items-center gap-2 flex-wrap flex-1 min-w-[280px]">
           <!-- Instant Search -->
-          <div class="relative w-64">
+          <div class="relative w-60">
             <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
@@ -139,7 +151,7 @@
           <div class="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl text-xs font-bold text-stone-600">
             <span class="text-stone-400 text-[10px] uppercase font-bold px-1.5">Batch:</span>
             <button onclick="setBatchFilter('all')" id="batch-all" class="px-2.5 py-1 rounded-lg bg-stone-900 text-white shadow-2xs transition">All</button>
-            <button onclick="setBatchFilter('2028')" id="batch-2028" class="px-2.5 py-1 rounded-lg hover:bg-stone-200 transition">2028 (Matches You ⭐)</button>
+            <button onclick="setBatchFilter('2028')" id="batch-2028" class="px-2.5 py-1 rounded-lg hover:bg-stone-200 transition">2028 ⭐</button>
             <button onclick="setBatchFilter('2027')" id="batch-2027" class="px-2.5 py-1 rounded-lg hover:bg-stone-200 transition">2027</button>
             <button onclick="setBatchFilter('2026')" id="batch-2026" class="px-2.5 py-1 rounded-lg hover:bg-stone-200 transition">2026</button>
           </div>
@@ -151,9 +163,6 @@
             </button>
             <button onclick="setTypeFilter('Summer Intern')" id="type-summer" class="px-3 py-1.5 rounded-xl border border-stone-200 hover:border-emerald-400 text-xs font-semibold text-stone-700 bg-white transition">
               Summer 2026
-            </button>
-            <button onclick="setTypeFilter('6-Month Intern')" id="type-sixmonth" class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 bg-white transition">
-              6-Month Semester
             </button>
           </div>
         </div>
@@ -181,8 +190,8 @@
         </div>
       </div>
 
-      <!-- Main Dual-Pane Console (Calculated Height: Covers Entire Viewport without Page Scrolling!) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[640px] max-h-[calc(100vh-180px)]">
+      <!-- Main Dual-Pane Console: Left Directory + Right Dossier -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[580px] max-h-[calc(100vh-190px)]">
         
         <!-- Left Directory (42% Width): Scannable, Comfortable Font Sizes, Internal Scroll -->
         <div class="lg:col-span-5 bg-white border border-stone-200 rounded-2xl p-4 shadow-xs flex flex-col h-full overflow-hidden">
@@ -200,7 +209,7 @@
 
           <!-- The List Scroller -->
           <div id="job-list-scroller" class="space-y-2 overflow-y-auto pr-1.5 mt-3 flex-1 scrollbar-thin">
-            <!-- Job items dynamically populated or static -->
+            <!-- Job items dynamically populated -->
           </div>
 
           <!-- Bottom Speed-Scan Footnote -->
@@ -213,7 +222,7 @@
         <!-- Right Dossier (58% Width): Full Requisition Details Directly in View -->
         <div class="lg:col-span-7 bg-white border border-stone-200 rounded-2xl p-6 sm:p-7 shadow-xs flex flex-col justify-between h-full overflow-y-auto">
           
-          <div class="space-y-5">
+          <div class="space-y-4">
             <!-- Dossier Header -->
             <div class="flex items-start justify-between gap-4 border-b border-stone-100 pb-4">
               <div>
@@ -271,9 +280,9 @@
                 Requisition Context & Core Fit:
               </div>
               <p id="dossier-desc" class="text-xs sm:text-sm leading-relaxed text-stone-700">
-                Applied Sciences Interns work directly on state-of-the-art machine learning models, NLP pipelines, and generative AI features across Azure AI, Office 365, and Bing. Students pursuing B.Tech, M.Tech, or Dual Degree with expected graduation in 2026, 2027, or 2028 are eligible.
+                Applied Sciences Interns work directly on machine learning models, natural language processing pipelines, and core intelligence stacks across Office, Bing, and Azure AI. Students in 2nd, 3rd, or 4th year eligible.
               </p>
-              <div class="grid grid-cols-2 gap-3 pt-2 text-xs border-t border-stone-200/60 mt-3">
+              <div class="grid grid-cols-2 gap-3 pt-2 text-xs border-t border-stone-200/60 mt-2.5">
                 <div>
                   <span class="text-stone-400 mr-2 font-medium">Discipline:</span>
                   <span id="dossier-discipline" class="font-bold text-stone-900">Software & AI / ML</span>
@@ -287,7 +296,7 @@
           </div>
 
           <!-- Bottom Action Buttons: Clear, High-Contrast & Instant -->
-          <div class="pt-5 border-t border-stone-100 flex items-center justify-between gap-3 mt-4 shrink-0">
+          <div class="pt-4 border-t border-stone-100 flex items-center justify-between gap-3 mt-3 shrink-0">
             <button onclick="archiveCurrentJob()" class="px-4 py-2.5 rounded-xl border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-100 hover:text-stone-900 transition cursor-pointer">
               Dismiss / Archive ✕
             </button>
@@ -315,36 +324,163 @@
     </div>
 
     <!-- ======================================================================= -->
-    <!-- VIEW B: FULL-PAGE TAKEOVER SNAP (Modern Slide-Section Style)            -->
+    <!-- VIEW B: FULL-PAGE TAKEOVER SNAP (Fully Working Interactive Snap Demo)     -->
     <!-- ======================================================================= -->
-    <div id="view-snap" class="hidden space-y-8 py-2">
-      <div class="bg-white border border-stone-200 rounded-3xl p-8 shadow-xs max-w-4xl mx-auto text-center space-y-4">
-        <div class="h-12 w-12 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-extrabold text-xl mx-auto border border-amber-300">
-          🧲
+    <div id="view-snap" class="hidden flex-1">
+      
+      <!-- Snap Container: Scroll down to snap into Section 2 -->
+      <div id="snap-scroll-wrapper" class="snap-container border border-stone-200/90 rounded-3xl bg-white shadow-xs">
+        
+        <!-- SECTION 1: Top Morning Career Brief & Status Cards -->
+        <div class="snap-section flex flex-col justify-between p-6 sm:p-10 bg-gradient-to-b from-stone-50 via-white to-stone-50 relative">
+          
+          <div class="space-y-4 max-w-3xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-950 text-xs font-semibold border border-amber-300">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Morning Career Radar Active</span>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+              Good morning, Kumar
+            </h2>
+            <p class="text-sm sm:text-base text-stone-600 leading-relaxed">
+              <strong>19 urgent high-intent tech openings</strong> posted in the last 48 hours for Batch 2028/27/26. Scraped directly from official Workday & Greenhouse boards.
+            </p>
+          </div>
+
+          <!-- 3 Atlas Status Cards (Balanced White Cards) -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
+            <div class="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs">
+              <span class="text-xs font-bold uppercase text-stone-500 block mb-1">Live ATS Openings</span>
+              <span class="text-4xl font-extrabold text-stone-900 block">57</span>
+              <span class="text-xs text-stone-500 mt-1 block">Workday & Greenhouse Verified</span>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs">
+              <span class="text-xs font-bold uppercase text-stone-500 block mb-1">Closes Fast (&lt;48h)</span>
+              <span class="text-4xl font-extrabold text-amber-900 block">19</span>
+              <span class="text-xs text-stone-500 mt-1 block">High applicant churn</span>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs">
+              <span class="text-xs font-bold uppercase text-stone-500 block mb-1">Tier-1 Timelines</span>
+              <span class="text-2xl font-extrabold text-stone-800 block mt-1.5">Summer 2026 Peak</span>
+              <span class="text-xs text-stone-500 mt-1 block">Google, Microsoft, Amazon</span>
+            </div>
+          </div>
+
+          <!-- Call to Action: Scroll or Click to Snap Down -->
+          <div class="pt-4 border-t border-stone-100 flex items-center justify-between">
+            <span class="text-xs text-stone-500">
+              👇 Scroll mouse wheel down slightly or click the button to snap into the full-screen workspace
+            </span>
+            <button onclick="scrollToWorkspace()" class="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-xs shadow-xs transition flex items-center gap-2 cursor-pointer">
+              <span>Snap into Dual Workspace</span>
+              <span>↓</span>
+            </button>
+          </div>
         </div>
-        <h2 class="text-2xl font-extrabold text-stone-900">Concept B: Full-Page Section Snap (Slide Takeover)</h2>
-        <p class="text-sm text-stone-600 leading-relaxed max-w-2xl mx-auto">
-          In this mode, as soon as you scroll down past the morning brief, the page uses CSS <code>scroll-snap-type: y mandatory</code>. The browser window smoothly snaps down to lock the Internship Command Center to <strong>cover 100% of your screen</strong> like a brand new page!
-        </p>
-        <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-xs text-stone-700 text-left max-w-xl mx-auto space-y-2">
-          <div class="font-bold text-stone-900 uppercase">Why this matches what you described:</div>
-          <div>✅ <strong>"Like we went to a new page"</strong>: Screen snaps cleanly without awkward half-scrolled gaps.</div>
-          <div>✅ <strong>"Covering entirely that internship left and right panel"</strong>: The dual panels expand to full viewport height.</div>
-          <div>✅ <strong>Sticky Mini-Navbar</strong>: A 40px floating pill with filters stays pinned at the very top so you never scroll back up.</div>
+
+        <!-- SECTION 2: Snapped Full-Page Workspace ("Like going to a brand new page") -->
+        <div id="snapped-workspace" class="snap-section flex flex-col p-4 sm:p-5 bg-[#faf9f6] justify-between">
+          
+          <!-- Pinned Top Filter Bar Inside Snapped Screen (Never scroll back up to Section 1!) -->
+          <div class="bg-white border border-stone-200 rounded-2xl p-2.5 shadow-2xs flex items-center justify-between gap-3 shrink-0">
+            <div class="flex items-center gap-2 flex-wrap flex-1">
+              <button onclick="scrollToTop()" class="px-2.5 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-100 text-stone-700 text-xs font-semibold flex items-center gap-1">
+                <span>↑</span>
+                <span>Back to Overview</span>
+              </button>
+              <div class="h-4 w-px bg-stone-200"></div>
+
+              <!-- Instant Filter Pills -->
+              <button onclick="setBatchFilter('all')" class="px-2.5 py-1 rounded-lg bg-stone-900 text-white text-xs font-bold">All Batches</button>
+              <button onclick="setBatchFilter('2028')" class="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold">2028 ⭐</button>
+              <button onclick="setBatchFilter('2027')" class="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold">2027</button>
+              <button onclick="toggleUrgentOnly()" class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 text-xs font-bold">🔥 Closes &lt;48h</button>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs font-bold text-stone-600">
+              <span class="px-2.5 py-1 rounded-lg bg-stone-100">Live ATS Radar: 57 Open</span>
+            </div>
+          </div>
+
+          <!-- Dual Panels Cover 100% of the Snapped Screen -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 mt-3">
+            
+            <!-- Left Scroller -->
+            <div class="lg:col-span-5 bg-white border border-stone-200 rounded-2xl p-4 shadow-xs flex flex-col h-full overflow-hidden">
+              <div class="flex items-center justify-between pb-2 border-b border-stone-100 text-xs font-bold text-stone-900 shrink-0">
+                <span>Live Feed Directory</span>
+                <span class="text-stone-400 font-normal">Click to load right →</span>
+              </div>
+              <div id="job-list-scroller-snap" class="space-y-2 overflow-y-auto pr-1 mt-2 flex-1 scrollbar-thin">
+                <!-- Dynamically filled with same job list -->
+              </div>
+            </div>
+
+            <!-- Right Dossier -->
+            <div class="lg:col-span-7 bg-white border border-stone-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between h-full overflow-y-auto">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between gap-4 border-b border-stone-100 pb-3">
+                  <div>
+                    <div class="flex items-center gap-2 mb-1">
+                      <span id="snap-dossier-company" class="text-xs font-extrabold text-stone-500 uppercase">Philips</span>
+                      <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">Verified ATS • HTTP 200 Live</span>
+                    </div>
+                    <h3 id="snap-dossier-title" class="text-xl font-extrabold text-stone-900">Software Intern</h3>
+                  </div>
+                  <div class="text-right">
+                    <span id="snap-dossier-stipend" class="text-lg font-extrabold text-emerald-800 block">Competitive CTC</span>
+                    <span class="text-xs text-stone-400">Internship</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2.5 text-xs">
+                  <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+                    <span class="text-stone-400 block text-[10px] font-bold uppercase mb-0.5">Locations</span>
+                    <span id="snap-dossier-location" class="font-extrabold text-stone-900 text-xs truncate block">Chennai (ex Madras)</span>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+                    <span class="text-stone-400 block text-[10px] font-bold uppercase mb-0.5">Eligibility</span>
+                    <span id="snap-dossier-batch" class="font-extrabold text-stone-900 text-xs truncate block">Batch 2026, Batch 2027</span>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+                    <span class="text-stone-400 block text-[10px] font-bold uppercase mb-0.5">Closing Window</span>
+                    <span id="snap-dossier-window" class="font-extrabold text-amber-950 text-xs truncate block">🔥 Within 48 Hours</span>
+                  </div>
+                </div>
+
+                <div class="space-y-1.5 text-xs text-stone-700 bg-[#faf9f6] p-3.5 rounded-xl border border-stone-200">
+                  <div class="font-bold text-stone-900 uppercase text-[11px]">Requisition Context & Core Fit:</div>
+                  <p id="snap-dossier-desc" class="leading-relaxed">
+                    Work on medical equipment telemetry, digital health software platforms, and diagnostic firmware integration. Fast-track conversion for high-performing interns.
+                  </p>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-stone-100 flex items-center justify-between gap-3 shrink-0">
+                <button class="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-100 transition">Dismiss ✕</button>
+                <div class="flex items-center gap-2.5">
+                  <button class="px-3.5 py-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 font-bold text-xs">Draft AI Pitch</button>
+                  <button class="px-4 py-2 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-950 font-extrabold text-xs">✓ Applied</button>
+                  <a href="https://careers.philips.com" target="_blank" class="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white font-extrabold text-xs">Apply on Portal ↗</a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
-        <button onclick="setConcept('console')" class="px-5 py-2.5 rounded-xl bg-stone-900 text-white font-bold text-xs shadow-xs hover:bg-stone-800 transition">
-          Preview Integrated Console (Recommended) →
-        </button>
+
       </div>
+
     </div>
 
     <!-- ======================================================================= -->
     <!-- VIEW C: UNIFIED SPEED-FILTERING FOR HACKATHONS & PROGRAMS               -->
     <!-- ======================================================================= -->
-    <div id="view-unified" class="hidden space-y-6">
+    <div id="view-unified" class="hidden space-y-5">
       
       <!-- Hackathons & Student Programs Overview Bar -->
-      <div class="bg-white border border-stone-200 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="bg-white border border-stone-200 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2 mb-1">
             <span class="text-xs font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">Hackathons & Programs</span>
@@ -356,16 +492,16 @@
         <!-- Filter Pills for Hackathons -->
         <div class="flex items-center gap-2">
           <button class="px-3.5 py-1.5 rounded-xl bg-stone-900 text-white font-bold text-xs shadow-xs">All (14)</button>
-          <button class="px-3.5 py-1.5 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 font-semibold text-xs">Flagship Cash Prizes (₹5L+)</button>
-          <button class="px-3.5 py-1.5 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 font-semibold text-xs">Diversity Programs (Women in Tech)</button>
+          <button class="px-3.5 py-1.5 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 font-semibold text-xs">Cash Prizes (₹5L+)</button>
+          <button class="px-3.5 py-1.5 rounded-xl bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 font-semibold text-xs">Women in Tech</button>
         </div>
       </div>
 
-      <!-- Scannable 2-Column Wide Grid (No Tiny Letters, Breatheable Width) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <!-- Scannable 2-Column Wide Grid (Balanced Width & Clear Font) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         <!-- Hackathon 1 -->
-        <div class="bg-white border border-stone-200 hover:border-stone-400 rounded-2xl p-5 shadow-xs transition space-y-4">
+        <div class="bg-white border border-stone-200 hover:border-stone-400 rounded-2xl p-5 shadow-xs transition space-y-3.5">
           <div class="flex items-start justify-between gap-3">
             <div>
               <div class="flex items-center gap-2 mb-1">
@@ -403,7 +539,7 @@
         </div>
 
         <!-- Program 1 (Amazon WoW) -->
-        <div class="bg-white border border-stone-200 hover:border-stone-400 rounded-2xl p-5 shadow-xs transition space-y-4">
+        <div class="bg-white border border-stone-200 hover:border-stone-400 rounded-2xl p-5 shadow-xs transition space-y-3.5">
           <div class="flex items-start justify-between gap-3">
             <div>
               <div class="flex items-center gap-2 mb-1">
@@ -450,7 +586,6 @@
   <!-- JAVASCRIPT STATE ENGINE & INTERACTIVITY                                  -->
   <!-- ========================================================================= -->
   <script>
-    // Live sample jobs with rich metadata
     const jobs = [
       {
         id: 'msft',
@@ -582,10 +717,13 @@
     let appliedSet = new Set(['juspay-qe']);
     let archivedSet = new Set();
 
-    // Render list
+    // Render list for both View A and View B
     function renderList() {
-      const scroller = document.getElementById('job-list-scroller');
-      scroller.innerHTML = '';
+      const scrollerA = document.getElementById('job-list-scroller');
+      const scrollerB = document.getElementById('job-list-scroller-snap');
+      
+      if (scrollerA) scrollerA.innerHTML = '';
+      if (scrollerB) scrollerB.innerHTML = '';
 
       const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
 
@@ -608,18 +746,20 @@
         return true;
       });
 
-      document.getElementById('directory-badge-count').innerText = `${filtered.length} Openings`;
+      const badgeCount = document.getElementById('directory-badge-count');
+      if (badgeCount) badgeCount.innerText = `${filtered.length} Openings`;
 
       if (filtered.length === 0) {
-        scroller.innerHTML = `
+        const emptyMsg = `
           <div class="p-8 text-center text-stone-400 text-xs">
             No openings match your active filter criteria. Try clearing search or choosing "All Batches".
           </div>
         `;
+        if (scrollerA) scrollerA.innerHTML = emptyMsg;
+        if (scrollerB) scrollerB.innerHTML = emptyMsg;
         return;
       }
 
-      // If current selected item not in filtered, pick first
       if (!filtered.some(f => f.id === currentSelectedId)) {
         currentSelectedId = filtered[0].id;
         loadDossier(filtered[0]);
@@ -630,15 +770,7 @@
         const isApplied = appliedSet.has(job.id);
         const isArchived = archivedSet.has(job.id);
 
-        const card = document.createElement('div');
-        card.className = `p-3.5 rounded-xl border transition-all cursor-pointer text-left ${
-          isSelected 
-            ? 'border-2 border-stone-900 bg-stone-50/90 shadow-2xs ring-1 ring-stone-900/10' 
-            : 'border-stone-200 hover:border-stone-400 bg-white'
-        }`;
-        card.onclick = () => selectJob(job.id);
-
-        card.innerHTML = `
+        const cardContent = `
           <div class="flex items-start justify-between gap-2">
             <span class="text-sm font-extrabold text-stone-900 tracking-tight">${job.company}</span>
             <div class="shrink-0 flex items-center gap-1.5">
@@ -663,7 +795,29 @@
           </div>
         `;
 
-        scroller.appendChild(card);
+        if (scrollerA) {
+          const cardA = document.createElement('div');
+          cardA.className = `p-3 rounded-xl border transition-all cursor-pointer text-left ${
+            isSelected 
+              ? 'border-2 border-stone-900 bg-stone-50/90 shadow-2xs' 
+              : 'border-stone-200 hover:border-stone-400 bg-white'
+          }`;
+          cardA.onclick = () => selectJob(job.id);
+          cardA.innerHTML = cardContent;
+          scrollerA.appendChild(cardA);
+        }
+
+        if (scrollerB) {
+          const cardB = document.createElement('div');
+          cardB.className = `p-3 rounded-xl border transition-all cursor-pointer text-left ${
+            isSelected 
+              ? 'border-2 border-stone-900 bg-stone-50/90 shadow-2xs' 
+              : 'border-stone-200 hover:border-stone-400 bg-white'
+          }`;
+          cardB.onclick = () => selectJob(job.id);
+          cardB.innerHTML = cardContent;
+          scrollerB.appendChild(cardB);
+        }
       });
     }
 
@@ -675,29 +829,45 @@
     }
 
     function loadDossier(job) {
-      document.getElementById('dossier-company').innerText = job.company;
-      document.getElementById('dossier-title').innerText = job.title;
-      document.getElementById('dossier-stipend').innerText = job.stipend;
-      document.getElementById('dossier-type').innerText = job.roleType;
-      document.getElementById('dossier-location').innerText = job.location;
-      document.getElementById('dossier-batch').innerText = job.batch;
-      document.getElementById('dossier-window').innerText = job.window;
-      document.getElementById('dossier-desc').innerText = job.desc;
-      document.getElementById('dossier-discipline').innerText = job.discipline;
-      document.getElementById('dossier-degree').innerText = job.degree;
-      document.getElementById('dossier-portal-link').href = job.url;
+      // Update View A
+      const cA = document.getElementById('dossier-company');
+      if (cA) {
+        document.getElementById('dossier-company').innerText = job.company;
+        document.getElementById('dossier-title').innerText = job.title;
+        document.getElementById('dossier-stipend').innerText = job.stipend;
+        document.getElementById('dossier-type').innerText = job.roleType;
+        document.getElementById('dossier-location').innerText = job.location;
+        document.getElementById('dossier-batch').innerText = job.batch;
+        document.getElementById('dossier-window').innerText = job.window;
+        document.getElementById('dossier-desc').innerText = job.desc;
+        document.getElementById('dossier-discipline').innerText = job.discipline;
+        document.getElementById('dossier-degree').innerText = job.degree;
+        document.getElementById('dossier-portal-link').href = job.url;
 
-      const appliedBadge = document.getElementById('dossier-applied-badge');
-      const applyBtn = document.getElementById('btn-dossier-apply');
+        const appliedBadge = document.getElementById('dossier-applied-badge');
+        const applyBtn = document.getElementById('btn-dossier-apply');
 
-      if (appliedSet.has(job.id)) {
-        appliedBadge.classList.remove('hidden');
-        applyBtn.innerText = '✓ Applied (Click to Unmark)';
-        applyBtn.className = 'px-5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-100 text-emerald-950 font-extrabold text-xs hover:bg-emerald-200 transition shadow-xs cursor-pointer';
-      } else {
-        appliedBadge.classList.add('hidden');
-        applyBtn.innerText = '✓ Applied';
-        applyBtn.className = 'px-5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-950 font-extrabold text-xs hover:bg-emerald-100 transition shadow-xs cursor-pointer';
+        if (appliedSet.has(job.id)) {
+          appliedBadge.classList.remove('hidden');
+          applyBtn.innerText = '✓ Applied (Click to Unmark)';
+          applyBtn.className = 'px-5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-100 text-emerald-950 font-extrabold text-xs hover:bg-emerald-200 transition shadow-xs cursor-pointer';
+        } else {
+          appliedBadge.classList.add('hidden');
+          applyBtn.innerText = '✓ Applied';
+          applyBtn.className = 'px-5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50 text-emerald-950 font-extrabold text-xs hover:bg-emerald-100 transition shadow-xs cursor-pointer';
+        }
+      }
+
+      // Update View B
+      const cB = document.getElementById('snap-dossier-company');
+      if (cB) {
+        document.getElementById('snap-dossier-company').innerText = job.company;
+        document.getElementById('snap-dossier-title').innerText = job.title;
+        document.getElementById('snap-dossier-stipend').innerText = job.stipend;
+        document.getElementById('snap-dossier-location').innerText = job.location;
+        document.getElementById('snap-dossier-batch').innerText = job.batch;
+        document.getElementById('snap-dossier-window').innerText = job.window;
+        document.getElementById('snap-dossier-desc').innerText = job.desc;
       }
     }
 
@@ -723,9 +893,11 @@
       currentBatchFilter = batch;
       ['all', '2028', '2027', '2026'].forEach(b => {
         const el = document.getElementById('batch-' + b);
-        el.className = b === batch 
-          ? 'px-2.5 py-1 rounded-lg bg-stone-900 text-white shadow-2xs transition' 
-          : 'px-2.5 py-1 rounded-lg hover:bg-stone-200 transition';
+        if (el) {
+          el.className = b === batch 
+            ? 'px-2.5 py-1 rounded-lg bg-stone-900 text-white shadow-2xs transition' 
+            : 'px-2.5 py-1 rounded-lg hover:bg-stone-200 transition';
+        }
       });
       renderList();
     }
@@ -733,10 +905,12 @@
     function toggleUrgentOnly() {
       currentUrgentOnly = !currentUrgentOnly;
       const el = document.getElementById('btn-urgent-toggle');
-      if (currentUrgentOnly) {
-        el.className = 'px-3 py-1.5 rounded-xl border border-amber-400 bg-amber-100 text-amber-950 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs';
-      } else {
-        el.className = 'px-3 py-1.5 rounded-xl border border-stone-200 hover:border-amber-400 text-xs font-bold text-stone-700 bg-white hover:bg-amber-50/50 transition flex items-center gap-1.5';
+      if (el) {
+        if (currentUrgentOnly) {
+          el.className = 'px-3 py-1.5 rounded-xl border border-amber-400 bg-amber-100 text-amber-950 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs';
+        } else {
+          el.className = 'px-3 py-1.5 rounded-xl border border-stone-200 hover:border-amber-400 text-xs font-bold text-stone-700 bg-white hover:bg-amber-50/50 transition flex items-center gap-1.5';
+        }
       }
       renderList();
     }
@@ -745,16 +919,9 @@
       if (currentTypeFilter === type) {
         currentTypeFilter = null;
         document.getElementById('type-summer').className = 'px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-700 bg-white transition';
-        document.getElementById('type-sixmonth').className = 'px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 bg-white transition';
       } else {
         currentTypeFilter = type;
-        if (type === 'Summer Intern') {
-          document.getElementById('type-summer').className = 'px-3 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-bold shadow-2xs transition';
-          document.getElementById('type-sixmonth').className = 'px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 bg-white transition';
-        } else {
-          document.getElementById('type-summer').className = 'px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-700 bg-white transition';
-          document.getElementById('type-sixmonth').className = 'px-3 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-bold shadow-2xs transition';
-        }
+        document.getElementById('type-summer').className = 'px-3 py-1.5 rounded-xl bg-stone-900 text-white text-xs font-bold shadow-2xs transition';
       }
       renderList();
     }
@@ -763,15 +930,26 @@
       currentFeedTab = tab;
       ['active', 'applied', 'archived'].forEach(t => {
         const el = document.getElementById('tab-' + t);
-        el.className = t === tab 
-          ? 'px-3 py-1 rounded-lg bg-white text-stone-900 font-bold shadow-2xs' 
-          : 'px-3 py-1 rounded-lg text-stone-600 hover:text-stone-900';
+        if (el) {
+          el.className = t === tab 
+            ? 'px-3 py-1 rounded-lg bg-white text-stone-900 font-bold shadow-2xs' 
+            : 'px-3 py-1 rounded-lg text-stone-600 hover:text-stone-900';
+        }
       });
       renderList();
     }
 
     function filterJobs() {
       renderList();
+    }
+
+    // Scroll helper for Concept B
+    function scrollToWorkspace() {
+      document.getElementById('snapped-workspace').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function scrollToTop() {
+      document.getElementById('snap-scroll-wrapper').scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Concept Switcher
@@ -782,24 +960,58 @@
 
       ['console', 'snap', 'unified'].forEach(k => {
         const el = document.getElementById('btn-concept-' + k);
-        el.className = 'px-3 py-1.5 rounded-lg font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer';
+        if (el) {
+          el.className = 'px-3 py-1.5 rounded-lg font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition cursor-pointer';
+        }
       });
 
       const activeBtn = document.getElementById('btn-concept-' + c);
-      activeBtn.className = 'px-3 py-1.5 rounded-lg font-bold transition shadow-xs bg-stone-900 text-white cursor-pointer';
+      if (activeBtn) {
+        activeBtn.className = 'px-3 py-1.5 rounded-lg font-bold transition shadow-xs bg-stone-900 text-white cursor-pointer';
+      }
+
+      const explainer = document.getElementById('top-explainer');
 
       if (c === 'console') {
+        explainer.classList.remove('hidden');
         document.getElementById('view-console').classList.remove('hidden');
-        document.getElementById('banner-title').innerText = 'Option A: Pinned 100vh Zero-Scroll Console (Superhuman / Linear Style)';
-        document.getElementById('banner-body').innerHTML = '<strong>How this cures your scroll fatigue:</strong> You NEVER scroll the browser window up and down! Search, Batch (2028/27/26), and Urgency filters are pinned in a single 40px top control strip. The Left Directory and Right Dossier fill 100% of your remaining screen height with balanced ultra-wide margins. You can evaluate 25 internships in <strong>under 60 seconds</strong>.';
+        document.getElementById('banner-title').innerText = 'Option A: Pinned 100vh Zero-Scroll Console (Balanced 1400px Canvas)';
+        document.getElementById('banner-body').innerHTML = '<strong>Why this is balanced & effortless:</strong> Canvas is widened to 1400px (+60px on each side compared to earlier), removing empty margins without looking stretched. Quick Search, Batch selector (2028/27/26), and Urgency filters are pinned in a single 40px top control strip. You evaluate 25 internships in <strong>under 45 seconds with zero window scroll</strong>.';
       } else if (c === 'snap') {
+        explainer.classList.add('hidden'); // In Snap mode, section 1 is the explainer
         document.getElementById('view-snap').classList.remove('hidden');
-        document.getElementById('banner-title').innerText = 'Option B: Full-Page Takeover Snap (Section Slide Architecture)';
-        document.getElementById('banner-body').innerHTML = '<strong>How this cures your scroll fatigue:</strong> As you scroll down from the top brief, the viewport automatically snaps with <code>scroll-snap: mandatory</code> to cover the entire screen cleanly like a brand new page. A floating mini-filter pill follows you everywhere.';
+        renderList();
       } else if (c === 'unified') {
+        explainer.classList.remove('hidden');
         document.getElementById('view-unified').classList.remove('hidden');
         document.getElementById('banner-title').innerText = 'Option C: Unified 1-Minute Scan for Hackathons & Student Programs';
         document.getElementById('banner-body').innerHTML = '<strong>How this cures your visual fatigue:</strong> The exact same clean, large typography, instant registration tracking (✓ I Registered), and official portal links applied across Flagship Hackathons (Flipkart Grid, Smart India) and Diversity Programs (Amazon WoW, Google STEP).';
+      }
+    }
+
+    // Canvas Width Adjuster
+    function setCanvasWidth(w) {
+      ['standard', 'balanced', 'wide'].forEach(k => {
+        const el = document.getElementById('btn-width-' + k);
+        if (el) {
+          el.className = k === w 
+            ? 'px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs' 
+            : 'px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200';
+        }
+      });
+
+      const container = document.getElementById('main-container');
+      const explainer = document.getElementById('top-explainer');
+
+      if (w === 'standard') {
+        container.className = 'max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-3.5 flex-1 flex flex-col';
+        explainer.className = 'max-w-[1280px] mx-auto px-4 sm:px-6 pt-3.5 w-full';
+      } else if (w === 'balanced') {
+        container.className = 'max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-3.5 flex-1 flex flex-col';
+        explainer.className = 'max-w-[1400px] mx-auto px-4 sm:px-6 pt-3.5 w-full';
+      } else if (w === 'wide') {
+        container.className = 'max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-3.5 flex-1 flex flex-col';
+        explainer.className = 'max-w-[1600px] mx-auto px-4 sm:px-6 pt-3.5 w-full';
       }
     }
 
@@ -807,12 +1019,13 @@
     function setFontScale(scale) {
       ['normal', 'large', 'xlarge'].forEach(s => {
         const el = document.getElementById('btn-font-' + s);
-        el.className = s === scale 
-          ? 'px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs' 
-          : 'px-2.5 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200';
+        if (el) {
+          el.className = s === scale 
+            ? 'px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs' 
+            : 'px-2.5 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200';
+        }
       });
 
-      const scroller = document.getElementById('job-list-scroller');
       if (scale === 'normal') {
         document.body.style.fontSize = '14px';
       } else if (scale === 'large') {
@@ -823,26 +1036,7 @@
       renderList();
     }
 
-    // Canvas Width Adjuster
-    function setCanvasWidth(w) {
-      ['standard', 'wide', 'full'].forEach(k => {
-        const el = document.getElementById('btn-width-' + k);
-        el.className = k === w 
-          ? 'px-2.5 py-1 rounded-lg font-bold bg-white text-stone-900 shadow-2xs' 
-          : 'px-2 py-1 rounded-lg font-semibold text-stone-600 hover:bg-stone-200';
-      });
-
-      const container = document.getElementById('main-container');
-      if (w === 'standard') {
-        container.className = 'max-w-5xl w-full mx-auto px-4 sm:px-6 py-4 flex-1 flex flex-col';
-      } else if (w === 'wide') {
-        container.className = 'max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 flex-1 flex flex-col';
-      } else if (w === 'full') {
-        container.className = 'w-full px-4 sm:px-6 py-4 flex-1 flex flex-col';
-      }
-    }
-
-    // Arrow Key Navigation for Speed Scan
+    // Keyboard Arrow Navigation
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT') return;
       if (e.key === 'ArrowDown' || e.key === 'j') {
