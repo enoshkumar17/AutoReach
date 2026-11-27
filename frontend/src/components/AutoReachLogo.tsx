@@ -3,54 +3,59 @@ import React from 'react';
 export interface AutoReachLogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   variant?: 'full' | 'icon' | 'wordmark';
+  iconType?: 'first' | 'dove';
   theme?: 'dark' | 'light' | 'auto';
   showBadge?: boolean;
   className?: string;
   onClick?: () => void;
 }
 
-// The exact vibrant warm amber gold sampled from the user's AR squircle background (#FFB900)
+// The exact vibrant warm amber gold sampled from the AR badge (#FFB900)
 export const BIRD_COLOR_HEX = '#FFB900';
 
 export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   size = 'md',
   variant = 'full',
+  iconType = 'first',
   theme = 'auto',
   showBadge = false,
   className = '',
   onClick,
 }) => {
-  // Option 02 Lockup Geometry:
-  // - The bird is BIG and hovers in the air above "Auto"
-  // - Tail is down-left of "Auto" with clear horizontal air space
-  // - Belly is above "Auto" with clear vertical air space (NO CONTACT!)
-  // - Head and beak reach over "uto" towards "Reach"
-  // - "Reach" is colored #FFB900 matching the AR badge background
+  // Horizontal Lockup Geometry:
+  // - First image (the bird logo icon) on the left
+  // - Followed by "AutoReach" on the EXACT SAME horizontal level
+  // - Clean vertical alignment, zero overlap, proportional sizing
   const sizeConfig = {
-    xs: { birdW: 42, birdH: 40, textLeft: 19, textTop: 32, fontSize: 12, totalW: 110, totalH: 46 },
-    sm: { birdW: 52, birdH: 50, textLeft: 23, textTop: 38, fontSize: 15, totalW: 135, totalH: 56 },
-    md: { birdW: 76, birdH: 73, textLeft: 35, textTop: 58, fontSize: 20, totalW: 175, totalH: 80 },
-    lg: { birdW: 104, birdH: 101, textLeft: 47, textTop: 80, fontSize: 26, totalW: 230, totalH: 110 },
-    xl: { birdW: 148, birdH: 143, textLeft: 67, textTop: 114, fontSize: 37, totalW: 320, totalH: 155 },
+    xs: { iconSize: 22, textSize: 'text-xs', gap: 'gap-1.5' },
+    sm: { iconSize: 32, textSize: 'text-[17px]', gap: 'gap-2.5' },
+    md: { iconSize: 42, textSize: 'text-2xl', gap: 'gap-3' },
+    lg: { iconSize: 58, textSize: 'text-3xl', gap: 'gap-3.5' },
+    xl: { iconSize: 76, textSize: 'text-5xl', gap: 'gap-4' },
   };
 
   const current = typeof size === 'number'
     ? {
-        birdW: size,
-        birdH: Math.round(size * 0.969),
-        textLeft: Math.round(size * 0.45),
-        textTop: Math.round(size * 0.77),
-        fontSize: Math.max(11, Math.round(size * 0.26)),
-        totalW: Math.round(size * 2.15),
-        totalH: Math.round(size * 1.05),
+        iconSize: size,
+        textSize: 'text-base',
+        gap: 'gap-2.5',
       }
     : sizeConfig[size] || sizeConfig.sm;
 
-  // Adaptive bird asset depending on theme
-  const iconSrc =
-    theme === 'dark'
-      ? '/origami_bird_darkmode.png'
-      : '/origami_bird_transparent.png';
+  // Determine icon source based on iconType ('first' vs 'dove') and theme
+  const getIconSrc = () => {
+    if (iconType === 'dove') {
+      return theme === 'dark'
+        ? '/origami_bird_darkmode.png'
+        : '/origami_bird_transparent.png';
+    }
+    // Default: 'first' (the geometric origami hummingbird from user's first image)
+    return theme === 'dark'
+      ? '/origami_bird_first_darkmode.png'
+      : '/origami_bird_first.png';
+  };
+
+  const iconSrc = getIconSrc();
 
   const autoTextColor =
     theme === 'dark'
@@ -66,7 +71,7 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
         className={`relative inline-flex items-center justify-center shrink-0 select-none ${
           onClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
         } ${className}`}
-        style={{ width: current.birdW, height: current.birdH }}
+        style={{ width: current.iconSize, height: current.iconSize }}
         onClick={onClick}
       >
         <img
@@ -83,49 +88,35 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   if (variant === 'wordmark') {
     return (
       <span
-        className={`font-black tracking-tight leading-none ${autoTextColor} ${className}`}
-        style={{ fontSize: current.fontSize }}
+        className={`font-black tracking-tight leading-none ${current.textSize} ${autoTextColor} ${className}`}
       >
         Auto<span style={{ color: BIRD_COLOR_HEX }}>Reach</span>
       </span>
     );
   }
 
-  // OPTION 02 FULL BRAND LOCKUP:
-  // Soaring bird in the air hovering over "Auto" with guaranteed air gap
-  const containerW = showBadge ? current.totalW + 55 : current.totalW;
-
+  // PERFECT HORIZONTAL LOCKUP:
+  // First image followed by AutoReach on the exact same horizontal level
   return (
     <div
-      className={`relative inline-block select-none ${
+      className={`inline-flex items-center ${current.gap} select-none ${
         onClick ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''
       } ${className}`}
-      style={{ width: containerW, height: current.totalH }}
       onClick={onClick}
     >
-      {/* 1. Big Origami Bird hovering in the air */}
+      {/* 1. First Image (Bird Mark) */}
       <img
         src={iconSrc}
-        alt="AutoReach Origami Bird"
-        className="absolute top-0 left-0 object-contain z-10"
-        style={{
-          width: current.birdW,
-          height: current.birdH,
-        }}
+        alt="AutoReach Bird Logo"
+        style={{ width: current.iconSize, height: current.iconSize }}
+        className="shrink-0 object-contain"
         draggable={false}
       />
 
-      {/* 2. Wordmark nestled under bird with zero contact and visible air gap */}
-      <div
-        className="absolute flex items-center gap-1.5 whitespace-nowrap z-20"
-        style={{
-          left: current.textLeft,
-          top: current.textTop,
-        }}
-      >
+      {/* 2. Followed by AutoReach on the same level */}
+      <div className="flex items-center gap-2 whitespace-nowrap">
         <span
-          className={`font-black tracking-tight leading-none ${autoTextColor}`}
-          style={{ fontSize: current.fontSize }}
+          className={`font-black tracking-tight leading-none ${current.textSize} ${autoTextColor}`}
         >
           Auto<span style={{ color: BIRD_COLOR_HEX }}>Reach</span>
         </span>
