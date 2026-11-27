@@ -3,36 +3,40 @@ import React from 'react';
 export interface AutoReachLogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   variant?: 'full' | 'icon' | 'wordmark';
-  layout?: 'perched' | 'horizontal';
   theme?: 'dark' | 'light' | 'auto';
   showBadge?: boolean;
   className?: string;
   onClick?: () => void;
 }
 
-// The exact golden yellow sampled directly from the user's origami bird wing (#EFC33E)
-export const BIRD_YELLOW_HEX = '#EFC33E';
+// Warm, high-contrast yellowish-orange (#F58220) for maximum visibility on white & dark surfaces
+export const BIRD_ORANGE_HEX = '#F58220';
 
 export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   size = 'md',
   variant = 'full',
-  layout = 'perched',
   theme = 'auto',
   showBadge = false,
   className = '',
   onClick,
 }) => {
-  // Sizing configuration
+  // Sizing configuration calibrated to the Option 02 tucked lockup
   const sizeConfig = {
-    xs: { birdW: 24, birdH: 23, offsetBottom: '-mb-1.5', textSize: 'text-xs', navBird: 'w-5 h-5 -mr-1 -mt-1' },
-    sm: { birdW: 34, birdH: 33, offsetBottom: '-mb-2', textSize: 'text-base', navBird: 'w-7 h-7 -mr-1 -mt-1.5' },
-    md: { birdW: 46, birdH: 44, offsetBottom: '-mb-3', textSize: 'text-xl', navBird: 'w-9 h-9 -mr-1.5 -mt-2' },
-    lg: { birdW: 68, birdH: 66, offsetBottom: '-mb-4', textSize: 'text-3xl', navBird: 'w-14 h-14 -mr-2 -mt-3' },
-    xl: { birdW: 96, birdH: 93, offsetBottom: '-mb-6', textSize: 'text-5xl', navBird: 'w-20 h-20 -mr-3 -mt-4' },
+    xs: { birdW: 34, birdH: 33, ml: '-ml-[18px]', mb: 'mb-[2px]', textSize: 'text-sm' },
+    sm: { birdW: 46, birdH: 44, ml: '-ml-[24px]', mb: 'mb-[3px]', textSize: 'text-[17px]' },
+    md: { birdW: 60, birdH: 58, ml: '-ml-[31px]', mb: 'mb-[5px]', textSize: 'text-xl' },
+    lg: { birdW: 86, birdH: 83, ml: '-ml-[45px]', mb: 'mb-[7px]', textSize: 'text-3xl' },
+    xl: { birdW: 126, birdH: 122, ml: '-ml-[66px]', mb: 'mb-[10px]', textSize: 'text-5xl' },
   };
 
   const current = typeof size === 'number'
-    ? { birdW: size, birdH: Math.round(size * 0.97), offsetBottom: '-mb-2', textSize: 'text-base', navBird: 'w-7 h-7 -mr-1 -mt-1' }
+    ? {
+        birdW: size,
+        birdH: Math.round(size * 0.97),
+        ml: `-ml-[${Math.round(size * 0.52)}px]`,
+        mb: 'mb-[3px]',
+        textSize: 'text-base',
+      }
     : sizeConfig[size] || sizeConfig.sm;
 
   // Adaptive icon depending on theme
@@ -73,89 +77,45 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   // If wordmark-only
   if (variant === 'wordmark') {
     return (
-      <span className={`font-extrabold tracking-tight ${current.textSize} ${autoTextColor} ${className}`}>
-        Auto<span style={{ color: BIRD_YELLOW_HEX }}>Reach</span>
+      <span className={`font-black tracking-tight ${current.textSize} ${autoTextColor} ${className}`}>
+        Auto<span style={{ color: BIRD_ORANGE_HEX }}>Reach</span>
       </span>
     );
   }
 
-  // PERCHED LAYOUT: Bird resting on top of the head of 'A' in AutoReach
-  if (layout === 'perched') {
-    return (
-      <div
-        className={`relative inline-flex flex-col items-start select-none ${
-          onClick ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''
-        } ${className}`}
-        onClick={onClick}
-      >
-        {/* Bird perched so bottom tip lands directly on the apex of 'A' */}
-        <div
-          className={`relative ${current.offsetBottom} ml-0.5 shrink-0 z-10`}
-          style={{ width: current.birdW, height: current.birdH }}
-        >
-          <img
-            src={iconSrc}
-            alt="AutoReach Origami Bird"
-            className="w-full h-full object-contain filter drop-shadow-xs"
-            draggable={false}
-          />
-        </div>
-
-        {/* Wordmark AutoReach underneath bird */}
-        <div className="flex items-center gap-2">
-          <span className={`font-black tracking-tight leading-none ${current.textSize} ${autoTextColor}`}>
-            Auto<span style={{ color: BIRD_YELLOW_HEX }}>Reach</span>
-          </span>
-
-          {showBadge && (
-            <span
-              className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase"
-              style={{
-                backgroundColor: 'rgba(239, 195, 62, 0.15)',
-                color: BIRD_YELLOW_HEX,
-                borderColor: 'rgba(239, 195, 62, 0.35)',
-              }}
-            >
-              v5.0 Live
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // HORIZONTAL LAYOUT (Bird slightly elevated on left with tail swooping into 'A')
+  // TUCKED LOCKUP (Option 02 layout):
+  // The bird's tail angles down-left, with the letter 'A' in AutoReach tucked directly under the bird's belly
   return (
     <div
-      className={`inline-flex items-center select-none ${
+      className={`inline-flex items-end select-none ${
         onClick ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''
       } ${className}`}
       onClick={onClick}
     >
-      <div
-        className={`relative ${current.navBird} shrink-0 z-10 flex items-center justify-center`}
+      {/* Origami Bird */}
+      <img
+        src={iconSrc}
+        alt="AutoReach Origami Bird"
         style={{ width: current.birdW, height: current.birdH }}
-      >
-        <img
-          src={iconSrc}
-          alt="AutoReach Origami Bird"
-          className="w-full h-full object-contain filter drop-shadow-xs"
-          draggable={false}
-        />
-      </div>
+        className="shrink-0 object-contain z-10"
+        draggable={false}
+      />
 
-      <div className="flex items-center gap-2">
-        <span className={`font-black tracking-tight ${current.textSize} ${autoTextColor}`}>
-          Auto<span style={{ color: BIRD_YELLOW_HEX }}>Reach</span>
+      {/* Tucked Wordmark AutoReach */}
+      <div
+        className={`flex items-center gap-2 whitespace-nowrap z-20 ${current.ml} ${current.mb}`}
+      >
+        <span className={`font-black tracking-tight leading-none ${current.textSize} ${autoTextColor}`}>
+          Auto<span style={{ color: BIRD_ORANGE_HEX }}>Reach</span>
         </span>
 
         {showBadge && (
           <span
             className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase"
             style={{
-              backgroundColor: 'rgba(239, 195, 62, 0.15)',
-              color: BIRD_YELLOW_HEX,
-              borderColor: 'rgba(239, 195, 62, 0.35)',
+              backgroundColor: 'rgba(245, 130, 32, 0.12)',
+              color: BIRD_ORANGE_HEX,
+              borderColor: 'rgba(245, 130, 32, 0.35)',
             }}
           >
             v5.0 Live
