@@ -3,9 +3,9 @@ import React from 'react';
 export interface AutoReachLogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   variant?: 'full' | 'icon' | 'wordmark';
-  iconType?: 'first' | 'dove';
   theme?: 'dark' | 'light' | 'auto';
   showBadge?: boolean;
+  subtitle?: string;
   className?: string;
   onClick?: () => void;
 }
@@ -16,22 +16,22 @@ export const BIRD_COLOR_HEX = '#FFB900';
 export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   size = 'md',
   variant = 'full',
-  iconType = 'first',
   theme = 'auto',
   showBadge = false,
+  subtitle,
   className = '',
   onClick,
 }) => {
   // Horizontal Lockup Geometry:
-  // - First image (the bird logo icon) on the left
-  // - Followed by "AutoReach" on the EXACT SAME horizontal level
-  // - Clean vertical alignment, zero overlap, proportional sizing
+  // - THIS BIRD ONLY: The Origami Dove (/origami_bird_transparent.png and /origami_bird_darkmode.png)
+  // - Bird on the left, followed immediately by AutoReach on the EXACT SAME HORIZONTAL LINE
+  // - Perfectly aligned, vertically centered, zero contact/overlap
   const sizeConfig = {
-    xs: { iconSize: 22, textSize: 'text-xs', gap: 'gap-1.5' },
-    sm: { iconSize: 32, textSize: 'text-[17px]', gap: 'gap-2.5' },
-    md: { iconSize: 42, textSize: 'text-2xl', gap: 'gap-3' },
-    lg: { iconSize: 58, textSize: 'text-3xl', gap: 'gap-3.5' },
-    xl: { iconSize: 76, textSize: 'text-5xl', gap: 'gap-4' },
+    xs: { iconSize: 28, textSize: 'text-xs', gap: 'gap-2' },
+    sm: { iconSize: 44, textSize: 'text-[18px]', gap: 'gap-3' },
+    md: { iconSize: 58, textSize: 'text-2xl', gap: 'gap-3.5' },
+    lg: { iconSize: 76, textSize: 'text-3xl', gap: 'gap-4' },
+    xl: { iconSize: 104, textSize: 'text-5xl', gap: 'gap-5' },
   };
 
   const current = typeof size === 'number'
@@ -42,20 +42,11 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
       }
     : sizeConfig[size] || sizeConfig.sm;
 
-  // Determine icon source based on iconType ('first' vs 'dove') and theme
-  const getIconSrc = () => {
-    if (iconType === 'dove') {
-      return theme === 'dark'
-        ? '/origami_bird_darkmode.png'
-        : '/origami_bird_transparent.png';
-    }
-    // Default: 'first' (the geometric origami hummingbird from user's first image)
-    return theme === 'dark'
-      ? '/origami_bird_first_darkmode.png'
-      : '/origami_bird_first.png';
-  };
-
-  const iconSrc = getIconSrc();
+  // Adaptive icon depending on theme
+  const iconSrc =
+    theme === 'dark'
+      ? '/origami_bird_darkmode.png'
+      : '/origami_bird_transparent.png';
 
   const autoTextColor =
     theme === 'dark'
@@ -96,7 +87,7 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   }
 
   // PERFECT HORIZONTAL LOCKUP:
-  // First image followed by AutoReach on the exact same horizontal level
+  // Origami Dove Bird on the left, AutoReach on the same horizontal line
   return (
     <div
       className={`inline-flex items-center ${current.gap} select-none ${
@@ -104,33 +95,41 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
       } ${className}`}
       onClick={onClick}
     >
-      {/* 1. First Image (Bird Mark) */}
+      {/* 1. Origami Dove Bird Mark */}
       <img
         src={iconSrc}
-        alt="AutoReach Bird Logo"
+        alt="AutoReach Origami Bird"
         style={{ width: current.iconSize, height: current.iconSize }}
         className="shrink-0 object-contain"
         draggable={false}
       />
 
-      {/* 2. Followed by AutoReach on the same level */}
-      <div className="flex items-center gap-2 whitespace-nowrap">
-        <span
-          className={`font-black tracking-tight leading-none ${current.textSize} ${autoTextColor}`}
-        >
-          Auto<span style={{ color: BIRD_COLOR_HEX }}>Reach</span>
-        </span>
-
-        {showBadge && (
+      {/* 2. AutoReach Wordmark on the same line */}
+      <div className="flex flex-col justify-center">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <span
-            className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border tracking-wide uppercase shrink-0"
-            style={{
-              backgroundColor: 'rgba(255, 185, 0, 0.15)',
-              color: '#D97706',
-              borderColor: 'rgba(255, 185, 0, 0.4)',
-            }}
+            className={`font-black tracking-tight leading-none ${current.textSize} ${autoTextColor}`}
           >
-            v5.0
+            Auto<span style={{ color: BIRD_COLOR_HEX }}>Reach</span>
+          </span>
+
+          {showBadge && (
+            <span
+              className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full border tracking-wide uppercase shrink-0"
+              style={{
+                backgroundColor: 'rgba(255, 185, 0, 0.15)',
+                color: '#D97706',
+                borderColor: 'rgba(255, 185, 0, 0.4)',
+              }}
+            >
+              v5.0 Live
+            </span>
+          )}
+        </div>
+
+        {subtitle && (
+          <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 tracking-tight mt-0.5">
+            {subtitle}
           </span>
         )}
       </div>
