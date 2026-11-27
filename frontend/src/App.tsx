@@ -360,7 +360,7 @@ export default function App() {
 
       <main className="flex-1 max-w-[1350px] w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
         
-        {/* Guest Multi-Tenant Banner */}
+        {/* Guest Welcome Banner */}
         {!user && (
           <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-stone-800 shadow-md">
             <div className="flex items-center gap-3">
@@ -369,13 +369,13 @@ export default function App() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                  Multi-User Ready
+                  Personal Career Workspace
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
-                    Data Isolation Enforced
+                    Free AI Included
                   </span>
                 </h3>
                 <p className="text-xs text-stone-300">
-                  Sharing with a sister, friend, or classmate? Each person gets their own private workspace, resume parser, and custom outreach queue. Platform AI key is built-in!
+                  Create your free private account to upload your resume, match opportunities for your graduation batch, and generate tailored cold email pitches in 1 click.
                 </p>
               </div>
             </div>
@@ -511,7 +511,7 @@ export default function App() {
                 <div className="my-2">
                   <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">{liveStats.openCount}</span>
                   <span className="text-xs text-emerald-100/90 font-medium block mt-1">
-                    Positions scraped directly from official ATS boards
+                    Directly synced from official company ATS portals
                   </span>
                 </div>
 
@@ -540,7 +540,7 @@ export default function App() {
                 <div className="my-2">
                   <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">{liveStats.freshCount}</span>
                   <span className="text-xs text-amber-100/90 font-medium block mt-1">
-                    High applicant churn · Window closes within 1–2 days
+                    High applicant volume · Window closes within 1–2 days
                   </span>
                 </div>
 

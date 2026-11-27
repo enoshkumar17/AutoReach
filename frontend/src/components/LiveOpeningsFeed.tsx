@@ -813,7 +813,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           <span className="font-bold text-stone-900">{currentFeedListings.length}</span>
           <span>
             {feedView === 'active'
-              ? 'active ATS requisitions'
+              ? 'active opportunities'
               : feedView === 'applied'
               ? 'applied applications'
               : feedView === 'archived'
@@ -827,7 +827,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           )}
         </div>
 
-        {/* Layout Switcher: 3 Modes (Side-by-Side [Default], Top & Bottom, Card Grid) */}
+        {/* Layout Switcher: 3 Modes (Side-by-Side, Top & Bottom, Card Grid) */}
         <div className="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 shadow-2xs">
           <button
             onClick={() => handleLayoutModeChange('split')}
@@ -836,11 +836,10 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                 ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
                 : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
             }`}
-            title="Split Command Center: Directory (Left) + Dossier (Right) side-by-side"
+            title="Side-by-Side: Directory on left + full details on right"
           >
             <Columns2 className="h-3.5 w-3.5 text-stone-800" />
             <span>Side-by-Side</span>
-            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">Default</span>
           </button>
           <button
             onClick={() => handleLayoutModeChange('stacked')}
@@ -917,7 +916,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           <div className="bg-white border border-stone-200 rounded-2xl p-3 sm:p-4 shadow-xs">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100 text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-stone-900">Scannable Directory</span>
+                <span className="font-bold text-stone-900">Live Openings</span>
                 <span className="text-[11px] font-semibold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
                   {currentFeedListings.length}
                 </span>
@@ -1019,7 +1018,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                         {selectedSplitListing.company}
                       </span>
                       <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                        Verified ATS • HTTP 200 Live
+                        Verified ATS • Active Link
                       </span>
                       {appliedIdSet.has(selectedSplitListing.id) && (
                         <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
@@ -1067,7 +1066,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                 {/* Role Summary Brief */}
                 <div className="space-y-1.5 text-xs text-stone-600 bg-[#faf9f6] p-3 rounded-xl border border-stone-200">
                   <div className="font-bold text-stone-900 uppercase text-[10px]">
-                    Requisition Context & Core Fit:
+                    Role Details & Qualifications:
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs text-stone-600">
                     <div>
@@ -1139,7 +1138,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               </div>
             ) : (
               <div className="bg-white border border-stone-200 rounded-2xl p-6 text-center text-stone-400 text-xs">
-                Select an opening above to inspect requisition details.
+                Select an opening above to view job details.
               </div>
             )}
           </div>
@@ -1154,9 +1153,9 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           <div className="lg:col-span-5 bg-white border border-stone-200 rounded-2xl p-4 shadow-xs flex flex-col space-y-3">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 text-xs">
               <span className="font-bold text-stone-900">
-                Scannable Directory ({currentFeedListings.length})
+                Live Directory ({currentFeedListings.length})
               </span>
-              <span className="text-stone-400 text-[11px]">Click to inspect</span>
+              <span className="text-stone-400 text-[11px]">Click to view</span>
             </div>
 
             <div className="space-y-2 overflow-y-auto max-h-[600px] pr-1 scrollbar-thin">
@@ -1248,7 +1247,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                           {selectedSplitListing.company}
                         </span>
                         <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                          Verified ATS • HTTP 200 Live
+                          Verified ATS • Active Link
                         </span>
                         {appliedIdSet.has(selectedSplitListing.id) && (
                           <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
@@ -1296,7 +1295,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                   {/* Role Summary Brief */}
                   <div className="space-y-2 text-xs text-stone-600 bg-[#faf9f6] p-4 rounded-xl border border-stone-200">
                     <div className="font-bold text-stone-900 uppercase text-[11px]">
-                      Requisition Context & Core Fit:
+                      Role Details & Qualifications:
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-stone-600 pt-1">
                       <div>
@@ -1369,7 +1368,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               </div>
             ) : (
               <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center text-stone-400 text-xs">
-                Select an opening on the left to inspect requisition details.
+                Select an opening on the left to view job details.
               </div>
             )}
           </div>
@@ -1495,7 +1494,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                   ) : isClosed ? (
                     <div className="mb-3 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200/80 text-xs text-rose-900 flex items-center gap-1.5 font-medium">
                       <Clock className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                      <span>{listing.closedAgoLabel || 'Application window closed'} • Requisition filled on ATS</span>
+                      <span>{listing.closedAgoLabel || 'Application window closed'} • Position filled on career portal</span>
                     </div>
                   ) : isFresh ? (
                     <div className="mb-3 px-3 py-1.5 rounded-lg bg-amber-50/80 border border-amber-200/90 text-xs text-amber-950 flex items-center gap-1.5 font-medium">
@@ -1677,18 +1676,18 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
                 <span>
-                  <strong>Official ATS Requisition:</strong> Verified active on career portal
+                  <strong>Official Career Portal:</strong> Verified active on career portal
                 </span>
               </div>
-              <span className="font-mono text-[11px] text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-300">
-                HTTP 200 OK • Live
+              <span className="font-mono text-[11px] text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                Verified Active Link
               </span>
             </div>
 
             {/* Application Information Box */}
             <div className="space-y-4 text-xs text-stone-700 bg-stone-50 p-4 rounded-xl border border-stone-200/80">
               <h4 className="font-bold text-stone-900 uppercase tracking-wider text-[11px]">
-                Application Details & Requisition Info
+                Job Details & Requirements
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
@@ -1704,10 +1703,10 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                   <span className="font-semibold text-stone-800">{activeModalListing.degreeRequired}</span>
                 </div>
                 <div>
-                  <span className="text-stone-400 font-medium block">Requisition Status:</span>
+                  <span className="text-stone-400 font-medium block">Application Status:</span>
                   <span className="font-semibold text-stone-800">
                     {activeModalListing.status === 'closed'
-                      ? 'Closed (Filled on ATS)'
+                      ? 'Closed (Filled on Portal)'
                       : activeModalListing.deadline}
                   </span>
                 </div>
@@ -1784,7 +1783,7 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
               ) : (
                 <div className="w-full flex items-center justify-between">
                   <span className="text-xs text-rose-700 font-semibold flex items-center gap-1.5">
-                    <AlertCircle className="h-4 w-4" /> This requisition has concluded and is no longer accepting applications.
+                    <AlertCircle className="h-4 w-4" /> This position has concluded and is no longer accepting applications.
                   </span>
                   <button
                     onClick={() => setActiveModalListing(null)}

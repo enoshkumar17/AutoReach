@@ -117,7 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 AutoReach
               </span>
               <span className="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-950 border border-emerald-300/80">
-                v5.0 Multi-Tenant
+                v5.0 Live
               </span>
             </div>
           </div>

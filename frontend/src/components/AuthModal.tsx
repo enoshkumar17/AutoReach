@@ -85,7 +85,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               AR
             </span>
             <span className="text-xs font-semibold tracking-wider uppercase text-amber-300">
-              Multi-Tenant Cloud
+              Student Career Cloud
             </span>
           </div>
 
@@ -95,15 +95,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <p className="text-xs text-stone-300 mt-1">
             {mode === 'login'
               ? 'Access your private profile, cold email queue, and job alerts.'
-              : 'Isolated workspace for your resume, customized pitches, and alerts.'}
+              : 'Your private space for resume parsing, tailored pitches, and batch alerts.'}
           </p>
 
           <div className="mt-3 flex items-center gap-3 pt-3 border-t border-stone-800 text-[11px] text-stone-300">
             <span className="flex items-center gap-1 text-emerald-300">
-              <ShieldCheck className="h-3.5 w-3.5" /> 100% Data Isolated
+              <ShieldCheck className="h-3.5 w-3.5" /> 100% Private & Secure
             </span>
             <span className="flex items-center gap-1 text-amber-300">
-              <Sparkles className="h-3.5 w-3.5" /> Platform AI Included
+              <Sparkles className="h-3.5 w-3.5" /> Free AI Included
             </span>
           </div>
         </div>
