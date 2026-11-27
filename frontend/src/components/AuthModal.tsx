@@ -72,7 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden">
         
         {/* Header Ribbon */}
-        <div className="bg-gradient-to-r from-stone-950 via-stone-900 to-stone-850 p-6 text-white relative">
+        <div className="bg-gradient-to-b from-stone-950 to-stone-900 p-6 text-white relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
@@ -81,11 +81,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <X className="h-4 w-4" />
           </button>
 
-          <div className="flex items-center gap-2 mb-2">
-            <AutoReachLogo size="xs" variant="icon" theme="dark" />
-            <span className="text-xs font-semibold tracking-wider uppercase text-amber-300">
-              Student Career Cloud
-            </span>
+          {/* Hero Brand Identity Header */}
+          <div className="mb-3">
+            <AutoReachLogo size="md" theme="dark" showBadge={false} />
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-[11px] font-semibold tracking-wide uppercase mb-2">
+            <Sparkles className="h-3 w-3 text-amber-400" />
+            Student Career Cloud
           </div>
 
           <h2 className="text-xl font-bold tracking-tight text-white">
