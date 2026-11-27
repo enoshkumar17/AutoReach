@@ -62,13 +62,13 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
   const APPLIED_META_KEY = `${userPrefix}_applied_meta`;
   const LAYOUT_PREF_KEY = `${userPrefix}_layout_mode`;
 
-  // Layout mode: 'stacked' (Top & Bottom View - Default), 'split' (Side-by-Side), or 'grid' (classic cards)
+  // Layout mode: 'split' (Option 2 Side-by-Side - Default), 'stacked' (Top & Bottom), or 'grid' (classic cards)
   const [layoutMode, setLayoutMode] = useState<'stacked' | 'split' | 'grid'>(() => {
     try {
       const saved = localStorage.getItem(LAYOUT_PREF_KEY);
-      return saved === 'stacked' || saved === 'split' || saved === 'grid' ? saved : 'stacked';
+      return saved === 'stacked' || saved === 'split' || saved === 'grid' ? saved : 'split';
     } catch {
-      return 'stacked';
+      return 'split';
     }
   });
 
@@ -819,21 +819,8 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           )}
         </div>
 
-        {/* Layout Switcher: 3 Modes (Top & Bottom, Side-by-Side, Card Grid) */}
+        {/* Layout Switcher: 3 Modes (Side-by-Side [Default], Top & Bottom, Card Grid) */}
         <div className="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200 shadow-2xs">
-          <button
-            onClick={() => handleLayoutModeChange('stacked')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              layoutMode === 'stacked'
-                ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
-            }`}
-            title="Compact Full-Width List on top + Opening Dossier below (both visible on screen)"
-          >
-            <Rows className="h-3.5 w-3.5 text-stone-800" />
-            <span>Top & Bottom</span>
-            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">Default</span>
-          </button>
           <button
             onClick={() => handleLayoutModeChange('split')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
@@ -845,6 +832,19 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
           >
             <Columns2 className="h-3.5 w-3.5 text-stone-800" />
             <span>Side-by-Side</span>
+            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">Default</span>
+          </button>
+          <button
+            onClick={() => handleLayoutModeChange('stacked')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              layoutMode === 'stacked'
+                ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/90'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
+            }`}
+            title="Compact Full-Width List on top + Opening Dossier below (both visible on screen)"
+          >
+            <Rows className="h-3.5 w-3.5 text-stone-800" />
+            <span>Top & Bottom</span>
           </button>
           <button
             onClick={() => handleLayoutModeChange('grid')}
@@ -946,47 +946,49 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                   >
                     {/* Left: Company & Role */}
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs sm:text-sm font-bold text-stone-900 shrink-0">
+                      <span className="text-sm sm:text-base font-bold text-stone-900 shrink-0">
                         {listing.company}
                       </span>
-                      <span className="text-xs font-semibold text-stone-700 truncate">
+                      <span className="text-xs sm:text-sm font-semibold text-stone-800 truncate">
                         {listing.title}
                       </span>
-                      <div className="hidden md:flex items-center gap-1.5 text-[11px] text-stone-500 shrink-0">
+                      <div className="hidden md:flex items-center gap-2 text-xs text-stone-600 font-medium shrink-0">
                         <span>•</span>
                         <span>{listing.roleType}</span>
                         <span>•</span>
                         <span>{listing.locations[0] || 'India'}</span>
                         <span>•</span>
-                        <span>{listing.eligibleBatchesLabel}</span>
+                        <span className="bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-semibold text-xs">
+                          {listing.eligibleBatchesLabel}
+                        </span>
                       </div>
                     </div>
 
                     {/* Right: Clean Status Pill */}
                     <div className="shrink-0 flex items-center gap-2">
                       {isItemFresh && (
-                        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60 hidden sm:inline">
+                        <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60 hidden sm:inline">
                           🔥 2d left
                         </span>
                       )}
                       {isItemArchived ? (
-                        <span className="text-[10px] font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-medium text-stone-600 bg-stone-100 px-2.5 py-0.5 rounded-full">
                           Hidden
                         </span>
                       ) : isItemApplied ? (
-                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full">
                           ✓ Applied
                         </span>
                       ) : isItemClosed ? (
-                        <span className="text-[10px] font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-medium text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full">
                           Closed
                         </span>
                       ) : isItemFresh ? (
-                        <span className="text-[10px] font-semibold text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-semibold text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full">
                           Closes &lt;18h
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
                           {stipendText}
                         </span>
                       )}
@@ -1170,28 +1172,28 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                   >
                     {/* Top Row: Company Name + Subtle Clean Pill */}
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-stone-900 tracking-tight">
+                      <span className="text-sm sm:text-base font-bold text-stone-900 tracking-tight">
                         {listing.company}
                       </span>
                       <div className="shrink-0">
                         {isItemArchived ? (
-                          <span className="text-[10px] font-medium text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-medium text-stone-600 bg-stone-100 px-2.5 py-0.5 rounded-full">
                             Hidden
                           </span>
                         ) : isItemApplied ? (
-                          <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full">
                             ✓ Applied
                           </span>
                         ) : isItemClosed ? (
-                          <span className="text-[10px] font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-medium text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full">
                             Closed
                           </span>
                         ) : isItemFresh ? (
-                          <span className="text-[10px] font-semibold text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-semibold text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full">
                             Closes &lt;18h
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
                             {stipendText}
                           </span>
                         )}
@@ -1199,17 +1201,19 @@ export const LiveOpeningsFeed: React.FC<LiveOpeningsFeedProps> = ({
                     </div>
 
                     {/* Role Title */}
-                    <div className="font-bold text-xs sm:text-sm text-stone-900 mt-1 line-clamp-1">
+                    <div className="font-bold text-sm sm:text-[15px] text-stone-900 mt-1 line-clamp-1">
                       {listing.title}
                     </div>
 
-                    {/* Clean Metadata Line (Separated by middle dots) */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-stone-500 mt-1.5 flex-wrap">
+                    {/* Clean Metadata Line (Separated by middle dots with clear legible font) */}
+                    <div className="flex items-center gap-2 text-xs sm:text-[13px] text-stone-600 mt-2 flex-wrap font-medium">
                       <span>{listing.roleType}</span>
                       <span>•</span>
                       <span>{listing.locations[0] || 'India'}</span>
                       <span>•</span>
-                      <span>{listing.eligibleBatchesLabel}</span>
+                      <span className="bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-semibold text-xs">
+                        {listing.eligibleBatchesLabel}
+                      </span>
                       {isItemFresh && (
                         <>
                           <span>•</span>

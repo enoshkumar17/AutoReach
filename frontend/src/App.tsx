@@ -349,7 +349,7 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
+      <main className="flex-1 max-w-[1350px] w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
         
         {/* Guest Multi-Tenant Banner */}
         {!user && (
@@ -485,61 +485,61 @@ export default function App() {
 
             {/* Atlas-Style Status Widgets */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Widget 1: Clean Minimal Live ATS Radar */}
+              {/* Widget 1: Live ATS Openings (Vibrant Emerald Gradient) */}
               <div
                 onClick={() => setActiveTab('live')}
-                className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-2xs hover:border-stone-400 transition cursor-pointer flex flex-col justify-between group"
+                className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white rounded-2xl p-5 shadow-2xs hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
                     Live ATS Openings
                   </span>
-                  <div className="w-6 h-6 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 group-hover:scale-110 transition">
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition">
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </div>
                 </div>
 
                 <div className="my-2">
-                  <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-stone-900">{liveStats.openCount}</span>
-                  <span className="text-xs text-stone-500 font-medium block mt-1">
+                  <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">{liveStats.openCount}</span>
+                  <span className="text-xs text-emerald-100/90 font-medium block mt-1">
                     Positions scraped directly from official ATS boards
                   </span>
                 </div>
 
-                <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-                  <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/60 px-2 py-0.5 rounded-md font-semibold">
-                    <ShieldCheck className="h-3 w-3 text-emerald-600" /> Workday & Greenhouse Verified
+                <div className="pt-3 border-t border-emerald-500/40 flex items-center justify-between text-[11px] text-emerald-100">
+                  <span className="inline-flex items-center gap-1.5 bg-white/20 text-white px-2 py-0.5 rounded-md font-semibold">
+                    <ShieldCheck className="h-3 w-3 text-emerald-200" /> Workday & Greenhouse Verified
                   </span>
-                  <span className="font-mono text-stone-400">Updated today</span>
+                  <span className="font-mono text-emerald-200">Updated today</span>
                 </div>
               </div>
 
-              {/* Widget 2: Clean Minimal Fast Closing Widget */}
+              {/* Widget 2: Closes Fast (Vibrant Amber / Orange Gradient) */}
               <div
                 onClick={() => setActiveTab('live')}
-                className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-2xs hover:border-stone-400 transition cursor-pointer flex flex-col justify-between group"
+                className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl p-5 shadow-2xs hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-100">
                     Closes Fast (&lt;48h)
                   </span>
-                  <div className="w-6 h-6 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 group-hover:scale-110 transition">
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition">
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </div>
                 </div>
 
                 <div className="my-2">
-                  <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-amber-900">{liveStats.freshCount}</span>
-                  <span className="text-xs text-stone-500 font-medium block mt-1">
+                  <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">{liveStats.freshCount}</span>
+                  <span className="text-xs text-amber-100/90 font-medium block mt-1">
                     High applicant churn · Window closes within 1–2 days
                   </span>
                 </div>
 
-                <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-                  <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200/60 px-2 py-0.5 rounded-md font-semibold">
-                    <Flame className="h-3 w-3 text-orange-500" /> Priority Attention
+                <div className="pt-3 border-t border-amber-400/40 flex items-center justify-between text-[11px] text-amber-100">
+                  <span className="inline-flex items-center gap-1.5 bg-white/20 text-white px-2 py-0.5 rounded-md font-semibold">
+                    <Flame className="h-3 w-3 text-amber-200 fill-amber-200" /> Priority Attention
                   </span>
-                  <span className="text-stone-400">Apply early</span>
+                  <span className="text-amber-100">Apply early</span>
                 </div>
               </div>
 
