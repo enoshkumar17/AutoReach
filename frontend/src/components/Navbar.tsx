@@ -1,4 +1,5 @@
 import React from 'react';
+import { AutoReachLogo } from './AutoReachLogo';
 import {
   Send,
   Zap,
@@ -105,22 +106,12 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-[1350px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo & Product Identity */}
-          <div
-            className="flex items-center gap-2.5 cursor-pointer select-none shrink-0"
+          <AutoReachLogo
+            size="sm"
+            showBadge
+            theme="light"
             onClick={() => setActiveTab('outreach')}
-          >
-            <div className="h-8 w-8 rounded-lg bg-stone-900 flex items-center justify-center text-stone-50 shadow-xs">
-              <span className="font-bold text-xs tracking-wider">AR</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-base tracking-tight text-stone-900">
-                AutoReach
-              </span>
-              <span className="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-950 border border-emerald-300/80">
-                v5.0 Live
-              </span>
-            </div>
-          </div>
+          />
 
           {/* Navigation Items */}
           <nav className="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none">

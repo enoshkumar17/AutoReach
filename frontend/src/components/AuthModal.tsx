@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AutoReachLogo } from './AutoReachLogo';
 import { apiLogin, apiRegister } from '../api';
 import type { AuthUser } from '../types';
 import {
@@ -81,9 +82,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
 
           <div className="flex items-center gap-2 mb-2">
-            <span className="h-6 w-6 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center text-xs font-bold">
-              AR
-            </span>
+            <AutoReachLogo size="xs" variant="icon" theme="dark" />
             <span className="text-xs font-semibold tracking-wider uppercase text-amber-300">
               Student Career Cloud
             </span>
