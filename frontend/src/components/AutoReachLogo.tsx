@@ -9,8 +9,8 @@ export interface AutoReachLogoProps {
   onClick?: () => void;
 }
 
-// Warm, high-contrast yellowish-orange (#F58220) for maximum visibility on white & dark surfaces
-export const BIRD_ORANGE_HEX = '#F58220';
+// The exact vibrant warm yellow/orange sampled from the AR background (#FFB900)
+export const BIRD_COLOR_HEX = '#FFB900';
 
 export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   size = 'md',
@@ -20,21 +20,23 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   className = '',
   onClick,
 }) => {
-  // Sizing configuration calibrated to the Option 02 tucked lockup
+  // Sizing configuration:
+  // Option 02 layout where the bird is big and spans across the length of 'Auto',
+  // with the tail down-left and the body bending over 'Auto'
   const sizeConfig = {
-    xs: { birdW: 34, birdH: 33, ml: '-ml-[18px]', mb: 'mb-[2px]', textSize: 'text-sm' },
-    sm: { birdW: 46, birdH: 44, ml: '-ml-[24px]', mb: 'mb-[3px]', textSize: 'text-[17px]' },
-    md: { birdW: 60, birdH: 58, ml: '-ml-[31px]', mb: 'mb-[5px]', textSize: 'text-xl' },
-    lg: { birdW: 86, birdH: 83, ml: '-ml-[45px]', mb: 'mb-[7px]', textSize: 'text-3xl' },
-    xl: { birdW: 126, birdH: 122, ml: '-ml-[66px]', mb: 'mb-[10px]', textSize: 'text-5xl' },
+    xs: { birdW: 42, birdH: 40, ml: '-ml-[21px]', mb: 'mb-[1px]', textSize: 'text-xs' },
+    sm: { birdW: 56, birdH: 54, ml: '-ml-[28px]', mb: 'mb-[2px]', textSize: 'text-[17px]' },
+    md: { birdW: 76, birdH: 73, ml: '-ml-[38px]', mb: 'mb-[3px]', textSize: 'text-xl' },
+    lg: { birdW: 110, birdH: 106, ml: '-ml-[55px]', mb: 'mb-[5px]', textSize: 'text-3xl' },
+    xl: { birdW: 154, birdH: 149, ml: '-ml-[77px]', mb: 'mb-[8px]', textSize: 'text-5xl' },
   };
 
   const current = typeof size === 'number'
     ? {
         birdW: size,
         birdH: Math.round(size * 0.97),
-        ml: `-ml-[${Math.round(size * 0.52)}px]`,
-        mb: 'mb-[3px]',
+        ml: `-ml-[${Math.round(size * 0.50)}px]`,
+        mb: 'mb-[2px]',
         textSize: 'text-base',
       }
     : sizeConfig[size] || sizeConfig.sm;
@@ -78,13 +80,14 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
   if (variant === 'wordmark') {
     return (
       <span className={`font-black tracking-tight ${current.textSize} ${autoTextColor} ${className}`}>
-        Auto<span style={{ color: BIRD_ORANGE_HEX }}>Reach</span>
+        Auto<span style={{ color: BIRD_COLOR_HEX }}>Reach</span>
       </span>
     );
   }
 
-  // TUCKED LOCKUP (Option 02 layout):
-  // The bird's tail angles down-left, with the letter 'A' in AutoReach tucked directly under the bird's belly
+  // OPTION 02 LOCKUP:
+  // The bird is big and spans across the length of 'Auto',
+  // with the tail down-left and the body bending over 'Auto'
   return (
     <div
       className={`inline-flex items-end select-none ${
@@ -92,7 +95,7 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
       } ${className}`}
       onClick={onClick}
     >
-      {/* Origami Bird */}
+      {/* Big Origami Bird spanning over Auto */}
       <img
         src={iconSrc}
         alt="AutoReach Origami Bird"
@@ -101,21 +104,21 @@ export const AutoReachLogo: React.FC<AutoReachLogoProps> = ({
         draggable={false}
       />
 
-      {/* Tucked Wordmark AutoReach */}
+      {/* Wordmark AutoReach nestled under bird */}
       <div
         className={`flex items-center gap-2 whitespace-nowrap z-20 ${current.ml} ${current.mb}`}
       >
         <span className={`font-black tracking-tight leading-none ${current.textSize} ${autoTextColor}`}>
-          Auto<span style={{ color: BIRD_ORANGE_HEX }}>Reach</span>
+          Auto<span style={{ color: BIRD_COLOR_HEX }}>Reach</span>
         </span>
 
         {showBadge && (
           <span
             className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase"
             style={{
-              backgroundColor: 'rgba(245, 130, 32, 0.12)',
-              color: BIRD_ORANGE_HEX,
-              borderColor: 'rgba(245, 130, 32, 0.35)',
+              backgroundColor: 'rgba(255, 185, 0, 0.15)',
+              color: '#D97706',
+              borderColor: 'rgba(255, 185, 0, 0.4)',
             }}
           >
             v5.0 Live
